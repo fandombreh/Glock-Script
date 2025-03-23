@@ -17,10 +17,9 @@ local fovSize = 100
 -- UI Setup
 local glockGui = Instance.new("ScreenGui")
 glockGui.Name = "Glock - made by snoopy"
-glockGui.Parent = localPlayer:WaitForChild("PlayerGui")
-glockGui.ResetOnSpawn = false  -- Prevent UI from disappearing on respawn
+glockGui.Parent = game:GetService("CoreGui")
 
--- Main Frame (Draggable)
+-- Main Frame
 local mainFrame = Instance.new("Frame")
 mainFrame.Size = UDim2.new(0, 400, 0, 250)
 mainFrame.Position = UDim2.new(0.5, -200, 0.5, -125)
@@ -28,7 +27,6 @@ mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 mainFrame.Parent = glockGui
 mainFrame.Active = true
 mainFrame.Draggable = true
-mainFrame.ZIndex = 10
 
 -- FOV Circle
 local fovCircle = Drawing.new("Circle")
@@ -43,7 +41,7 @@ RunService.RenderStepped:Connect(function()
     fovCircle.Visible = fovCircleEnabled
 end)
 
--- Function to get the closest player within FOV
+-- Function to get closest player
 local function getClosestPlayer()
     local closestPlayer = nil
     local shortestDistance = fovSize
@@ -62,7 +60,7 @@ local function getClosestPlayer()
     return closestPlayer
 end
 
--- Toggleable Features
+-- UI Button Creator
 local function createButton(text, parent, callback, position)
     local button = Instance.new("TextButton")
     button.Size = UDim2.new(0, 180, 0, 40)
@@ -71,7 +69,6 @@ local function createButton(text, parent, callback, position)
     button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
     button.TextColor3 = Color3.fromRGB(255, 255, 255)
     button.Parent = parent
-    button.ZIndex = 11
     button.MouseButton1Click:Connect(callback)
     return button
 end
@@ -79,7 +76,7 @@ end
 local buttonSpacing = 45
 local startY = 10
 
--- Cam Lock
+-- Cam Lock Toggle
 local camLockConnection
 createButton("Toggle Cam Lock", mainFrame, function()
     camLockEnabled = not camLockEnabled
@@ -90,7 +87,7 @@ createButton("Toggle Cam Lock", mainFrame, function()
             local target = getClosestPlayer()
             if target and target.Character and target.Character:FindFirstChild("Head") then
                 local targetPos = target.Character.Head.Position
-                camera.CFrame = CFrame.new(camera.CFrame.Position, targetPos)
+                camera.CFrame = camera.CFrame:Lerp(CFrame.new(camera.CFrame.Position, targetPos), camLockSmoothness / 100)
             end
         end)
     else
@@ -99,15 +96,15 @@ createButton("Toggle Cam Lock", mainFrame, function()
             camLockConnection = nil
         end
     end
-end, startY + buttonSpacing * 0)
+end, startY)
 
--- Silent Aim
+-- Silent Aim Toggle
 createButton("Toggle Silent Aim", mainFrame, function()
     silentAimEnabled = not silentAimEnabled
     print("Silent Aim:", silentAimEnabled)
-end, startY + buttonSpacing * 1)
+end, startY + buttonSpacing)
 
--- Trigger Bot
+-- Trigger Bot Toggle
 local triggerBotConnection
 createButton("Toggle Trigger Bot", mainFrame, function()
     triggerBotEnabled = not triggerBotEnabled
@@ -131,13 +128,13 @@ createButton("Toggle Trigger Bot", mainFrame, function()
     end
 end, startY + buttonSpacing * 2)
 
--- ESP
+-- ESP Toggle
 createButton("Toggle ESP", mainFrame, function()
     espEnabled = not espEnabled
     print("ESP:", espEnabled)
 end, startY + buttonSpacing * 3)
 
--- FOV Circle
+-- FOV Circle Toggle
 createButton("Toggle FOV Circle", mainFrame, function()
     fovCircleEnabled = not fovCircleEnabled
     fovCircle.Visible = fovCircleEnabled
