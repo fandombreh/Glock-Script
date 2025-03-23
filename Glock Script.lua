@@ -19,44 +19,12 @@ glockGui.Parent = game.CoreGui
 
 -- Main Frame (Draggable)
 local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 400, 0, 250)
-mainFrame.Position = UDim2.new(0.5, -200, 0.5, -125)
+mainFrame.Size = UDim2.new(0, 250, 0, 250)
+mainFrame.Position = UDim2.new(0.5, -125, 0.5, -125)
 mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 mainFrame.Parent = glockGui
 mainFrame.Active = true
-
--- Dragging System
-local dragging, dragInput, dragStart, startPos
-
-mainFrame.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = true
-        dragStart = input.Position
-        startPos = mainFrame.Position
-
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-            end
-        end)
-    end
-end)
-
-mainFrame.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement then
-        dragInput = input
-    end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-    if input == dragInput and dragging then
-        local delta = input.Position - dragStart
-        mainFrame.Position = UDim2.new(
-            startPos.X.Scale, startPos.X.Offset + delta.X,
-            startPos.Y.Scale, startPos.Y.Offset + delta.Y
-        )
-    end
-end)
+mainFrame.Draggable = true
 
 -- Function to find the closest enemy
 local function getClosestPlayer()
@@ -127,9 +95,10 @@ RunService.RenderStepped:Connect(updateTriggerBot)
 RunService.RenderStepped:Connect(updateAimbot)
 
 -- Function to create toggle buttons
-local function createToggleButton(text, parent, toggleVar)
+local function createToggleButton(text, parent, toggleVar, yOffset)
     local button = Instance.new("TextButton")
     button.Size = UDim2.new(0, 200, 0, 40)
+    button.Position = UDim2.new(0.5, -100, 0, yOffset) -- Spacing buttons properly
     button.Text = text .. " [OFF]"
     button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
     button.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -152,8 +121,8 @@ local function createToggleButton(text, parent, toggleVar)
     end)
 end
 
--- Create buttons
-createToggleButton("Cam Lock", mainFrame, "camLock")
-createToggleButton("Silent Aim", mainFrame, "silentAim")
-createToggleButton("Trigger Bot", mainFrame, "triggerBot")
-createToggleButton("Aimbot", mainFrame, "aimbot")
+-- Create buttons with proper spacing
+createToggleButton("Cam Lock", mainFrame, "camLock", 10)
+createToggleButton("Silent Aim", mainFrame, "silentAim", 60)
+createToggleButton("Trigger Bot", mainFrame, "triggerBot", 110)
+createToggleButton("Aimbot", mainFrame, "aimbot", 160)
