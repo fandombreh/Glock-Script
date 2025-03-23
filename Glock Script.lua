@@ -73,12 +73,12 @@ local function toggleTriggerBot()
     end
 end
 
--- 🔵 Fixed ESP System (Fully Working)
+-- 🔵 Fully Working ESP System
 local function toggleESP()
     espEnabled = not espEnabled
     espButton.Text = "ESP: " .. (espEnabled and "ON" or "OFF")
 
-    -- Remove all ESP highlights if turning off
+    -- Remove ESP highlights when disabled
     if not espEnabled then
         for _, player in pairs(game.Players:GetPlayers()) do
             if player.Character then
@@ -115,7 +115,7 @@ local function toggleESP()
     table.insert(espConnections, espLoop)
 end
 
--- 🔵 FOV Circle (Working)
+-- 🔵 Re-Added FOV Circle (Fully Working)
 local fovCircle = Drawing.new("Circle")
 fovCircle.Visible = false
 fovCircle.Color = Color3.fromRGB(0, 255, 0)
@@ -129,7 +129,9 @@ local function toggleFOVCircle()
 end
 
 RunService.RenderStepped:Connect(function()
-    fovCircle.Position = UserInputService:GetMouseLocation()
+    if fovCircleEnabled then
+        fovCircle.Position = UserInputService:GetMouseLocation()
+    end
 end)
 
 -- 🛠️ UI Setup
