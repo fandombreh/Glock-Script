@@ -18,15 +18,17 @@ local fovSize = 100
 local glockGui = Instance.new("ScreenGui")
 glockGui.Name = "Glock - made by snoopy"
 glockGui.Parent = localPlayer:WaitForChild("PlayerGui")
+glockGui.ResetOnSpawn = false  -- Prevent UI from disappearing on respawn
 
 -- Main Frame (Draggable)
 local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 400, 0, 300)
-mainFrame.Position = UDim2.new(0.5, -200, 0.5, -150)
+mainFrame.Size = UDim2.new(0, 400, 0, 250)
+mainFrame.Position = UDim2.new(0.5, -200, 0.5, -125)
 mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 mainFrame.Parent = glockGui
 mainFrame.Active = true
 mainFrame.Draggable = true -- Enables native dragging support
+mainFrame.ZIndex = 10  -- Ensure UI is visible
 
 -- FOV Circle
 local fovCircle = Drawing.new("Circle")
@@ -69,32 +71,35 @@ local function createButton(text, parent, callback, position)
     button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
     button.TextColor3 = Color3.fromRGB(255, 255, 255)
     button.Parent = parent
+    button.ZIndex = 11  -- Ensure buttons are above background
     button.MouseButton1Click:Connect(callback)
 end
 
-local buttonSpacing = 50
+local buttonSpacing = 45  -- Adjusted for better visibility
+local startY = 10  -- Start closer to the top
+
 createButton("Toggle Cam Lock", mainFrame, function()
     camLockEnabled = not camLockEnabled
     print("Cam Lock:", camLockEnabled)
-end, buttonSpacing * 1)
+end, startY + buttonSpacing * 0)
 
 createButton("Toggle Silent Aim", mainFrame, function()
     silentAimEnabled = not silentAimEnabled
     print("Silent Aim:", silentAimEnabled)
-end, buttonSpacing * 2)
+end, startY + buttonSpacing * 1)
 
 createButton("Toggle Trigger Bot", mainFrame, function()
     triggerBotEnabled = not triggerBotEnabled
     print("Trigger Bot:", triggerBotEnabled)
-end, buttonSpacing * 3)
+end, startY + buttonSpacing * 2)
 
 createButton("Toggle ESP", mainFrame, function()
     espEnabled = not espEnabled
     print("ESP:", espEnabled)
-end, buttonSpacing * 4)
+end, startY + buttonSpacing * 3)
 
 createButton("Toggle FOV Circle", mainFrame, function()
     fovCircleEnabled = not fovCircleEnabled
     fovCircle.Visible = fovCircleEnabled
     print("FOV Circle:", fovCircleEnabled)
-end, buttonSpacing * 5)
+end, startY + buttonSpacing * 4)
