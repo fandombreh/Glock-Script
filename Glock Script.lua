@@ -31,19 +31,21 @@ end
 
 -- 🔫 Silent Aim Fix (Redirects Aim Properly)
 local mt = getrawmetatable(game)
-setreadonly(mt, false)
-local oldNamecall = mt.__namecall
-mt.__namecall = newcclosure(function(self, ...)
-    local args = {...}
-    local method = getnamecallmethod()
-    if silentAimEnabled and method == "FindPartOnRayWithIgnoreList" then
-        local target = getClosestPlayer()
-        if target and target.Character and target.Character:FindFirstChild("Head") then
-            args[1] = Ray.new(camera.CFrame.Position, (target.Character.Head.Position - camera.CFrame.Position).unit * silentAimStrength)
+if mt then
+    setreadonly(mt, false)
+    local oldNamecall = mt.__namecall
+    mt.__namecall = newcclosure(function(self, ...)
+        local args = {...}
+        local method = getnamecallmethod()
+        if silentAimEnabled and method == "FindPartOnRayWithIgnoreList" then
+            local target = getClosestPlayer()
+            if target and target.Character and target.Character:FindFirstChild("Head") then
+                args[1] = Ray.new(camera.CFrame.Position, (target.Character.Head.Position - camera.CFrame.Position).unit * silentAimStrength)
+            end
         end
-    end
-    return oldNamecall(self, unpack(args))
-end)
+        return oldNamecall(self, unpack(args))
+    end)
+end
 
 -- 🔥 Trigger Bot (Auto-Shoot)
 local triggerBotConnection
@@ -56,7 +58,9 @@ local function toggleTriggerBot()
             if target and target.Character and target.Character:FindFirstChild("Head") then
                 local distance = (target.Character.Head.Position - camera.CFrame.Position).Magnitude
                 if distance < triggerBotRange then
-                    mouse1click()
+                    VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
+                    task.wait(0.1)
+                    VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
                 end
             end
         end)
@@ -74,7 +78,7 @@ local function toggleESP()
     for _, player in pairs(game.Players:GetPlayers()) do
         if player ~= localPlayer and player.Character then
             local character = player.Character
-            local highlight = character:FindFirstChild("Highlight")
+            local highlight = character:FindFirstChildOfClass("Highlight")
             if espEnabled then
                 if not highlight then
                     highlight = Instance.new("Highlight")
