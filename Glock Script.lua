@@ -102,3 +102,4 @@ smoothnessBox.FocusLost:Connect(function(enterPressed)
         end
     end
 end)
+
