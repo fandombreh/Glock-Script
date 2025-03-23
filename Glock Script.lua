@@ -9,9 +9,8 @@ local triggerBotEnabled = false
 local silentAimEnabled = false
 local espEnabled = false
 local fovCircleEnabled = true
-local camLockSmoothness = 5
+local camLockSmoothness = 0.2  -- Lower value = smoother tracking
 local triggerBotRange = 10
-local silentAimStrength = 5
 local fovSize = 100
 
 -- UI Setup
@@ -19,7 +18,6 @@ local glockGui = Instance.new("ScreenGui")
 glockGui.Name = "Glock - made by snoopy"
 glockGui.Parent = game:GetService("CoreGui")
 
--- Main Frame
 local mainFrame = Instance.new("Frame")
 mainFrame.Size = UDim2.new(0, 400, 0, 250)
 mainFrame.Position = UDim2.new(0.5, -200, 0.5, -125)
@@ -76,7 +74,7 @@ end
 local buttonSpacing = 45
 local startY = 10
 
--- Cam Lock Toggle
+-- Cam Lock Toggle (Uses Smooth Camera Adjustment)
 local camLockConnection
 createButton("Toggle Cam Lock", mainFrame, function()
     camLockEnabled = not camLockEnabled
@@ -86,8 +84,10 @@ createButton("Toggle Cam Lock", mainFrame, function()
         camLockConnection = RunService.RenderStepped:Connect(function()
             local target = getClosestPlayer()
             if target and target.Character and target.Character:FindFirstChild("Head") then
-                local targetPos = target.Character.Head.Position
-                camera.CFrame = camera.CFrame:Lerp(CFrame.new(camera.CFrame.Position, targetPos), camLockSmoothness / 100)
+                local headPos = target.Character.Head.Position
+                local newCFrame = CFrame.new(camera.CFrame.Position, headPos)
+
+                camera.CFrame = camera.CFrame:Lerp(newCFrame, camLockSmoothness)
             end
         end)
     else
