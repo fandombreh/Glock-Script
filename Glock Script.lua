@@ -1,14 +1,15 @@
 local player = game.Players.LocalPlayer
 local camera = game.Workspace.CurrentCamera
 local mouse = player:GetMouse()
+local RunService = game:GetService("RunService")
 
--- Create the main ScreenGui
+-- Create UI
 local glockGui = Instance.new("ScreenGui")
 glockGui.Name = "Glock"
 glockGui.Parent = player:WaitForChild("PlayerGui")
 glockGui.ResetOnSpawn = false
 
--- Main Frame (Clean, centered)
+-- Main Frame
 local mainFrame = Instance.new("Frame")
 mainFrame.Size = UDim2.new(0, 350, 0, 500)
 mainFrame.Position = UDim2.new(0.5, -175, 0.5, -250)
@@ -27,7 +28,7 @@ local function createToggleAndMode(name, yPos)
     
     local label = Instance.new("TextLabel")
     label.Size = UDim2.new(0, 200, 0, 20)
-    label.Position = UDim2.new(0.5, -100, 1, yPos)
+    label.Position = UDim2.new(0, 75, 0, yPos)
     label.BackgroundTransparency = 1
     label.Text = name .. ": OFF"
     label.TextColor3 = Color3.fromRGB(230, 230, 230)
@@ -37,7 +38,7 @@ local function createToggleAndMode(name, yPos)
     
     local button = Instance.new("TextButton")
     button.Size = UDim2.new(0, 180, 0, 30)
-    button.Position = UDim2.new(0.5, -90, 1, yPos + 30)
+    button.Position = UDim2.new(0, 85, 0, yPos + 30)
     button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
     button.Text = "Toggle " .. name
     button.Font = Enum.Font.Gotham
@@ -52,7 +53,7 @@ local function createToggleAndMode(name, yPos)
     
     local modeLabel = Instance.new("TextLabel")
     modeLabel.Size = UDim2.new(0, 200, 0, 20)
-    modeLabel.Position = UDim2.new(0.5, -100, 1, yPos + 70)
+    modeLabel.Position = UDim2.new(0, 75, 0, yPos + 70)
     modeLabel.BackgroundTransparency = 1
     modeLabel.Text = "Mode: Legit"
     modeLabel.TextColor3 = Color3.fromRGB(230, 230, 230)
@@ -62,7 +63,7 @@ local function createToggleAndMode(name, yPos)
     
     local modeButton = Instance.new("TextButton")
     modeButton.Size = UDim2.new(0, 180, 0, 30)
-    modeButton.Position = UDim2.new(0.5, -90, 1, yPos + 100)
+    modeButton.Position = UDim2.new(0, 85, 0, yPos + 100)
     modeButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
     modeButton.Text = "Switch Mode"
     modeButton.Font = Enum.Font.Gotham
@@ -78,41 +79,45 @@ local function createToggleAndMode(name, yPos)
     return {enabled = function() return enabled end, mode = function() return mode end}
 end
 
-local silentAim = createToggleAndMode("Silent Aim", -220)
-local triggerBot = createToggleAndMode("Trigger Bot", -120)
-local cameraLock = createToggleAndMode("Camera Lock", -20)
-local aimbot = createToggleAndMode("Aimbot", 80)
+local silentAim = createToggleAndMode("Silent Aim", 20)
+local triggerBot = createToggleAndMode("Trigger Bot", 120) -- Currently not used in functionality
+local cameraLock = createToggleAndMode("Camera Lock", 220)   -- Currently not used in functionality
+local aimbot = createToggleAndMode("Aimbot", 320)
 
--- Functionality for Silent Aim, Trigger Bot, Camera Lock, and Aimbot
+-- Functionality for Silent Aim and Aimbot
 local function getClosestPlayer()
     local closestPlayer = nil
     local shortestDistance = math.huge
     for _, v in pairs(game.Players:GetPlayers()) do
         if v ~= player and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
-            local targetPos = camera:WorldToViewportPoint(v.Character.HumanoidRootPart.Position)
-            local distance = (Vector2.new(mouse.X, mouse.Y) - Vector2.new(targetPos.X, targetPos.Y)).magnitude
-            if distance < shortestDistance then
-                shortestDistance = distance
-                closestPlayer = v
+            local targetPos, onScreen = camera:WorldToViewportPoint(v.Character.HumanoidRootPart.Position)
+            if onScreen then
+                local distance = (Vector2.new(mouse.X, mouse.Y) - Vector2.new(targetPos.X, targetPos.Y)).Magnitude
+                if distance < shortestDistance then
+                    shortestDistance = distance
+                    closestPlayer = v
+                end
             end
         end
     end
     return closestPlayer
 end
 
-game:GetService("RunService").RenderStepped:Connect(function()
+RunService.RenderStepped:Connect(function()
     local target = getClosestPlayer()
     if target and target.Character and target.Character:FindFirstChild("Head") then
-        local headPos = camera:WorldToViewportPoint(target.Character.Head.Position)
-        
-        if silentAim.enabled() then
-            local factor = silentAim.mode() == "Legit" and 0.5 or 1
-            mousemoverel((headPos.X - mouse.X) * factor, (headPos.Y - mouse.Y) * factor)
-        end
-        
-        if aimbot.enabled() then
-            local factor = aimbot.mode() == "Legit" and 0.5 or 1
-            mousemoverel((headPos.X - mouse.X) * factor, (headPos.Y - mouse.Y) * factor)
+        local headPos, onScreen = camera:WorldToViewportPoint(target.Character.Head.Position)
+        if onScreen then
+            if silentAim.enabled() then
+                local factor = silentAim.mode() == "Legit" and 0.5 or 1
+                -- mousemoverel is typically provided by exploit environments.
+                mousemoverel((headPos.X - mouse.X) * factor, (headPos.Y - mouse.Y) * factor)
+            end
+            
+            if aimbot.enabled() then
+                local factor = aimbot.mode() == "Legit" and 0.5 or 1
+                mousemoverel((headPos.X - mouse.X) * factor, (headPos.Y - mouse.Y) * factor)
+            end
         end
     end
 end)
