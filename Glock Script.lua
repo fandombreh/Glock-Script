@@ -11,6 +11,7 @@ local fovCircleEnabled = false
 local triggerBotRange = 15
 local aimbotSmoothness = 0.2  -- Lower = Faster
 local espConnections = {}
+local triggerBotConnection
 
 -- 🎯 Get Closest Player Function
 local function getClosestPlayer()
@@ -46,13 +47,13 @@ local function lockAimbot()
     end)
 end
 
--- 🔫 Toggle Trigger Bot
+-- 🔫 Toggle Trigger Bot (Fixed)
 local function toggleTriggerBot()
     triggerBotEnabled = not triggerBotEnabled
     triggerBotButton.Text = "Trigger Bot: " .. (triggerBotEnabled and "ON" or "OFF")
 
-    RunService.RenderStepped:Connect(function()
-        if triggerBotEnabled then
+    if triggerBotEnabled then
+        triggerBotConnection = RunService.RenderStepped:Connect(function()
             local target = getClosestPlayer()
             if target and target.Character and target.Character:FindFirstChild("Head") then
                 local headPos, onScreen = camera:WorldToViewportPoint(target.Character.Head.Position)
@@ -63,8 +64,13 @@ local function toggleTriggerBot()
                     VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 1)
                 end
             end
+        end)
+    else
+        if triggerBotConnection then
+            triggerBotConnection:Disconnect()
+            triggerBotConnection = nil
         end
-    end)
+    end
 end
 
 -- 🔵 ESP System
