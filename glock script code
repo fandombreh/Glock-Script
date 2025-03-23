@@ -4,6 +4,10 @@ local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local player = Players.LocalPlayer
 local camera = workspace.CurrentCamera
+}
+if not funcs then
+loadstring(game:HttpGet("https://raw.githubusercontent.com/wiird2012/roblox-scripts/master/funcs.lua"))()
+end
 
 -- Default Lock-On Settings
 local lockOnEnabled = false
