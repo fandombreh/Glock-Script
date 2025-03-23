@@ -56,8 +56,10 @@ local function createSlider(parent, label, min, max, default, callback)
     dragBar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     dragBar.Parent = sliderBar
 
+    local moveConn, releaseConn
+
     local function updateSlider(input)
-        local mouseX = UserInputService:GetMouseLocation().X
+        local mouseX = input.Position.X
         local posX = math.clamp(mouseX - sliderBar.AbsolutePosition.X, 0, sliderBar.AbsoluteSize.X)
         local value = math.floor(min + ((posX / sliderBar.AbsoluteSize.X) * (max - min)))
         dragBar.Position = UDim2.new(0, posX - 5, 0, -5)
@@ -66,13 +68,14 @@ local function createSlider(parent, label, min, max, default, callback)
     end
 
     dragBar.MouseButton1Down:Connect(function()
-        local moveConn
-        moveConn = RunService.RenderStepped:Connect(updateSlider)
-        local releaseConn
+        moveConn = RunService.RenderStepped:Connect(function()
+            updateSlider(UserInputService:GetMouseLocation())
+        end)
+
         releaseConn = UserInputService.InputEnded:Connect(function(input)
             if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                moveConn:Disconnect()
-                releaseConn:Disconnect()
+                if moveConn then moveConn:Disconnect() end
+                if releaseConn then releaseConn:Disconnect() end
             end
         end)
     end)
@@ -103,7 +106,7 @@ local function updateSilentAim()
         local target = getClosestPlayer()
         if target and target.Character and target.Character:FindFirstChild("Head") then
             local targetPosition = target.Character.Head.Position
-            camera.CFrame = camera.CFrame:Lerp(CFrame.new(camera.CFrame.Position, targetPosition), silentAimStrength / 20)
+            camera.CFrame = camera.CFrame:Lerp(CFrame.new(camera.CFrame.Position, targetPosition), silentAimStrength / 10)
         end
     end
 end
@@ -124,8 +127,7 @@ local function updateTriggerBot()
         local target = getClosestPlayer()
         if target and target.Character and target.Character:FindFirstChild("Head") then
             if (localPlayer.Character.Head.Position - target.Character.Head.Position).Magnitude <= triggerBotRange then
-                -- You need an alternative to simulate a mouse click in Roblox
-                -- Example: Fire a remote event to activate a weapon
+                -- Alternative: Use a remote event to fire a weapon
                 print("Trigger Bot Activated!")
             end
         end
