@@ -30,29 +30,26 @@ local function getClosestPlayer()
     return closestPlayer
 end
 
--- 🔫 Silent Aim Fix (Redirects Aim Properly)
-local function silentAimHook()
-    local mt = getrawmetatable(game)
-    if mt then
-        setreadonly(mt, false)
-        local oldNamecall = mt.__namecall
-        mt.__namecall = newcclosure(function(self, ...)
-            local args = {...}
-            local method = getnamecallmethod()
-            if silentAimEnabled and method == "FindPartOnRayWithIgnoreList" then
-                local target = getClosestPlayer()
-                if target and target.Character and target.Character:FindFirstChild("Head") then
-                    local direction = (target.Character.Head.Position - camera.CFrame.Position).unit * silentAimStrength
-                    args[1] = Ray.new(camera.CFrame.Position, direction)
-                    return oldNamecall(self, unpack(args))
-                end
+-- 🔫 Silent Aim Hook (Fixes Raycasting)
+local mt = getrawmetatable(game)
+if mt then
+    setreadonly(mt, false)
+    local oldNamecall = mt.__namecall
+    mt.__namecall = newcclosure(function(self, ...)
+        local args = {...}
+        local method = getnamecallmethod()
+        if silentAimEnabled and method == "FindPartOnRayWithIgnoreList" then
+            local target = getClosestPlayer()
+            if target and target.Character and target.Character:FindFirstChild("Head") then
+                local direction = (target.Character.Head.Position - camera.CFrame.Position).unit * silentAimStrength
+                args[1] = Ray.new(camera.CFrame.Position, direction)
+                return oldNamecall(self, unpack(args))
             end
-            return oldNamecall(self, ...)
-        end)
-        setreadonly(mt, true)
-    end
+        end
+        return oldNamecall(self, ...)
+    end)
+    setreadonly(mt, true)
 end
-silentAimHook()
 
 -- 🔥 Trigger Bot (Auto-Shoot)
 local triggerBotConnection
@@ -144,4 +141,3 @@ end, startY)
 
 createButton("Toggle Trigger Bot", mainFrame, toggleTriggerBot, startY + buttonSpacing)
 createButton("Toggle ESP", mainFrame, toggleESP, startY + buttonSpacing * 2)
-
