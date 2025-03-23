@@ -45,6 +45,7 @@ if mt then
         end
         return oldNamecall(self, unpack(args))
     end)
+    setreadonly(mt, true)
 end
 
 -- 🔥 Trigger Bot (Auto-Shoot)
@@ -58,9 +59,9 @@ local function toggleTriggerBot()
             if target and target.Character and target.Character:FindFirstChild("Head") then
                 local distance = (target.Character.Head.Position - camera.CFrame.Position).Magnitude
                 if distance < triggerBotRange then
-                    VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
-                    task.wait(0.1)
-                    VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
+                    mouse1press()
+                    task.wait(0.05)
+                    mouse1release()
                 end
             end
         end)
@@ -78,7 +79,7 @@ local function toggleESP()
     for _, player in pairs(game.Players:GetPlayers()) do
         if player ~= localPlayer and player.Character then
             local character = player.Character
-            local highlight = character:FindFirstChildOfClass("Highlight")
+            local highlight = character:FindFirstChild("Highlight")
             if espEnabled then
                 if not highlight then
                     highlight = Instance.new("Highlight")
@@ -131,3 +132,4 @@ end, startY)
 
 createButton("Toggle Trigger Bot", mainFrame, toggleTriggerBot, startY + buttonSpacing)
 createButton("Toggle ESP", mainFrame, toggleESP, startY + buttonSpacing * 2)
+
