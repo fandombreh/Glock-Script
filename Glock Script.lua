@@ -4,7 +4,6 @@ local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local Mouse = localPlayer:GetMouse()
 
-local isFocused = true
 local camLockEnabled = false
 local triggerBotEnabled = false
 local silentAimEnabled = false
@@ -22,57 +21,55 @@ mainFrame.Position = UDim2.new(0.5, -200, 0.5, -250)
 mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 mainFrame.Parent = glockGui
 
+-- UI Layout
+local layout = Instance.new("UIListLayout")
+layout.Parent = mainFrame
+layout.FillDirection = Enum.FillDirection.Vertical
+layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+layout.Padding = UDim.new(0, 10)
+
 -- Function to create sliders
 local function createSlider(parent, label, min, max, default, callback)
     local frame = Instance.new("Frame")
     frame.Size = UDim2.new(0, 300, 0, 50)
     frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
     frame.Parent = parent
-
+    
     local sliderLabel = Instance.new("TextLabel")
     sliderLabel.Size = UDim2.new(0, 100, 0, 50)
     sliderLabel.Text = label .. ": " .. tostring(default)
     sliderLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
     sliderLabel.Parent = frame
-
-    local sliderBar = Instance.new("Frame")
-    sliderBar.Size = UDim2.new(0, 200, 0, 10)
-    sliderBar.Position = UDim2.new(0, 100, 0, 20)
-    sliderBar.BackgroundColor3 = Color3.fromRGB(70, 70, 255)
-    sliderBar.Parent = frame
-
-    local sliderButton = Instance.new("Frame")
-    sliderButton.Size = UDim2.new(0, 10, 0, 20)
-    sliderButton.Position = UDim2.new((default - min) / (max - min), -5, 0, 15)
-    sliderButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    sliderButton.Parent = sliderBar
-    sliderButton.Active = true
-    sliderButton.Draggable = true
-
-    local function updateSlider(positionX)
-        local newValue = math.clamp(math.floor(min + ((positionX - sliderBar.AbsolutePosition.X) / sliderBar.AbsoluteSize.X) * (max - min)), min, max)
-        sliderButton.Position = UDim2.new((newValue - min) / (max - min), -5, 0, 15)
-        sliderLabel.Text = label .. ": " .. tostring(newValue)
-        callback(newValue)
-    end
-
-    sliderButton.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            local connection
-            connection = RunService.RenderStepped:Connect(function()
-                updateSlider(UserInputService:GetMouseLocation().X)
-            end)
-
-            UserInputService.InputEnded:Connect(function(inputEnd)
-                if inputEnd.UserInputType == Enum.UserInputType.MouseButton1 then
-                    connection:Disconnect()
-                end
-            end)
-        end
+    
+    local slider = Instance.new("Frame")
+    slider.Size = UDim2.new(0, 200, 0, 20)
+    slider.Position = UDim2.new(0, 100, 0, 15)
+    slider.BackgroundColor3 = Color3.fromRGB(70, 70, 255)
+    slider.Parent = frame
+    
+    local dragBar = Instance.new("TextButton")
+    dragBar.Size = UDim2.new(0, 10, 0, 20)
+    dragBar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    dragBar.Parent = slider
+    
+    dragBar.MouseButton1Down:Connect(function()
+        local moveConn
+        moveConn = RunService.RenderStepped:Connect(function()
+            local mouseX = UserInputService:GetMouseLocation().X
+            local posX = math.clamp(mouseX - slider.AbsolutePosition.X, 0, slider.AbsoluteSize.X)
+            local value = math.floor(min + ((posX / slider.AbsoluteSize.X) * (max - min)))
+            dragBar.Position = UDim2.new(0, posX - 5, 0, 0)
+            sliderLabel.Text = label .. ": " .. tostring(value)
+            callback(value)
+        end)
+        UserInputService.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                moveConn:Disconnect()
+            end
+        end)
     end)
 end
 
--- Find Closest Player
 local function getClosestPlayer()
     local closestPlayer = nil
     local shortestDistance = math.huge
@@ -91,73 +88,41 @@ local function getClosestPlayer()
     return closestPlayer
 end
 
--- Silent Aim
-RunService.RenderStepped:Connect(function()
-    if silentAimEnabled and isFocused then
+local function updateSilentAim()
+    if silentAimEnabled then
         local target = getClosestPlayer()
         if target and target.Character and target.Character:FindFirstChild("Head") then
-            local headPos = camera:WorldToViewportPoint(target.Character.Head.Position)
-            local moveX, moveY = (headPos.X - Mouse.X) / silentAimStrength, (headPos.Y - Mouse.Y) / silentAimStrength
-            
-            if mousemoverel then
-                mousemoverel(moveX, moveY)
-            end
+            local targetPosition = target.Character.Head.Position
+            camera.CFrame = camera.CFrame:Lerp(CFrame.new(camera.CFrame.Position, targetPosition), silentAimStrength / 20)
         end
     end
-end)
-
--- Cam Lock
-RunService.RenderStepped:Connect(function()
-    if camLockEnabled and isFocused then
-        local target = getClosestPlayer()
-        if target and target.Character and target.Character:FindFirstChild("Head") then
-            local headPosition = target.Character.Head.Position
-            camera.CFrame = camera.CFrame:Lerp(CFrame.new(camera.CFrame.Position, headPosition), camLockSmoothness / 10)
-        end
-    end
-end)
-
--- Trigger Bot
-RunService.RenderStepped:Connect(function()
-    if triggerBotEnabled and isFocused and localPlayer.Character and localPlayer.Character:FindFirstChild("Head") then
-        local target = getClosestPlayer()
-        if target and target.Character and target.Character:FindFirstChild("Head") then
-            local distance = (localPlayer.Character.Head.Position - target.Character.Head.Position).Magnitude
-            if distance <= triggerBotRange then
-                if mouse1click then
-                    mouse1click()
-                end
-            end
-        end
-    end
-end)
-
--- Create UI Elements
-local silentAimTab = Instance.new("Frame")
-silentAimTab.Size = UDim2.new(1, 0, 1, -50)
-silentAimTab.BackgroundTransparency = 1
-silentAimTab.Parent = mainFrame
-
-local function createToggle(parent, text, default, callback)
-    local button = Instance.new("TextButton")
-    button.Size = UDim2.new(0, 200, 0, 50)
-    button.Text = text .. ": " .. (default and "ON" or "OFF")
-    button.BackgroundColor3 = default and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
-    button.Parent = parent
-
-    button.MouseButton1Click:Connect(function()
-        default = not default
-        button.Text = text .. ": " .. (default and "ON" or "OFF")
-        button.BackgroundColor3 = default and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
-        callback(default)
-    end)
 end
 
-createToggle(silentAimTab, "Enable Silent Aim", false, function(value) silentAimEnabled = value end)
-createSlider(silentAimTab, "Silent Aim Strength", 1, 20, silentAimStrength, function(value) silentAimStrength = value end)
+local function updateCamLock()
+    if camLockEnabled then
+        local target = getClosestPlayer()
+        if target and target.Character and target.Character:FindFirstChild("Head") then
+            camera.CFrame = camera.CFrame:Lerp(CFrame.new(camera.CFrame.Position, target.Character.Head.Position), camLockSmoothness / 10)
+        end
+    end
+end
 
-createToggle(silentAimTab, "Enable Cam Lock", false, function(value) camLockEnabled = value end)
-createSlider(silentAimTab, "Cam Lock Speed", 1, 10, camLockSmoothness, function(value) camLockSmoothness = value end)
+local function updateTriggerBot()
+    if triggerBotEnabled then
+        local target = getClosestPlayer()
+        if target and target.Character and target.Character:FindFirstChild("Head") then
+            if (localPlayer.Character.Head.Position - target.Character.Head.Position).Magnitude <= triggerBotRange then
+                mouse1click()
+            end
+        end
+    end
+end
 
-createToggle(silentAimTab, "Enable Trigger Bot", false, function(value) triggerBotEnabled = value end)
-createSlider(silentAimTab, "Trigger Bot Range", 5, 50, triggerBotRange, function(value) triggerBotRange = value end)
+RunService.RenderStepped:Connect(updateSilentAim)
+RunService.RenderStepped:Connect(updateCamLock)
+RunService.RenderStepped:Connect(updateTriggerBot)
+
+-- Create UI Elements
+createSlider(mainFrame, "Silent Aim Strength", 1, 20, silentAimStrength, function(value) silentAimStrength = value end)
+createSlider(mainFrame, "Cam Lock Speed", 1, 10, camLockSmoothness, function(value) camLockSmoothness = value end)
+createSlider(mainFrame, "Trigger Bot Range", 5, 50, triggerBotRange, function(value) triggerBotRange = value end)
