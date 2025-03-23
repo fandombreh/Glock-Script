@@ -2,6 +2,7 @@ local localPlayer = game.Players.LocalPlayer
 local camera = game.Workspace.CurrentCamera
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
+local VirtualInputManager = game:GetService("VirtualInputManager")
 local Mouse = localPlayer:GetMouse()
 
 local triggerBotEnabled = false
@@ -29,25 +30,29 @@ local function getClosestPlayer()
     return closestPlayer
 end
 
--- 🔫 Silent Aim (Redirects Aim Properly)
-local mt = getrawmetatable(game)
-if mt then
-    setreadonly(mt, false)
-    local oldNamecall = mt.__namecall
-    mt.__namecall = newcclosure(function(self, ...)
-        local args = {...}
-        local method = getnamecallmethod()
-        if silentAimEnabled and method == "FindPartOnRayWithIgnoreList" then
-            local target = getClosestPlayer()
-            if target and target.Character and target.Character:FindFirstChild("Head") then
-                args[1] = Ray.new(camera.CFrame.Position, (target.Character.Head.Position - camera.CFrame.Position).unit * silentAimStrength)
-                return oldNamecall(self, unpack(args))
+-- 🔫 Silent Aim Fix (Redirects Aim Properly)
+local function silentAimHook()
+    local mt = getrawmetatable(game)
+    if mt then
+        setreadonly(mt, false)
+        local oldNamecall = mt.__namecall
+        mt.__namecall = newcclosure(function(self, ...)
+            local args = {...}
+            local method = getnamecallmethod()
+            if silentAimEnabled and method == "FindPartOnRayWithIgnoreList" then
+                local target = getClosestPlayer()
+                if target and target.Character and target.Character:FindFirstChild("Head") then
+                    local direction = (target.Character.Head.Position - camera.CFrame.Position).unit * silentAimStrength
+                    args[1] = Ray.new(camera.CFrame.Position, direction)
+                    return oldNamecall(self, unpack(args))
+                end
             end
-        end
-        return oldNamecall(self, ...)
-    end)
-    setreadonly(mt, true)
+            return oldNamecall(self, ...)
+        end)
+        setreadonly(mt, true)
+    end
 end
+silentAimHook()
 
 -- 🔥 Trigger Bot (Auto-Shoot)
 local triggerBotConnection
@@ -60,9 +65,9 @@ local function toggleTriggerBot()
             if target and target.Character and target.Character:FindFirstChild("Head") then
                 local distance = (target.Character.Head.Position - camera.CFrame.Position).Magnitude
                 if distance < triggerBotRange then
-                    mouse1press()
+                    VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
                     task.wait(0.05)
-                    mouse1release()
+                    VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
                 end
             end
         end)
@@ -75,26 +80,32 @@ local function toggleTriggerBot()
 end
 
 -- 🔵 ESP (Highlights Enemies)
+local espConnections = {}
 local function toggleESP()
     espEnabled = not espEnabled
-    for _, player in pairs(game.Players:GetPlayers()) do
-        if player ~= localPlayer and player.Character then
-            local character = player.Character
-            local highlight = character:FindFirstChild("Highlight")
-            if espEnabled then
-                if not highlight then
-                    highlight = Instance.new("Highlight")
-                    highlight.Parent = character
-                    highlight.FillColor = Color3.fromRGB(255, 0, 0)
-                    highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
-                    highlight.FillTransparency = 0.5
-                end
-            else
-                if highlight then
-                    highlight:Destroy()
+    for _, connection in pairs(espConnections) do
+        connection:Disconnect()
+    end
+    table.clear(espConnections)
+
+    if espEnabled then
+        local connection = RunService.RenderStepped:Connect(function()
+            for _, player in pairs(game.Players:GetPlayers()) do
+                if player ~= localPlayer and player.Character and player.Character:FindFirstChild("Head") then
+                    local character = player.Character
+                    local highlight = character:FindFirstChild("Highlight")
+                    if not highlight then
+                        highlight = Instance.new("Highlight")
+                        highlight.Parent = character
+                        highlight.FillColor = Color3.fromRGB(255, 0, 0)
+                        highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+                        highlight.FillTransparency = 0.5
+                        highlight.Adornee = character
+                    end
                 end
             end
-        end
+        end)
+        table.insert(espConnections, connection)
     end
 end
 
@@ -133,3 +144,4 @@ end, startY)
 
 createButton("Toggle Trigger Bot", mainFrame, toggleTriggerBot, startY + buttonSpacing)
 createButton("Toggle ESP", mainFrame, toggleESP, startY + buttonSpacing * 2)
+
