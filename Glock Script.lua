@@ -8,7 +8,8 @@ local camLockEnabled = false
 local triggerBotEnabled = false
 local silentAimEnabled = false
 local aimbotEnabled = false
-local autoLockEnabled = true -- Auto-lock when shot
+local autoLockEnabled = true
+
 local camLockSmoothness = 5
 local triggerBotRange = 10
 local silentAimStrength = 5
@@ -32,14 +33,8 @@ mainFrame.Draggable = true
 
 -- Function to check if player has a gun equipped
 local function checkGunEquipped()
-    if localPlayer.Character then
-        local tool = localPlayer.Character:FindFirstChildOfClass("Tool")
-        if tool and tool:FindFirstChild("Handle") then
-            gunEquipped = true
-        else
-            gunEquipped = false
-        end
-    end
+    local tool = localPlayer.Character and localPlayer.Character:FindFirstChildOfClass("Tool")
+    gunEquipped = tool and tool:FindFirstChild("Handle") ~= nil
 end
 
 -- Function to find the closest enemy
@@ -104,7 +99,7 @@ local function updateAimbot()
     end
 end
 
--- Auto Lock System (Locks onto the player who shot you)
+-- Auto Lock System (Locks onto the player who shot you, only when holding a gun)
 local function autoLock(target)
     if autoLockEnabled and gunEquipped then
         currentTarget = target
@@ -115,7 +110,7 @@ end
 -- Detect when a player is shot and auto-lock onto shooter
 local function detectHit()
     localPlayer.Character.Humanoid:GetPropertyChangedSignal("Health"):Connect(function()
-        if localPlayer.Character.Humanoid.Health < localPlayer.Character.Humanoid.MaxHealth then
+        if gunEquipped and localPlayer.Character.Humanoid.Health < localPlayer.Character.Humanoid.MaxHealth then
             for _, player in pairs(game.Players:GetPlayers()) do
                 if player ~= localPlayer and player.Character then
                     local tool = player.Character:FindFirstChildOfClass("Tool")
@@ -130,7 +125,7 @@ local function detectHit()
 end
 
 RunService.RenderStepped:Connect(function()
-    checkGunEquipped()
+    checkGunEquipped() -- Make sure gunEquipped updates instantly
     if gunEquipped then
         updateSilentAim()
         updateCamLock()
