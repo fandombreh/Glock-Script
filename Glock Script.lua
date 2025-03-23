@@ -91,11 +91,13 @@ local function getClosestPlayer()
     local shortestDistance = math.huge
     for _, player in pairs(game.Players:GetPlayers()) do
         if player ~= localPlayer and player.Character and player.Character:FindFirstChild("Head") then
-            local headPos = camera:WorldToViewportPoint(player.Character.Head.Position)
-            local distance = (Vector2.new(Mouse.X, Mouse.Y) - Vector2.new(headPos.X, headPos.Y)).Magnitude
-            if distance < shortestDistance then
-                closestPlayer = player
-                shortestDistance = distance
+            local headPos, onScreen = camera:WorldToViewportPoint(player.Character.Head.Position)
+            if onScreen then
+                local distance = (Vector2.new(Mouse.X, Mouse.Y) - Vector2.new(headPos.X, headPos.Y)).Magnitude
+                if distance < shortestDistance then
+                    closestPlayer = player
+                    shortestDistance = distance
+                end
             end
         end
     end
@@ -106,7 +108,8 @@ RunService.RenderStepped:Connect(function()
     if silentAimEnabled and isFocused then
         local target = getClosestPlayer()
         if target and target.Character and target.Character:FindFirstChild("Head") then
-            Mousemoverel((target.Character.Head.Position - camera.CFrame.Position).Unit * camLockSmoothness)
+            local headPos = camera:WorldToViewportPoint(target.Character.Head.Position)
+            mousemoverel((headPos.X - Mouse.X) / camLockSmoothness, (headPos.Y - Mouse.Y) / camLockSmoothness)
         end
     end
 end)
@@ -116,7 +119,8 @@ RunService.RenderStepped:Connect(function()
     if camLockEnabled and isFocused then
         local target = getClosestPlayer()
         if target and target.Character and target.Character:FindFirstChild("Head") then
-            camera.CFrame = CFrame.new(camera.CFrame.Position, target.Character.Head.Position)
+            local headPosition = target.Character.Head.Position
+            camera.CFrame = camera.CFrame:Lerp(CFrame.new(camera.CFrame.Position, headPosition), 0.1)
         end
     end
 end)
