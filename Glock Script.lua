@@ -17,7 +17,7 @@ local fovSize = 100
 -- UI Setup
 local glockGui = Instance.new("ScreenGui")
 glockGui.Name = "Glock - made by snoopy"
-glockGui.Parent = game.CoreGui
+glockGui.Parent = localPlayer:WaitForChild("PlayerGui")
 
 -- Main Frame (Draggable)
 local mainFrame = Instance.new("Frame")
@@ -26,38 +26,7 @@ mainFrame.Position = UDim2.new(0.5, -200, 0.5, -150)
 mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 mainFrame.Parent = glockGui
 mainFrame.Active = true
-
--- Dragging System
-local dragging, dragInput, dragStart, startPos
-
-mainFrame.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = true
-        dragStart = input.Position
-        startPos = mainFrame.Position
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-            end
-        end)
-    end
-end)
-
-mainFrame.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement then
-        dragInput = input
-    end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-    if input == dragInput and dragging then
-        local delta = input.Position - dragStart
-        mainFrame.Position = UDim2.new(
-            startPos.X.Scale, startPos.X.Offset + delta.X,
-            startPos.Y.Scale, startPos.Y.Offset + delta.Y
-        )
-    end
-end)
+mainFrame.Draggable = true -- Enables native dragging support
 
 -- FOV Circle
 local fovCircle = Drawing.new("Circle")
@@ -92,9 +61,10 @@ local function getClosestPlayer()
 end
 
 -- Toggleable Features
-local function createButton(text, parent, callback)
+local function createButton(text, parent, callback, position)
     local button = Instance.new("TextButton")
-    button.Size = UDim2.new(0, 150, 0, 40)
+    button.Size = UDim2.new(0, 180, 0, 40)
+    button.Position = UDim2.new(0, 10, 0, position)
     button.Text = text
     button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
     button.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -102,28 +72,29 @@ local function createButton(text, parent, callback)
     button.MouseButton1Click:Connect(callback)
 end
 
+local buttonSpacing = 50
 createButton("Toggle Cam Lock", mainFrame, function()
     camLockEnabled = not camLockEnabled
     print("Cam Lock:", camLockEnabled)
-end)
+end, buttonSpacing * 1)
 
 createButton("Toggle Silent Aim", mainFrame, function()
     silentAimEnabled = not silentAimEnabled
     print("Silent Aim:", silentAimEnabled)
-end)
+end, buttonSpacing * 2)
 
 createButton("Toggle Trigger Bot", mainFrame, function()
     triggerBotEnabled = not triggerBotEnabled
     print("Trigger Bot:", triggerBotEnabled)
-end)
+end, buttonSpacing * 3)
 
 createButton("Toggle ESP", mainFrame, function()
     espEnabled = not espEnabled
     print("ESP:", espEnabled)
-end)
+end, buttonSpacing * 4)
 
 createButton("Toggle FOV Circle", mainFrame, function()
     fovCircleEnabled = not fovCircleEnabled
     fovCircle.Visible = fovCircleEnabled
     print("FOV Circle:", fovCircleEnabled)
-end)
+end, buttonSpacing * 5)
