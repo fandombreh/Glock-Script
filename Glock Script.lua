@@ -1,4 +1,4 @@
-local player = game.Players.LocalPlayer
+local localPlayer = game.Players.LocalPlayer
 local camera = game.Workspace.CurrentCamera
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -17,12 +17,13 @@ end)
 -- UI Setup
 local glockGui = Instance.new("ScreenGui")
 glockGui.Name = "Glock"
-glockGui.Parent = player:WaitForChild("PlayerGui")
+glockGui.Parent = localPlayer:WaitForChild("PlayerGui")
 glockGui.ResetOnSpawn = false
 
 local mainFrame = Instance.new("Frame")
 mainFrame.Size = UDim2.new(0, 400, 0, 500)
-mainFrame.Position = UDim2.new(0.5, -200, 0.5, -250)
+mainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
 mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 mainFrame.BorderSizePixel = 0
 mainFrame.Parent = glockGui
@@ -83,6 +84,11 @@ local function createSlider(parent, text, min, max, default, callback)
     slider.Text = ""
     slider.Parent = sliderFrame
 
+    local fill = Instance.new("Frame")
+    fill.Size = UDim2.new(0.5, 0, 1, 0) -- Start at 50%
+    fill.BackgroundColor3 = Color3.fromRGB(100, 100, 255)
+    fill.Parent = slider
+
     local moving = false
 
     local function updateSlider(input)
@@ -92,6 +98,7 @@ local function createSlider(parent, text, min, max, default, callback)
         local percent = math.clamp((mousePos - sliderPos) / slider.AbsoluteSize.X, 0, 1)
         local value = math.floor(min + (max - min) * percent)
         label.Text = text .. ": " .. value
+        fill.Size = UDim2.new(percent, 0, 1, 0)
         callback(value)
     end
 
@@ -145,4 +152,3 @@ createSlider(triggerBotTab, "Trigger Range", 1, 50, 10, function(value) end)
 createSlider(camLockTab, "Lock Range", 1, 50, 10, function(value) end)
 
 silentAimTab.Visible = true -- Default active tab
-
