@@ -67,76 +67,37 @@ local function createTab(name, position, targetTab)
     end)
 end
 
--- Find nearest player to crosshair
-local function getNearestPlayer()
-    local closest, minDist = nil, math.huge
-    for _, player in ipairs(game.Players:GetPlayers()) do
-        if player ~= localPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            local screenPos, onScreen = camera:WorldToViewportPoint(player.Character.HumanoidRootPart.Position)
-            if onScreen then
-                local dist = (Vector2.new(screenPos.X, screenPos.Y) - UserInputService:GetMouseLocation()).Magnitude
-                if dist < minDist and dist < 200 then
-                    closest, minDist = player, dist
-                end
-            end
-        end
-    end
-    return closest
+-- Creating Tabs
+local function createTabContent(tab, name)
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, 0, 1, 0)
+    label.Text = name
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.BackgroundTransparency = 1
+    label.Font = Enum.Font.GothamBold
+    label.TextSize = 24
+    label.Parent = tab
 end
 
--- Cam Lock Function
-RunService.RenderStepped:Connect(function()
-    if camLockEnabled and targetPlayer and targetPlayer.Character then
-        local hrp = targetPlayer.Character:FindFirstChild("HumanoidRootPart")
-        if hrp then
-            camera.CFrame = camera.CFrame:Lerp(CFrame.new(camera.CFrame.Position, hrp.Position), camLockSmoothness / 100)
-        end
-    end
-end)
-
--- Trigger Bot Function
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if input.UserInputType == Enum.UserInputType.MouseButton2 and triggerBotEnabled then
-        local target = getNearestPlayer()
-        if target and (target.Character.HumanoidRootPart.Position - camera.CFrame.Position).Magnitude < triggerBotRange then
-            task.wait(0.1)
-            mouse1click()
-        end
-    end
-end)
-
--- Toggle Cam Lock
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if input.KeyCode == Enum.KeyCode.E then
-        camLockEnabled = not camLockEnabled
-        targetPlayer = getNearestPlayer()
-    end
-end)
-
--- Toggle Trigger Bot
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if input.KeyCode == Enum.KeyCode.T then
-        triggerBotEnabled = not triggerBotEnabled
-    end
-end)
-
--- Creating Tabs
 local silentAimTab = Instance.new("Frame")
 silentAimTab.Name = "SilentAimTab"
 silentAimTab.Size = UDim2.new(1, 0, 1, -50)
 silentAimTab.BackgroundTransparency = 1
 silentAimTab.Parent = contentFrame
 silentAimTab.Visible = false
+createTabContent(silentAimTab, "Silent Aim Settings")
 
 local camLockTab = silentAimTab:Clone()
 camLockTab.Name = "CamLockTab"
 camLockTab.Parent = contentFrame
 camLockTab.Visible = false
+createTabContent(camLockTab, "Cam Lock Settings")
 
 local triggerBotTab = silentAimTab:Clone()
 triggerBotTab.Name = "TriggerBotTab"
 triggerBotTab.Parent = contentFrame
 triggerBotTab.Visible = false
+createTabContent(triggerBotTab, "Trigger Bot Settings")
 
 createTab("Silent Aim", 0, silentAimTab)
 createTab("Cam Lock", 1, camLockTab)
