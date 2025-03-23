@@ -9,7 +9,7 @@ local lockAimbotEnabled = false
 local espEnabled = false
 local fovCircleEnabled = false
 local triggerBotRange = 15
-local aimbotSmoothness = 0.2  -- Lower = Faster
+local aimbotSmoothness = 0.2
 local espConnections = {}
 local triggerBotConnection
 
@@ -47,7 +47,7 @@ local function lockAimbot()
     end)
 end
 
--- 🔫 Toggle Trigger Bot (Fixed)
+-- 🔫 Toggle Trigger Bot
 local function toggleTriggerBot()
     triggerBotEnabled = not triggerBotEnabled
     triggerBotButton.Text = "Trigger Bot: " .. (triggerBotEnabled and "ON" or "OFF")
@@ -73,7 +73,7 @@ local function toggleTriggerBot()
     end
 end
 
--- 🔵 ESP System
+-- 🔵 Fixed ESP System (Optimized)
 local function toggleESP()
     espEnabled = not espEnabled
     espButton.Text = "ESP: " .. (espEnabled and "ON" or "OFF")
@@ -95,12 +95,14 @@ local function toggleESP()
         return
     end
 
-    local conn = RunService.RenderStepped:Connect(function()
+    local function updateESP()
         for _, player in pairs(game.Players:GetPlayers()) do
             if player ~= localPlayer and player.Character then
                 local character = player.Character
-                if not character:FindFirstChild("Highlight") then
-                    local highlight = Instance.new("Highlight")
+                local highlight = character:FindFirstChild("Highlight")
+
+                if not highlight then
+                    highlight = Instance.new("Highlight")
                     highlight.Parent = character
                     highlight.FillColor = Color3.fromRGB(255, 0, 0)
                     highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
@@ -109,27 +111,11 @@ local function toggleESP()
                 end
             end
         end
-    end)
+    end
+
+    local conn = RunService.Heartbeat:Connect(updateESP)
     table.insert(espConnections, conn)
 end
-
--- 🔵 FOV Circle
-local fovCircle = Drawing.new("Circle")
-fovCircle.Visible = false
-fovCircle.Color = Color3.fromRGB(0, 255, 0)
-fovCircle.Thickness = 2
-fovCircle.Radius = 100
-fovCircle.Position = UserInputService:GetMouseLocation()
-
-local function toggleFOVCircle()
-    fovCircleEnabled = not fovCircleEnabled
-    fovButton.Text = "FOV Circle: " .. (fovCircleEnabled and "ON" or "OFF")
-    fovCircle.Visible = fovCircleEnabled
-end
-
-RunService.RenderStepped:Connect(function()
-    fovCircle.Position = UserInputService:GetMouseLocation()
-end)
 
 -- 🛠️ UI Setup
 local glockGui = Instance.new("ScreenGui")
@@ -162,4 +148,4 @@ local startY = 10
 lockAimbotButton = createButton("Lock Aimbot: OFF", mainFrame, lockAimbot, startY)
 triggerBotButton = createButton("Trigger Bot: OFF", mainFrame, toggleTriggerBot, startY + buttonSpacing)
 espButton = createButton("ESP: OFF", mainFrame, toggleESP, startY + buttonSpacing * 2)
-fovButton = createButton("FOV Circle: OFF", mainFrame, toggleFOVCircle, startY + buttonSpacing * 3)
+
