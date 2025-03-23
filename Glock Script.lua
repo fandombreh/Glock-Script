@@ -5,10 +5,11 @@ local UserInputService = game:GetService("UserInputService")
 local VirtualInputManager = game:GetService("VirtualInputManager")
 
 local triggerBotEnabled = false
-local silentAimEnabled = false
+local lockAimbotEnabled = false
 local espEnabled = false
+local fovCircleEnabled = false
 local triggerBotRange = 15
-local silentAimStrength = 100
+local aimbotStrength = 100
 local espConnections = {}
 
 -- 🎯 Get Closest Player Function
@@ -30,60 +31,28 @@ local function getClosestPlayer()
     return closestPlayer
 end
 
--- 🔫 Silent Aim
-local mt = getrawmetatable(game)
-setreadonly(mt, false)
-local oldNamecall = mt.__namecall
-mt.__namecall = newcclosure(function(self, ...)
-    local args = {...}
-    local method = getnamecallmethod()
-    if silentAimEnabled and method == "FindPartOnRayWithIgnoreList" then
-        local target = getClosestPlayer()
-        if target and target.Character and target.Character:FindFirstChild("Head") then
-            local direction = (target.Character.Head.Position - camera.CFrame.Position).unit * silentAimStrength
-            args[1] = Ray.new(camera.CFrame.Position, direction)
-            return oldNamecall(self, unpack(args))
-        end
-    end
-    return oldNamecall(self, ...)
-end)
-setreadonly(mt, true)
-
--- 🔥 Trigger Bot
-local triggerBotConnection
-local function toggleTriggerBot()
-    triggerBotEnabled = not triggerBotEnabled
-    triggerBotButton.Text = "Trigger Bot: " .. (triggerBotEnabled and "ON" or "OFF")
-    if triggerBotEnabled then
-        triggerBotConnection = RunService.RenderStepped:Connect(function()
+-- 🔒 Lock Aimbot
+local function lockAimbot()
+    lockAimbotEnabled = not lockAimbotEnabled
+    lockAimbotButton.Text = "Lock Aimbot: " .. (lockAimbotEnabled and "ON" or "OFF")
+    RunService.RenderStepped:Connect(function()
+        if lockAimbotEnabled then
             local target = getClosestPlayer()
             if target and target.Character and target.Character:FindFirstChild("Head") then
-                local distance = (target.Character.Head.Position - camera.CFrame.Position).Magnitude
-                if distance < triggerBotRange then
-                    VirtualInputManager:SendMouseButtonEvent(0, 0, Enum.UserInputType.MouseButton1, true, game, 0)
-                    task.wait(0.05)
-                    VirtualInputManager:SendMouseButtonEvent(0, 0, Enum.UserInputType.MouseButton1, false, game, 0)
-                end
+                camera.CFrame = CFrame.new(camera.CFrame.Position, target.Character.Head.Position)
             end
-        end)
-    else
-        if triggerBotConnection then
-            triggerBotConnection:Disconnect()
-            triggerBotConnection = nil
         end
-    end
+    end)
 end
 
 -- 🔵 ESP System
 local function toggleESP()
     espEnabled = not espEnabled
     espButton.Text = "ESP: " .. (espEnabled and "ON" or "OFF")
-    
     for _, conn in ipairs(espConnections) do
         conn:Disconnect()
     end
     table.clear(espConnections)
-
     if not espEnabled then
         for _, player in pairs(game.Players:GetPlayers()) do
             if player.Character then
@@ -95,7 +64,6 @@ local function toggleESP()
         end
         return
     end
-
     local conn = RunService.RenderStepped:Connect(function()
         for _, player in pairs(game.Players:GetPlayers()) do
             if player ~= localPlayer and player.Character then
@@ -114,14 +82,30 @@ local function toggleESP()
     table.insert(espConnections, conn)
 end
 
+-- 🔵 FOV Circle
+local fovCircle = Drawing.new("Circle")
+fovCircle.Visible = false
+fovCircle.Color = Color3.fromRGB(0, 255, 0)
+fovCircle.Thickness = 2
+fovCircle.Radius = 100
+fovCircle.Position = UserInputService:GetMouseLocation()
+local function toggleFOVCircle()
+    fovCircleEnabled = not fovCircleEnabled
+    fovButton.Text = "FOV Circle: " .. (fovCircleEnabled and "ON" or "OFF")
+    fovCircle.Visible = fovCircleEnabled
+end
+RunService.RenderStepped:Connect(function()
+    fovCircle.Position = UserInputService:GetMouseLocation()
+end)
+
 -- 🛠️ UI Setup
 local glockGui = Instance.new("ScreenGui")
 glockGui.Name = "Glock - made by snoopy"
 glockGui.Parent = game:GetService("CoreGui")
 
 local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 400, 0, 250)
-mainFrame.Position = UDim2.new(0.5, -200, 0.5, -125)
+mainFrame.Size = UDim2.new(0, 400, 0, 300)
+mainFrame.Position = UDim2.new(0.5, -200, 0.5, -150)
 mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 mainFrame.Parent = glockGui
 mainFrame.Active = true
@@ -142,10 +126,7 @@ end
 local buttonSpacing = 45
 local startY = 10
 
-silentAimButton = createButton("Silent Aim: OFF", mainFrame, function()
-    silentAimEnabled = not silentAimEnabled
-    silentAimButton.Text = "Silent Aim: " .. (silentAimEnabled and "ON" or "OFF")
-end, startY)
-
+lockAimbotButton = createButton("Lock Aimbot: OFF", mainFrame, lockAimbot, startY)
 triggerBotButton = createButton("Trigger Bot: OFF", mainFrame, toggleTriggerBot, startY + buttonSpacing)
 espButton = createButton("ESP: OFF", mainFrame, toggleESP, startY + buttonSpacing * 2)
+fovButton = createButton("FOV Circle: OFF", mainFrame, toggleFOVCircle, startY + buttonSpacing * 3)
