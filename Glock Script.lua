@@ -103,17 +103,18 @@ local function toggleESP()
 
                 if not highlight then
                     highlight = Instance.new("Highlight")
-                    highlight.Parent = character
+                    highlight.Name = "Highlight"
                     highlight.FillColor = Color3.fromRGB(255, 0, 0)
                     highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
                     highlight.FillTransparency = 0.5
                     highlight.Adornee = character
+                    highlight.Parent = character
                 end
             end
         end
     end
 
-    local conn = RunService.Heartbeat:Connect(updateESP)
+    local conn = RunService.RenderStepped:Connect(updateESP)
     table.insert(espConnections, conn)
 end
 
