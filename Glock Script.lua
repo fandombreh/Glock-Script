@@ -1,7 +1,5 @@
--- Glock Script for Da Hood with a Clean GUI, Smoothness, and Range Sliders
-
-local camera = game.Workspace.CurrentCamera
 local player = game.Players.LocalPlayer
+local camera = game.Workspace.CurrentCamera
 local mouse = player:GetMouse()
 
 -- Create the main ScreenGui
@@ -12,8 +10,8 @@ glockGui.ResetOnSpawn = false
 
 -- Main Frame (Clean, centered)
 local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 350, 0, 350)
-mainFrame.Position = UDim2.new(0.5, -175, 0.5, -175)
+mainFrame.Size = UDim2.new(0, 350, 0, 500)
+mainFrame.Position = UDim2.new(0.5, -175, 0.5, -250)
 mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 mainFrame.BorderSizePixel = 0
 mainFrame.Parent = glockGui
@@ -22,152 +20,99 @@ local mainFrameCorner = Instance.new("UICorner")
 mainFrameCorner.CornerRadius = UDim.new(0, 10)
 mainFrameCorner.Parent = mainFrame
 
--- Tab Bar
-local tabBar = Instance.new("Frame")
-tabBar.Size = UDim2.new(1, -20, 0, 40)
-tabBar.Position = UDim2.new(0, 10, 0, 10)
-tabBar.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-tabBar.BorderSizePixel = 0
-tabBar.Parent = mainFrame
-
-local tabBarCorner = Instance.new("UICorner")
-tabBarCorner.CornerRadius = UDim.new(0, 8)
-tabBarCorner.Parent = tabBar
-
--- Function to create tab buttons
-local function createTabButton(parent, text, position)
+-- Function to create toggles and mode selectors
+local function createToggleAndMode(name, yPos)
+    local enabled = false
+    local mode = "Legit"
+    
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0, 200, 0, 20)
+    label.Position = UDim2.new(0.5, -100, 1, yPos)
+    label.BackgroundTransparency = 1
+    label.Text = name .. ": OFF"
+    label.TextColor3 = Color3.fromRGB(230, 230, 230)
+    label.Font = Enum.Font.Gotham
+    label.TextSize = 16
+    label.Parent = mainFrame
+    
     local button = Instance.new("TextButton")
-    button.Size = UDim2.new(0.5, -5, 1, 0)
-    button.Position = position
-    button.Text = text
-    button.Font = Enum.Font.GothamSemibold
-    button.TextSize = 18
-    button.TextColor3 = Color3.fromRGB(220, 220, 220)
-    button.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-    button.BorderSizePixel = 0
-    button.Parent = parent
-
-    local buttonCorner = Instance.new("UICorner")
-    buttonCorner.CornerRadius = UDim.new(0, 8)
-    buttonCorner.Parent = button
-
-    return button
+    button.Size = UDim2.new(0, 180, 0, 30)
+    button.Position = UDim2.new(0.5, -90, 1, yPos + 30)
+    button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    button.Text = "Toggle " .. name
+    button.Font = Enum.Font.Gotham
+    button.TextSize = 16
+    button.TextColor3 = Color3.fromRGB(230, 230, 230)
+    button.Parent = mainFrame
+    
+    button.MouseButton1Click:Connect(function()
+        enabled = not enabled
+        label.Text = name .. ": " .. (enabled and "ON" or "OFF")
+    end)
+    
+    local modeLabel = Instance.new("TextLabel")
+    modeLabel.Size = UDim2.new(0, 200, 0, 20)
+    modeLabel.Position = UDim2.new(0.5, -100, 1, yPos + 70)
+    modeLabel.BackgroundTransparency = 1
+    modeLabel.Text = "Mode: Legit"
+    modeLabel.TextColor3 = Color3.fromRGB(230, 230, 230)
+    modeLabel.Font = Enum.Font.Gotham
+    modeLabel.TextSize = 16
+    modeLabel.Parent = mainFrame
+    
+    local modeButton = Instance.new("TextButton")
+    modeButton.Size = UDim2.new(0, 180, 0, 30)
+    modeButton.Position = UDim2.new(0.5, -90, 1, yPos + 100)
+    modeButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    modeButton.Text = "Switch Mode"
+    modeButton.Font = Enum.Font.Gotham
+    modeButton.TextSize = 16
+    modeButton.TextColor3 = Color3.fromRGB(230, 230, 230)
+    modeButton.Parent = mainFrame
+    
+    modeButton.MouseButton1Click:Connect(function()
+        mode = (mode == "Legit" and "Blatant" or "Legit")
+        modeLabel.Text = "Mode: " .. mode
+    end)
+    
+    return {enabled = function() return enabled end, mode = function() return mode end}
 end
 
-local cameraLockTab = createTabButton(tabBar, "Camera Lock", UDim2.new(0, 0, 0, 0))
-local triggerbotTab = createTabButton(tabBar, "Triggerbot", UDim2.new(0.5, 5, 0, 0))
+local silentAim = createToggleAndMode("Silent Aim", -220)
+local triggerBot = createToggleAndMode("Trigger Bot", -120)
+local cameraLock = createToggleAndMode("Camera Lock", -20)
+local aimbot = createToggleAndMode("Aimbot", 80)
 
--- Content Frame
-local contentFrame = Instance.new("Frame")
-contentFrame.Size = UDim2.new(1, -20, 1, -140)
-contentFrame.Position = UDim2.new(0, 10, 0, 50)
-contentFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-contentFrame.BorderSizePixel = 0
-contentFrame.Parent = mainFrame
-
-local contentFrameCorner = Instance.new("UICorner")
-contentFrameCorner.CornerRadius = UDim.new(0, 8)
-contentFrameCorner.Parent = contentFrame
-
-local statusLabel = Instance.new("TextLabel")
-statusLabel.Size = UDim2.new(1, -10, 0.5, -10)
-statusLabel.Position = UDim2.new(0, 5, 0, 5)
-statusLabel.BackgroundTransparency = 1
-statusLabel.TextColor3 = Color3.fromRGB(240, 240, 240)
-statusLabel.Font = Enum.Font.Gotham
-statusLabel.TextSize = 16
-statusLabel.TextWrapped = true
-statusLabel.Text = "Welcome to Glock Script"
-statusLabel.Parent = contentFrame
-
--- Smoothness Slider
-local smoothnessLabel = Instance.new("TextLabel")
-smoothnessLabel.Size = UDim2.new(0, 200, 0, 20)
-smoothnessLabel.Position = UDim2.new(0.5, -100, 1, -110)
-smoothnessLabel.BackgroundTransparency = 1
-smoothnessLabel.Text = "Smoothness: 0.2"
-smoothnessLabel.TextColor3 = Color3.fromRGB(230, 230, 230)
-smoothnessLabel.Font = Enum.Font.Gotham
-smoothnessLabel.TextSize = 16
-smoothnessLabel.Parent = mainFrame
-
-local smoothnessSlider = Instance.new("TextBox")
-smoothnessSlider.Size = UDim2.new(0, 180, 0, 30)
-smoothnessSlider.Position = UDim2.new(0.5, -90, 1, -80)
-smoothnessSlider.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-smoothnessSlider.BorderSizePixel = 0
-smoothnessSlider.Text = "0.2"
-smoothnessSlider.Font = Enum.Font.Gotham
-smoothnessSlider.TextSize = 16
-smoothnessSlider.TextColor3 = Color3.fromRGB(230, 230, 230)
-smoothnessSlider.Parent = mainFrame
-
-local smoothnessBoxCorner = Instance.new("UICorner")
-smoothnessBoxCorner.CornerRadius = UDim.new(0, 6)
-smoothnessBoxCorner.Parent = smoothnessSlider
-
--- Range Slider
-local rangeLabel = Instance.new("TextLabel")
-rangeLabel.Size = UDim2.new(0, 200, 0, 20)
-rangeLabel.Position = UDim2.new(0.5, -100, 1, -70)
-rangeLabel.BackgroundTransparency = 1
-rangeLabel.Text = "Range: 100"
-rangeLabel.TextColor3 = Color3.fromRGB(230, 230, 230)
-rangeLabel.Font = Enum.Font.Gotham
-rangeLabel.TextSize = 16
-rangeLabel.Parent = mainFrame
-
-local rangeSlider = Instance.new("TextBox")
-rangeSlider.Size = UDim2.new(0, 180, 0, 30)
-rangeSlider.Position = UDim2.new(0.5, -90, 1, -40)
-rangeSlider.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-rangeSlider.BorderSizePixel = 0
-rangeSlider.Text = "100"
-rangeSlider.Font = Enum.Font.Gotham
-rangeSlider.TextSize = 16
-rangeSlider.TextColor3 = Color3.fromRGB(230, 230, 230)
-rangeSlider.Parent = mainFrame
-
-local rangeBoxCorner = Instance.new("UICorner")
-rangeBoxCorner.CornerRadius = UDim.new(0, 6)
-rangeBoxCorner.Parent = rangeSlider
-
--- Default states
-local smoothSpeed = 0.2
-local triggerRange = 100
-
-smoothnessSlider.FocusLost:Connect(function(enterPressed)
-    if enterPressed then
-        local input = tonumber(smoothnessSlider.Text)
-        if input and input >= 0 and input <= 1 then
-            smoothSpeed = input
-            smoothnessLabel.Text = "Smoothness: " .. smoothSpeed
-        else
-            smoothnessSlider.Text = "Invalid"
-            wait(1)
-            smoothnessSlider.Text = "0.2"
+-- Functionality for Silent Aim, Trigger Bot, Camera Lock, and Aimbot
+local function getClosestPlayer()
+    local closestPlayer = nil
+    local shortestDistance = math.huge
+    for _, v in pairs(game.Players:GetPlayers()) do
+        if v ~= player and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+            local targetPos = camera:WorldToViewportPoint(v.Character.HumanoidRootPart.Position)
+            local distance = (Vector2.new(mouse.X, mouse.Y) - Vector2.new(targetPos.X, targetPos.Y)).magnitude
+            if distance < shortestDistance then
+                shortestDistance = distance
+                closestPlayer = v
+            end
         end
     end
-end)
+    return closestPlayer
+end
 
-rangeSlider.FocusLost:Connect(function(enterPressed)
-    if enterPressed then
-        local input = tonumber(rangeSlider.Text)
-        if input and input >= 10 and input <= 500 then
-            triggerRange = input
-            rangeLabel.Text = "Range: " .. triggerRange
-        else
-            rangeSlider.Text = "Invalid"
-            wait(1)
-            rangeSlider.Text = "100"
+game:GetService("RunService").RenderStepped:Connect(function()
+    local target = getClosestPlayer()
+    if target and target.Character and target.Character:FindFirstChild("Head") then
+        local headPos = camera:WorldToViewportPoint(target.Character.Head.Position)
+        
+        if silentAim.enabled() then
+            local factor = silentAim.mode() == "Legit" and 0.5 or 1
+            mousemoverel((headPos.X - mouse.X) * factor, (headPos.Y - mouse.Y) * factor)
+        end
+        
+        if aimbot.enabled() then
+            local factor = aimbot.mode() == "Legit" and 0.5 or 1
+            mousemoverel((headPos.X - mouse.X) * factor, (headPos.Y - mouse.Y) * factor)
         end
     end
-end)
-
-cameraLockTab.MouseButton1Click:Connect(function()
-    statusLabel.Text = "Camera Lock: Adjust Smoothness & Range"
-end)
-
-triggerbotTab.MouseButton1Click:Connect(function()
-    statusLabel.Text = "Triggerbot: Adjust Smoothness & Range"
 end)
