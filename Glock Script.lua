@@ -2,6 +2,7 @@ local localPlayer = game.Players.LocalPlayer
 local camera = game.Workspace.CurrentCamera
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
+local Mouse = localPlayer:GetMouse()
 
 local isFocused = true
 local camLockEnabled = false
@@ -84,6 +85,55 @@ local function createToggle(parent, text, default, callback)
     end)
 end
 
+-- Silent Aim Logic
+local function getClosestPlayer()
+    local closestPlayer = nil
+    local shortestDistance = math.huge
+    for _, player in pairs(game.Players:GetPlayers()) do
+        if player ~= localPlayer and player.Character and player.Character:FindFirstChild("Head") then
+            local headPos = camera:WorldToViewportPoint(player.Character.Head.Position)
+            local distance = (Vector2.new(Mouse.X, Mouse.Y) - Vector2.new(headPos.X, headPos.Y)).Magnitude
+            if distance < shortestDistance then
+                closestPlayer = player
+                shortestDistance = distance
+            end
+        end
+    end
+    return closestPlayer
+end
+
+RunService.RenderStepped:Connect(function()
+    if silentAimEnabled and isFocused then
+        local target = getClosestPlayer()
+        if target and target.Character and target.Character:FindFirstChild("Head") then
+            Mousemoverel((target.Character.Head.Position - camera.CFrame.Position).Unit * camLockSmoothness)
+        end
+    end
+end)
+
+-- Cam Lock Logic
+RunService.RenderStepped:Connect(function()
+    if camLockEnabled and isFocused then
+        local target = getClosestPlayer()
+        if target and target.Character and target.Character:FindFirstChild("Head") then
+            camera.CFrame = CFrame.new(camera.CFrame.Position, target.Character.Head.Position)
+        end
+    end
+end)
+
+-- Trigger Bot Logic
+RunService.RenderStepped:Connect(function()
+    if triggerBotEnabled and isFocused then
+        local target = getClosestPlayer()
+        if target and target.Character and target.Character:FindFirstChild("Head") then
+            local distance = (localPlayer.Character.Head.Position - target.Character.Head.Position).Magnitude
+            if distance <= triggerBotRange then
+                mouse1click()
+            end
+        end
+    end
+end)
+
 -- Creating Tabs
 local silentAimTab = Instance.new("Frame")
 silentAimTab.Name = "SilentAimTab"
@@ -111,4 +161,3 @@ createTab("Cam Lock", 1, camLockTab)
 createTab("Trigger Bot", 2, triggerBotTab)
 
 silentAimTab.Visible = true -- Default active tab
-
