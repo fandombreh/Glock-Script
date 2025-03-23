@@ -9,6 +9,7 @@ local silentAimEnabled = false
 local espEnabled = false
 local triggerBotRange = 15
 local silentAimStrength = 100
+local espConnections = {}
 
 -- 🎯 Get Closest Player Function
 local function getClosestPlayer()
@@ -29,14 +30,13 @@ local function getClosestPlayer()
     return closestPlayer
 end
 
--- 🔫 Silent Aim (Fixed Raycasting)
+-- 🔫 Silent Aim
 local mt = getrawmetatable(game)
 setreadonly(mt, false)
 local oldNamecall = mt.__namecall
 mt.__namecall = newcclosure(function(self, ...)
     local args = {...}
     local method = getnamecallmethod()
-
     if silentAimEnabled and method == "FindPartOnRayWithIgnoreList" then
         local target = getClosestPlayer()
         if target and target.Character and target.Character:FindFirstChild("Head") then
@@ -49,7 +49,7 @@ mt.__namecall = newcclosure(function(self, ...)
 end)
 setreadonly(mt, true)
 
--- 🔥 Trigger Bot (Auto-Shoot)
+-- 🔥 Trigger Bot
 local triggerBotConnection
 local function toggleTriggerBot()
     triggerBotEnabled = not triggerBotEnabled
@@ -74,10 +74,16 @@ local function toggleTriggerBot()
     end
 end
 
--- 🔵 ESP (Fix Cleanup)
+-- 🔵 ESP System
 local function toggleESP()
     espEnabled = not espEnabled
     espButton.Text = "ESP: " .. (espEnabled and "ON" or "OFF")
+    
+    for _, conn in ipairs(espConnections) do
+        conn:Disconnect()
+    end
+    table.clear(espConnections)
+
     if not espEnabled then
         for _, player in pairs(game.Players:GetPlayers()) do
             if player.Character then
@@ -90,7 +96,7 @@ local function toggleESP()
         return
     end
 
-    RunService.RenderStepped:Connect(function()
+    local conn = RunService.RenderStepped:Connect(function()
         for _, player in pairs(game.Players:GetPlayers()) do
             if player ~= localPlayer and player.Character then
                 local character = player.Character
@@ -105,6 +111,7 @@ local function toggleESP()
             end
         end
     end)
+    table.insert(espConnections, conn)
 end
 
 -- 🛠️ UI Setup
