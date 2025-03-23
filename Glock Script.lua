@@ -9,8 +9,8 @@ local triggerBotEnabled = false
 local silentAimEnabled = false
 local espEnabled = false
 local fovCircleEnabled = true
-local camLockSmoothness = 0.2  -- Lower value = smoother tracking
-local triggerBotRange = 10
+local triggerBotRange = 15
+local silentAimStrength = 100  -- Higher value = more accurate silent aim
 local fovSize = 100
 
 -- UI Setup
@@ -58,6 +58,42 @@ local function getClosestPlayer()
     return closestPlayer
 end
 
+-- Silent Aim Function
+local function silentAim()
+    if not silentAimEnabled then return end
+    local target = getClosestPlayer()
+    if target and target.Character and target.Character:FindFirstChild("Head") then
+        camera.CFrame = CFrame.new(camera.CFrame.Position, target.Character.Head.Position)
+    end
+end
+
+-- ESP Function
+local espConnections = {}
+local function toggleESP()
+    if not espEnabled then
+        for _, conn in pairs(espConnections) do conn:Disconnect() end
+        espConnections = {}
+        for _, v in pairs(game.Workspace:GetChildren()) do
+            if v:IsA("Highlight") then v:Destroy() end
+        end
+        return
+    end
+
+    for _, player in pairs(game.Players:GetPlayers()) do
+        if player ~= localPlayer and player.Character then
+            local highlight = Instance.new("Highlight")
+            highlight.Parent = player.Character
+            highlight.FillColor = Color3.fromRGB(255, 0, 0)
+            highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+            highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+            highlight.FillTransparency = 0.5
+            table.insert(espConnections, player.Character.ChildRemoved:Connect(function(child)
+                if child == highlight then highlight:Destroy() end
+            end))
+        end
+    end
+end
+
 -- UI Button Creator
 local function createButton(text, parent, callback, position)
     local button = Instance.new("TextButton")
@@ -74,35 +110,11 @@ end
 local buttonSpacing = 45
 local startY = 10
 
--- Cam Lock Toggle (Uses Smooth Camera Adjustment)
-local camLockConnection
-createButton("Toggle Cam Lock", mainFrame, function()
-    camLockEnabled = not camLockEnabled
-    print("Cam Lock:", camLockEnabled)
-
-    if camLockEnabled then
-        camLockConnection = RunService.RenderStepped:Connect(function()
-            local target = getClosestPlayer()
-            if target and target.Character and target.Character:FindFirstChild("Head") then
-                local headPos = target.Character.Head.Position
-                local newCFrame = CFrame.new(camera.CFrame.Position, headPos)
-
-                camera.CFrame = camera.CFrame:Lerp(newCFrame, camLockSmoothness)
-            end
-        end)
-    else
-        if camLockConnection then
-            camLockConnection:Disconnect()
-            camLockConnection = nil
-        end
-    end
-end, startY)
-
 -- Silent Aim Toggle
 createButton("Toggle Silent Aim", mainFrame, function()
     silentAimEnabled = not silentAimEnabled
     print("Silent Aim:", silentAimEnabled)
-end, startY + buttonSpacing)
+end, startY)
 
 -- Trigger Bot Toggle
 local triggerBotConnection
@@ -126,17 +138,34 @@ createButton("Toggle Trigger Bot", mainFrame, function()
             triggerBotConnection = nil
         end
     end
-end, startY + buttonSpacing * 2)
+end, startY + buttonSpacing)
 
 -- ESP Toggle
 createButton("Toggle ESP", mainFrame, function()
     espEnabled = not espEnabled
+    toggleESP()
     print("ESP:", espEnabled)
-end, startY + buttonSpacing * 3)
+end, startY + buttonSpacing * 2)
 
 -- FOV Circle Toggle
 createButton("Toggle FOV Circle", mainFrame, function()
     fovCircleEnabled = not fovCircleEnabled
     fovCircle.Visible = fovCircleEnabled
     print("FOV Circle:", fovCircleEnabled)
-end, startY + buttonSpacing * 4)
+end, startY + buttonSpacing * 3)
+
+-- Hook Silent Aim into Shooting Events
+local mt = getrawmetatable(game)
+setreadonly(mt, false)
+local oldNamecall = mt.__namecall
+mt.__namecall = newcclosure(function(self, ...)
+    local args = {...}
+    local method = getnamecallmethod()
+    if silentAimEnabled and method == "FindPartOnRayWithIgnoreList" then
+        local target = getClosestPlayer()
+        if target and target.Character and target.Character:FindFirstChild("Head") then
+            args[1] = Ray.new(camera.CFrame.Position, (target.Character.Head.Position - camera.CFrame.Position).unit * silentAimStrength)
+        end
+    end
+    return oldNamecall(self, unpack(args))
+end)
