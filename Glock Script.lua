@@ -1,104 +1,93 @@
-local camera = game.Workspace.CurrentCamera -- Get the current camera
+local camera = game.Workspace.CurrentCamera
 local player = game.Players.LocalPlayer
+local mouse = player:GetMouse()
 
-local frame = script.Parent.Frame -- Reference the frame
-local triggerbotButton = frame.TriggerbotButton -- Button to toggle triggerbot
-local cameraLockButton = frame.CameraLockButton -- Button to toggle camera lock
-local smoothnessBox = frame.SmoothnessBox -- TextBox for adjusting smoothness
+-- Create GUI
+local glock = Instance.new("ScreenGui", player.PlayerGui)
+local mainFrame = Instance.new("Frame", glock)
+mainFrame.Size = UDim2.new(0, 300, 0, 200)
+mainFrame.Position = UDim2.new(0.5, -150, 0.5, -100)
+mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 
-local lockOnEnemy = nil -- Variable to store the current locked-on enemy
-local cameraLock = false -- Camera lock toggle state
-local triggerbotEnabled = false -- Triggerbot toggle state
-local smoothSpeed = 0.2 -- Default smoothness value
+local tabs = Instance.new("Frame", mainFrame)
+tabs.Size = UDim2.new(1, 0, 0, 30)
+tabs.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 
--- Function to find the closest enemy
+local cameraLockTab = Instance.new("TextButton", tabs)
+cameraLockTab.Size = UDim2.new(0.5, 0, 1, 0)
+cameraLockTab.Text = "Camera Lock"
+
+local triggerbotTab = Instance.new("TextButton", tabs)
+triggerbotTab.Size = UDim2.new(0.5, 0, 1, 0)
+triggerbotTab.Position = UDim2.new(0.5, 0, 0, 0)
+triggerbotTab.Text = "Triggerbot"
+
+local lockOnTarget = nil
+local cameraLock = false
+local triggerbotEnabled = false
+local smoothSpeed = 0.2
+
+-- Function to find the closest enemy player
 local function findClosestEnemy()
     local closestEnemy = nil
-    local closestDistance = 50 -- Range within which the camera locks onto the enemy
-
-    for _, enemy in pairs(game.Workspace.Enemies:GetChildren()) do
-        if enemy:FindFirstChild("HumanoidRootPart") then
-            local distance = (player.Character.HumanoidRootPart.Position - enemy.HumanoidRootPart.Position).magnitude
+    local closestDistance = math.huge
+    
+    for _, enemy in pairs(game.Players:GetPlayers()) do
+        if enemy ~= player and enemy.Character and enemy.Character:FindFirstChild("HumanoidRootPart") then
+            local distance = (player.Character.HumanoidRootPart.Position - enemy.Character.HumanoidRootPart.Position).Magnitude
             if distance < closestDistance then
                 closestEnemy = enemy
                 closestDistance = distance
             end
         end
     end
-
+    
     return closestEnemy
 end
 
 -- Function to track the enemy
 local function trackEnemy(enemy)
     if enemy then
-        local enemyPosition = enemy.HumanoidRootPart.Position
+        local enemyPosition = enemy.Character.HumanoidRootPart.Position
         local cameraPosition = camera.CFrame.Position
-        local lookAt = CFrame.new(cameraPosition, enemyPosition) -- Point the camera towards the enemy
-        camera.CFrame = camera.CFrame:Lerp(lookAt, smoothSpeed) -- Smoothly interpolate the camera position
+        local lookAt = CFrame.new(cameraPosition, enemyPosition)
+        camera.CFrame = camera.CFrame:Lerp(lookAt, smoothSpeed)
     end
 end
 
--- Main camera lock loop
+-- Camera Lock Loop
 game:GetService("RunService").RenderStepped:Connect(function()
     if cameraLock then
-        if not lockOnEnemy then
-            lockOnEnemy = findClosestEnemy() -- Find the closest enemy to lock onto
+        if not lockOnTarget or not lockOnTarget.Character then
+            lockOnTarget = findClosestEnemy()
         end
-
-        if lockOnEnemy then
-            if lockOnEnemy:FindFirstChild("HumanoidRootPart") then
-                trackEnemy(lockOnEnemy)
-            else
-                lockOnEnemy = nil
-            end
+        if lockOnTarget and lockOnTarget.Character then
+            trackEnemy(lockOnTarget)
         end
     end
 end)
 
--- Triggerbot functionality (Fires when target is in view)
+-- Triggerbot Logic
 local function triggerbot()
     if triggerbotEnabled then
         local target = findClosestEnemy()
-        if target and (player.Character.HumanoidRootPart.Position - target.HumanoidRootPart.Position).magnitude < 50 then
-            local humanoid = target:FindFirstChildOfClass("Humanoid")
-            if humanoid then
-                humanoid:TakeDamage(10) -- Fire at the enemy, or perform desired action
+        if target and target.Character and target.Character:FindFirstChild("Humanoid") then
+            if mouse.Target and mouse.Target:IsDescendantOf(target.Character) then
+                mouse1click()
             end
         end
     end
 end
+game:GetService("RunService").RenderStepped:Connect(triggerbot)
 
 -- Camera Lock Button
-cameraLockButton.MouseButton1Click:Connect(function()
+cameraLockTab.MouseButton1Click:Connect(function()
     cameraLock = not cameraLock
-    if cameraLock then
-        cameraLockButton.Text = "Camera Lock: ON"
-    else
-        cameraLockButton.Text = "Camera Lock: OFF"
-    end
+    cameraLockTab.Text = cameraLock and "Camera Lock: ON" or "Camera Lock: OFF"
 end)
 
 -- Triggerbot Button
-triggerbotButton.MouseButton1Click:Connect(function()
+triggerbotTab.MouseButton1Click:Connect(function()
     triggerbotEnabled = not triggerbotEnabled
-    if triggerbotEnabled then
-        triggerbotButton.Text = "Triggerbot: ON"
-        -- Set up triggerbot loop
-        game:GetService("RunService").RenderStepped:Connect(triggerbot)
-    else
-        triggerbotButton.Text = "Triggerbot: OFF"
-    end
-end)
-
--- Smoothness TextBox Update
-smoothnessBox.FocusLost:Connect(function(enterPressed)
-    if enterPressed then
-        local input = tonumber(smoothnessBox.Text)
-        if input and input >= 0 and input <= 1 then
-            smoothSpeed = input -- Update the smoothness value
-        else
-            smoothnessBox.Text = "Invalid"
-        end
-    end
+    triggerbotTab.Text = triggerbotEnabled and "Triggerbot: ON" or "Triggerbot: OFF"
 end)
