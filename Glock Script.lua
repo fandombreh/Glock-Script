@@ -81,6 +81,15 @@ local startY = 10  -- Start closer to the top
 createButton("Toggle Cam Lock", mainFrame, function()
     camLockEnabled = not camLockEnabled
     print("Cam Lock:", camLockEnabled)
+    if camLockEnabled then
+        RunService.RenderStepped:Connect(function()
+            local target = getClosestPlayer()
+            if target and target.Character and target.Character:FindFirstChild("Head") then
+                local targetPos = target.Character.Head.Position
+                camera.CFrame = CFrame.new(camera.CFrame.Position, targetPos)
+            end
+        end)
+    end
 end, startY + buttonSpacing * 0)
 
 createButton("Toggle Silent Aim", mainFrame, function()
@@ -91,6 +100,17 @@ end, startY + buttonSpacing * 1)
 createButton("Toggle Trigger Bot", mainFrame, function()
     triggerBotEnabled = not triggerBotEnabled
     print("Trigger Bot:", triggerBotEnabled)
+    if triggerBotEnabled then
+        RunService.RenderStepped:Connect(function()
+            local target = getClosestPlayer()
+            if target and target.Character and target.Character:FindFirstChild("Head") then
+                local distance = (target.Character.Head.Position - camera.CFrame.Position).Magnitude
+                if distance < triggerBotRange then
+                    mouse1click()
+                end
+            end
+        end)
+    end
 end, startY + buttonSpacing * 2)
 
 createButton("Toggle ESP", mainFrame, function()
