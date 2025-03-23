@@ -30,15 +30,24 @@ local function getClosestPlayer()
 end
 
 -- 🔫 Silent Aim (Fixed Raycasting)
-local function silentAim(rayOrigin, rayDirection)
-    if silentAimEnabled then
+local mt = getrawmetatable(game)
+setreadonly(mt, false)
+local oldNamecall = mt.__namecall
+mt.__namecall = newcclosure(function(self, ...)
+    local args = {...}
+    local method = getnamecallmethod()
+
+    if silentAimEnabled and method == "FindPartOnRayWithIgnoreList" then
         local target = getClosestPlayer()
         if target and target.Character and target.Character:FindFirstChild("Head") then
-            return target.Character.Head.Position
+            local direction = (target.Character.Head.Position - camera.CFrame.Position).unit * silentAimStrength
+            args[1] = Ray.new(camera.CFrame.Position, direction)
+            return oldNamecall(self, unpack(args))
         end
     end
-    return nil
-end
+    return oldNamecall(self, ...)
+end)
+setreadonly(mt, true)
 
 -- 🔥 Trigger Bot (Auto-Shoot)
 local triggerBotConnection
