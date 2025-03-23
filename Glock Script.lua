@@ -1,18 +1,28 @@
 local player = game.Players.LocalPlayer
 local camera = game.Workspace.CurrentCamera
-local mouse = player:GetMouse()
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 
--- Create UI
+local isFocused = true -- Assume focused initially
+
+-- Track focus state
+UserInputService.WindowFocused:Connect(function()
+    isFocused = true
+end)
+
+UserInputService.WindowFocusReleased:Connect(function()
+    isFocused = false
+end)
+
+-- UI Setup
 local glockGui = Instance.new("ScreenGui")
 glockGui.Name = "Glock"
 glockGui.Parent = player:WaitForChild("PlayerGui")
 glockGui.ResetOnSpawn = false
 
--- Main Frame
 local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 350, 0, 500)
-mainFrame.Position = UDim2.new(0.5, -175, 0.5, -250)
+mainFrame.Size = UDim2.new(0, 400, 0, 500)
+mainFrame.Position = UDim2.new(0.5, -200, 0.5, -250)
 mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 mainFrame.BorderSizePixel = 0
 mainFrame.Parent = glockGui
@@ -21,103 +31,118 @@ local mainFrameCorner = Instance.new("UICorner")
 mainFrameCorner.CornerRadius = UDim.new(0, 10)
 mainFrameCorner.Parent = mainFrame
 
--- Function to create toggles and mode selectors
-local function createToggleAndMode(name, yPos)
-    local enabled = false
-    local mode = "Legit"
-    
+local tabFrame = Instance.new("Frame")
+tabFrame.Size = UDim2.new(1, 0, 0, 50)
+tabFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+tabFrame.Parent = mainFrame
+
+local contentFrame = Instance.new("Frame")
+contentFrame.Size = UDim2.new(1, 0, 1, -50)
+contentFrame.Position = UDim2.new(0, 0, 0, 50)
+contentFrame.BackgroundTransparency = 1
+contentFrame.Parent = mainFrame
+
+-- Create Tabs
+local function createTab(name, position, targetTab)
+    local tab = Instance.new("TextButton")
+    tab.Size = UDim2.new(0, 100, 0, 50)
+    tab.Position = UDim2.new(0, position * 100, 0, 0)
+    tab.Text = name
+    tab.Font = Enum.Font.GothamBold
+    tab.TextSize = 16
+    tab.TextColor3 = Color3.fromRGB(255, 255, 255)
+    tab.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    tab.Parent = tabFrame
+
+    tab.MouseButton1Click:Connect(function()
+        for _, frame in pairs(contentFrame:GetChildren()) do
+            frame.Visible = false
+        end
+        targetTab.Visible = true
+    end)
+end
+
+-- Create Slider
+local function createSlider(parent, text, min, max, default, callback)
+    local sliderFrame = Instance.new("Frame")
+    sliderFrame.Size = UDim2.new(0, 350, 0, 50)
+    sliderFrame.Parent = parent
+    sliderFrame.BackgroundTransparency = 1
+
     local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(0, 200, 0, 20)
-    label.Position = UDim2.new(0, 75, 0, yPos)
-    label.BackgroundTransparency = 1
-    label.Text = name .. ": OFF"
+    label.Size = UDim2.new(1, 0, 0, 20)
+    label.Text = text .. ": " .. default
     label.TextColor3 = Color3.fromRGB(230, 230, 230)
-    label.Font = Enum.Font.Gotham
-    label.TextSize = 16
-    label.Parent = mainFrame
-    
-    local button = Instance.new("TextButton")
-    button.Size = UDim2.new(0, 180, 0, 30)
-    button.Position = UDim2.new(0, 85, 0, yPos + 30)
-    button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-    button.Text = "Toggle " .. name
-    button.Font = Enum.Font.Gotham
-    button.TextSize = 16
-    button.TextColor3 = Color3.fromRGB(230, 230, 230)
-    button.Parent = mainFrame
-    
-    button.MouseButton1Click:Connect(function()
-        enabled = not enabled
-        label.Text = name .. ": " .. (enabled and "ON" or "OFF")
+    label.BackgroundTransparency = 1
+    label.Parent = sliderFrame
+
+    local slider = Instance.new("TextButton")
+    slider.Size = UDim2.new(0, 350, 0, 20)
+    slider.Position = UDim2.new(0, 0, 0, 25)
+    slider.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    slider.Text = ""
+    slider.Parent = sliderFrame
+
+    local moving = false
+
+    local function updateSlider(input)
+        if not moving then return end
+        local mousePos = input.Position.X
+        local sliderPos = slider.AbsolutePosition.X
+        local percent = math.clamp((mousePos - sliderPos) / slider.AbsoluteSize.X, 0, 1)
+        local value = math.floor(min + (max - min) * percent)
+        label.Text = text .. ": " .. value
+        callback(value)
+    end
+
+    slider.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            moving = true
+            updateSlider(input)
+        end
     end)
-    
-    local modeLabel = Instance.new("TextLabel")
-    modeLabel.Size = UDim2.new(0, 200, 0, 20)
-    modeLabel.Position = UDim2.new(0, 75, 0, yPos + 70)
-    modeLabel.BackgroundTransparency = 1
-    modeLabel.Text = "Mode: Legit"
-    modeLabel.TextColor3 = Color3.fromRGB(230, 230, 230)
-    modeLabel.Font = Enum.Font.Gotham
-    modeLabel.TextSize = 16
-    modeLabel.Parent = mainFrame
-    
-    local modeButton = Instance.new("TextButton")
-    modeButton.Size = UDim2.new(0, 180, 0, 30)
-    modeButton.Position = UDim2.new(0, 85, 0, yPos + 100)
-    modeButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-    modeButton.Text = "Switch Mode"
-    modeButton.Font = Enum.Font.Gotham
-    modeButton.TextSize = 16
-    modeButton.TextColor3 = Color3.fromRGB(230, 230, 230)
-    modeButton.Parent = mainFrame
-    
-    modeButton.MouseButton1Click:Connect(function()
-        mode = (mode == "Legit" and "Blatant" or "Legit")
-        modeLabel.Text = "Mode: " .. mode
+
+    local inputChangedConn
+    inputChangedConn = UserInputService.InputChanged:Connect(function(input)
+        if moving and input.UserInputType == Enum.UserInputType.MouseMovement then
+            updateSlider(input)
+        end
     end)
-    
-    return {enabled = function() return enabled end, mode = function() return mode end}
+
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            moving = false
+        end
+    end)
 end
 
-local silentAim = createToggleAndMode("Silent Aim", 20)
-local triggerBot = createToggleAndMode("Trigger Bot", 120) -- Currently not used in functionality
-local cameraLock = createToggleAndMode("Camera Lock", 220)   -- Currently not used in functionality
-local aimbot = createToggleAndMode("Aimbot", 320)
+-- Creating Tabs
+local silentAimTab = Instance.new("Frame")
+silentAimTab.Name = "SilentAimTab"
+silentAimTab.Size = UDim2.new(1, 0, 1, -50)
+silentAimTab.BackgroundTransparency = 1
+silentAimTab.Parent = contentFrame
+silentAimTab.Visible = false
 
--- Functionality for Silent Aim and Aimbot
-local function getClosestPlayer()
-    local closestPlayer = nil
-    local shortestDistance = math.huge
-    for _, v in pairs(game.Players:GetPlayers()) do
-        if v ~= player and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
-            local targetPos, onScreen = camera:WorldToViewportPoint(v.Character.HumanoidRootPart.Position)
-            if onScreen then
-                local distance = (Vector2.new(mouse.X, mouse.Y) - Vector2.new(targetPos.X, targetPos.Y)).Magnitude
-                if distance < shortestDistance then
-                    shortestDistance = distance
-                    closestPlayer = v
-                end
-            end
-        end
-    end
-    return closestPlayer
-end
+local camLockTab = silentAimTab:Clone()
+camLockTab.Name = "CamLockTab"
+camLockTab.Parent = contentFrame
+camLockTab.Visible = false
 
-RunService.RenderStepped:Connect(function()
-    local target = getClosestPlayer()
-    if target and target.Character and target.Character:FindFirstChild("Head") then
-        local headPos, onScreen = camera:WorldToViewportPoint(target.Character.Head.Position)
-        if onScreen then
-            if silentAim.enabled() then
-                local factor = silentAim.mode() == "Legit" and 0.5 or 1
-                -- mousemoverel is typically provided by exploit environments.
-                mousemoverel((headPos.X - mouse.X) * factor, (headPos.Y - mouse.Y) * factor)
-            end
-            
-            if aimbot.enabled() then
-                local factor = aimbot.mode() == "Legit" and 0.5 or 1
-                mousemoverel((headPos.X - mouse.X) * factor, (headPos.Y - mouse.Y) * factor)
-            end
-        end
-    end
-end)
+local triggerBotTab = silentAimTab:Clone()
+triggerBotTab.Name = "TriggerBotTab"
+triggerBotTab.Parent = contentFrame
+triggerBotTab.Visible = false
+
+createTab("Silent Aim", 0, silentAimTab)
+createTab("Cam Lock", 1, camLockTab)
+createTab("Trigger Bot", 2, triggerBotTab)
+
+-- Sliders
+createSlider(silentAimTab, "Smoothness", 1, 10, 5, function(value) end)
+createSlider(camLockTab, "Smoothness", 1, 10, 5, function(value) end)
+createSlider(triggerBotTab, "Trigger Range", 1, 50, 10, function(value) end)
+createSlider(camLockTab, "Lock Range", 1, 50, 10, function(value) end)
+
+silentAimTab.Visible = true -- Default active tab
+
