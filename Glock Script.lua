@@ -4,21 +4,23 @@ local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local Mouse = localPlayer:GetMouse()
 
-local camLockEnabled = true
-local triggerBotEnabled = true
-local silentAimEnabled = true
+local camLockEnabled = false
+local triggerBotEnabled = false
+local silentAimEnabled = false
+local aimbotEnabled = false
 local camLockSmoothness = 5
 local triggerBotRange = 10
 local silentAimStrength = 5
+local aimbotSmoothness = 7
 
 -- UI Setup
 local glockGui = Instance.new("ScreenGui")
-glockGui.Parent = game.CoreGui  -- Parent to CoreGui to avoid disappearing
+glockGui.Parent = game.CoreGui
 
 -- Main Frame (Draggable)
 local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 400, 0, 200)
-mainFrame.Position = UDim2.new(0.5, -200, 0.5, -100)
+mainFrame.Size = UDim2.new(0, 400, 0, 250)
+mainFrame.Position = UDim2.new(0.5, -200, 0.5, -125)
 mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 mainFrame.Parent = glockGui
 mainFrame.Active = true
@@ -103,9 +105,18 @@ local function updateTriggerBot()
         local target = getClosestPlayer()
         if target and target.Character and target.Character:FindFirstChild("Head") then
             if (localPlayer.Character.Head.Position - target.Character.Head.Position).Magnitude <= triggerBotRange then
-                -- Simulate an attack
                 mouse1click()
             end
+        end
+    end
+end
+
+-- Aimbot System (Locks onto enemies when holding right-click)
+local function updateAimbot()
+    if aimbotEnabled and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
+        local target = getClosestPlayer()
+        if target and target.Character and target.Character:FindFirstChild("Head") then
+            camera.CFrame = camera.CFrame:Lerp(CFrame.new(camera.CFrame.Position, target.Character.Head.Position), aimbotSmoothness / 10)
         end
     end
 end
@@ -113,30 +124,36 @@ end
 RunService.RenderStepped:Connect(updateSilentAim)
 RunService.RenderStepped:Connect(updateCamLock)
 RunService.RenderStepped:Connect(updateTriggerBot)
+RunService.RenderStepped:Connect(updateAimbot)
 
--- Buttons to Toggle Features
-local function createButton(text, parent, callback)
+-- Function to create toggle buttons
+local function createToggleButton(text, parent, toggleVar)
     local button = Instance.new("TextButton")
-    button.Size = UDim2.new(0, 150, 0, 40)
-    button.Text = text
+    button.Size = UDim2.new(0, 200, 0, 40)
+    button.Text = text .. " [OFF]"
     button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
     button.TextColor3 = Color3.fromRGB(255, 255, 255)
     button.Parent = parent
 
-    button.MouseButton1Click:Connect(callback)
+    button.MouseButton1Click:Connect(function()
+        if toggleVar == "camLock" then
+            camLockEnabled = not camLockEnabled
+            button.Text = "Cam Lock [" .. (camLockEnabled and "ON" or "OFF") .. "]"
+        elseif toggleVar == "silentAim" then
+            silentAimEnabled = not silentAimEnabled
+            button.Text = "Silent Aim [" .. (silentAimEnabled and "ON" or "OFF") .. "]"
+        elseif toggleVar == "triggerBot" then
+            triggerBotEnabled = not triggerBotEnabled
+            button.Text = "Trigger Bot [" .. (triggerBotEnabled and "ON" or "OFF") .. "]"
+        elseif toggleVar == "aimbot" then
+            aimbotEnabled = not aimbotEnabled
+            button.Text = "Aimbot [" .. (aimbotEnabled and "ON" or "OFF") .. "]"
+        end
+    end)
 end
 
-createButton("Toggle Cam Lock", mainFrame, function()
-    camLockEnabled = not camLockEnabled
-    print("Cam Lock: ", camLockEnabled)
-end)
-
-createButton("Toggle Silent Aim", mainFrame, function()
-    silentAimEnabled = not silentAimEnabled
-    print("Silent Aim: ", silentAimEnabled)
-end)
-
-createButton("Toggle Trigger Bot", mainFrame, function()
-    triggerBotEnabled = not triggerBotEnabled
-    print("Trigger Bot: ", triggerBotEnabled)
-end)
+-- Create buttons
+createToggleButton("Cam Lock", mainFrame, "camLock")
+createToggleButton("Silent Aim", mainFrame, "silentAim")
+createToggleButton("Trigger Bot", mainFrame, "triggerBot")
+createToggleButton("Aimbot", mainFrame, "aimbot")
