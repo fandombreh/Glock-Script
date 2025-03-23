@@ -18,7 +18,7 @@ local function getClosestPlayer()
         if player ~= localPlayer and player.Character and player.Character:FindFirstChild("Head") then
             local headPos, onScreen = camera:WorldToViewportPoint(player.Character.Head.Position)
             if onScreen then
-                local distance = (Vector2.new(UserInputService:GetMouseLocation().X, UserInputService:GetMouseLocation().Y) - Vector2.new(headPos.X, headPos.Y)).Magnitude
+                local distance = (UserInputService:GetMouseLocation() - Vector2.new(headPos.X, headPos.Y)).Magnitude
                 if distance < shortestDistance then
                     closestPlayer = player
                     shortestDistance = distance
@@ -29,26 +29,15 @@ local function getClosestPlayer()
     return closestPlayer
 end
 
--- 🔫 Silent Aim Hook (Fixes Raycasting)
-local mt = getrawmetatable(game)
-if mt then
-    setreadonly(mt, false)
-    local oldNamecall = mt.__namecall
-    mt.__namecall = newcclosure(function(self, ...)
-        local args = {...}
-        local method = getnamecallmethod()
-
-        if silentAimEnabled and method == "FindPartOnRayWithIgnoreList" then
-            local target = getClosestPlayer()
-            if target and target.Character and target.Character:FindFirstChild("Head") then
-                local direction = (target.Character.Head.Position - camera.CFrame.Position).unit * silentAimStrength
-                args[1] = Ray.new(camera.CFrame.Position, direction) -- Adjusting raycast direction
-                return oldNamecall(self, unpack(args))
-            end
+-- 🔫 Silent Aim (Fixed Raycasting)
+local function silentAim(rayOrigin, rayDirection)
+    if silentAimEnabled then
+        local target = getClosestPlayer()
+        if target and target.Character and target.Character:FindFirstChild("Head") then
+            return target.Character.Head.Position
         end
-        return oldNamecall(self, ...)
-    end)
-    setreadonly(mt, true)
+    end
+    return nil
 end
 
 -- 🔥 Trigger Bot (Auto-Shoot)
@@ -76,35 +65,36 @@ local function toggleTriggerBot()
     end
 end
 
--- 🔵 ESP (Highlights Enemies)
-local espConnections = {}
+-- 🔵 ESP (Fix Cleanup)
 local function toggleESP()
     espEnabled = not espEnabled
-
-    -- Clear existing ESP
-    for _, connection in pairs(espConnections) do
-        connection:Disconnect()
-    end
-    table.clear(espConnections)
-
-    if espEnabled then
-        local connection = RunService.RenderStepped:Connect(function()
-            for _, player in pairs(game.Players:GetPlayers()) do
-                if player ~= localPlayer and player.Character then
-                    local character = player.Character
-                    if not character:FindFirstChild("Highlight") then
-                        local highlight = Instance.new("Highlight")
-                        highlight.Parent = character
-                        highlight.FillColor = Color3.fromRGB(255, 0, 0)
-                        highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
-                        highlight.FillTransparency = 0.5
-                        highlight.Adornee = character
-                    end
+    if not espEnabled then
+        for _, player in pairs(game.Players:GetPlayers()) do
+            if player.Character then
+                local highlight = player.Character:FindFirstChild("Highlight")
+                if highlight then
+                    highlight:Destroy()
                 end
             end
-        end)
-        table.insert(espConnections, connection)
+        end
+        return
     end
+
+    RunService.RenderStepped:Connect(function()
+        for _, player in pairs(game.Players:GetPlayers()) do
+            if player ~= localPlayer and player.Character then
+                local character = player.Character
+                if not character:FindFirstChild("Highlight") then
+                    local highlight = Instance.new("Highlight")
+                    highlight.Parent = character
+                    highlight.FillColor = Color3.fromRGB(255, 0, 0)
+                    highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+                    highlight.FillTransparency = 0.5
+                    highlight.Adornee = character
+                end
+            end
+        end
+    end)
 end
 
 -- 🛠️ UI Setup
