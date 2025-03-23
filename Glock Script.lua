@@ -111,3 +111,4 @@ createTab("Cam Lock", 1, camLockTab)
 createTab("Trigger Bot", 2, triggerBotTab)
 
 silentAimTab.Visible = true -- Default active tab
+
