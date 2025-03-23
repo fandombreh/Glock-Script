@@ -3,7 +3,6 @@ local camera = game.Workspace.CurrentCamera
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local VirtualInputManager = game:GetService("VirtualInputManager")
-local Mouse = localPlayer:GetMouse()
 
 local triggerBotEnabled = false
 local silentAimEnabled = false
@@ -19,7 +18,7 @@ local function getClosestPlayer()
         if player ~= localPlayer and player.Character and player.Character:FindFirstChild("Head") then
             local headPos, onScreen = camera:WorldToViewportPoint(player.Character.Head.Position)
             if onScreen then
-                local distance = (Vector2.new(Mouse.X, Mouse.Y) - Vector2.new(headPos.X, headPos.Y)).Magnitude
+                local distance = (Vector2.new(UserInputService:GetMouseLocation().X, UserInputService:GetMouseLocation().Y) - Vector2.new(headPos.X, headPos.Y)).Magnitude
                 if distance < shortestDistance then
                     closestPlayer = player
                     shortestDistance = distance
@@ -38,11 +37,11 @@ if mt then
     mt.__namecall = newcclosure(function(self, ...)
         local args = {...}
         local method = getnamecallmethod()
-        if silentAimEnabled and method == "FindPartOnRayWithIgnoreList" then
+        if silentAimEnabled and method == "Raycast" then
             local target = getClosestPlayer()
             if target and target.Character and target.Character:FindFirstChild("Head") then
                 local direction = (target.Character.Head.Position - camera.CFrame.Position).unit * silentAimStrength
-                args[1] = Ray.new(camera.CFrame.Position, direction)
+                args[2] = direction -- Adjusting raycast direction
                 return oldNamecall(self, unpack(args))
             end
         end
@@ -88,7 +87,7 @@ local function toggleESP()
     if espEnabled then
         local connection = RunService.RenderStepped:Connect(function()
             for _, player in pairs(game.Players:GetPlayers()) do
-                if player ~= localPlayer and player.Character and player.Character:FindFirstChild("Head") then
+                if player ~= localPlayer and player.Character then
                     local character = player.Character
                     local highlight = character:FindFirstChild("Highlight")
                     if not highlight then
