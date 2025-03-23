@@ -3,138 +3,166 @@ local camera = game.Workspace.CurrentCamera
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local Mouse = localPlayer:GetMouse()
-local ESPEnabled, FOVCircleEnabled, camLockEnabled, triggerBotEnabled, silentAimEnabled = false, false, false, false, false
-local camLockSmoothness, triggerBotRange, silentAimStrength, FOVRadius = 5, 10, 5, 150
-
--- GUI Setup
-glockGui = Instance.new("ScreenGui")
-glockGui.Parent = game.CoreGui
+local glockGui = Instance.new("ScreenGui")
 glockGui.Name = "Glock - made by snoopy"
+glockGui.Parent = game.CoreGui
 
--- Main UI Frame (Draggable)
+-- Variables
+local camLockEnabled = false
+local triggerBotEnabled = false
+local silentAimEnabled = false
+local espEnabled = false
+local fovEnabled = false
+local autoLockEnabled = true
+local camLockSmoothness = 5
+local triggerBotRange = 10
+local silentAimStrength = 5
+local fovRadius = 150
+local targetPlayer = nil
+
+-- Create GUI Elements
 local mainFrame = Instance.new("Frame")
 mainFrame.Size = UDim2.new(0, 400, 0, 250)
-mainFrame.Position = UDim2.new(0.5, -200, 0.5, -100)
+mainFrame.Position = UDim2.new(0.5, -200, 0.5, -125)
 mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-mainFrame.Parent = glockGui
 mainFrame.Active = true
+mainFrame.Parent = glockGui
 
--- Dragging Functionality
+-- Draggable UI
 local dragging, dragInput, dragStart, startPos
 mainFrame.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging, dragStart, startPos = true, input.Position, mainFrame.Position
+        dragging = true
+        dragStart = input.Position
+        startPos = mainFrame.Position
         input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then dragging = false end
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
         end)
+    end
+end)
+mainFrame.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        dragInput = input
     end
 end)
 UserInputService.InputChanged:Connect(function(input)
     if input == dragInput and dragging then
         local delta = input.Position - dragStart
-        mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        mainFrame.Position = UDim2.new(
+            startPos.X.Scale, startPos.X.Offset + delta.X,
+            startPos.Y.Scale, startPos.Y.Offset + delta.Y
+        )
     end
 end)
 
--- Function to Check If Player Has a Gun
-local function hasGun()
-    local tool = localPlayer.Character and localPlayer.Character:FindFirstChildOfClass("Tool")
-    return tool and tool:FindFirstChild("Handle")
-end
-
--- Function to Find Closest Player Within FOV
-local function getClosestPlayer()
-    local closest, shortestDist = nil, math.huge
-    for _, player in pairs(game.Players:GetPlayers()) do
-        if player ~= localPlayer and player.Character and player.Character:FindFirstChild("Head") then
-            local headPos, onScreen = camera:WorldToViewportPoint(player.Character.Head.Position)
-            local mousePos = Vector2.new(Mouse.X, Mouse.Y)
-            local dist = (mousePos - Vector2.new(headPos.X, headPos.Y)).Magnitude
-            if onScreen and dist < shortestDist and dist <= FOVRadius then
-                closest, shortestDist = player, dist
+-- Get Equipped Weapon
+local function hasGunEquipped()
+    local character = localPlayer.Character
+    if character then
+        for _, tool in pairs(character:GetChildren()) do
+            if tool:IsA("Tool") and tool:FindFirstChild("Handle") then
+                return true
             end
         end
     end
-    return closest
+    return false
+end
+
+-- Get Closest Player
+local function getClosestPlayer()
+    local closestPlayer = nil
+    local shortestDistance = math.huge
+    for _, player in pairs(game.Players:GetPlayers()) do
+        if player ~= localPlayer and player.Character and player.Character:FindFirstChild("Head") then
+            local headPos, onScreen = camera:WorldToViewportPoint(player.Character.Head.Position)
+            local distance = (Vector2.new(Mouse.X, Mouse.Y) - Vector2.new(headPos.X, headPos.Y)).Magnitude
+            if onScreen and distance < shortestDistance and distance < fovRadius then
+                closestPlayer = player
+                shortestDistance = distance
+            end
+        end
+    end
+    return closestPlayer
+end
+
+-- ESP Function
+local function updateESP()
+    if espEnabled then
+        for _, player in pairs(game.Players:GetPlayers()) do
+            if player ~= localPlayer and player.Character and player.Character:FindFirstChild("Head") then
+                local highlight = Instance.new("BoxHandleAdornment")
+                highlight.Adornee = player.Character.Head
+                highlight.Size = Vector3.new(3, 3, 3)
+                highlight.Color3 = Color3.fromRGB(255, 0, 0)
+                highlight.AlwaysOnTop = true
+                highlight.Parent = player.Character
+            end
+        end
+    end
 end
 
 -- FOV Circle
 local fovCircle = Drawing.new("Circle")
-fovCircle.Visible, fovCircle.Radius = false, FOVRadius
-fovCircle.Color, fovCircle.Thickness = Color3.fromRGB(255, 255, 0), 1
+fovCircle.Color = Color3.fromRGB(255, 255, 0)
+fovCircle.Radius = fovRadius
+fovCircle.Thickness = 2
+fovCircle.Visible = fovEnabled
+
 RunService.RenderStepped:Connect(function()
-    fovCircle.Position = Vector2.new(Mouse.X, Mouse.Y)
-    fovCircle.Visible = FOVCircleEnabled
+    fovCircle.Position = UserInputService:GetMouseLocation()
+    fovCircle.Visible = fovEnabled
 end)
 
--- ESP Function
-local function createESP(player)
-    local box = Drawing.new("Square")
-    box.Color, box.Thickness, box.Filled = Color3.fromRGB(255, 0, 0), 1, false
-    RunService.RenderStepped:Connect(function()
-        if ESPEnabled and player.Character and player.Character:FindFirstChild("Head") then
-            local headPos, onScreen = camera:WorldToViewportPoint(player.Character.Head.Position)
-            if onScreen then
-                box.Position = Vector2.new(headPos.X - 25, headPos.Y - 25)
-                box.Size, box.Visible = Vector2.new(50, 50), true
-            else
-                box.Visible = false
-            end
-        else
-            box.Visible = false
-        end
-    end)
-end
-for _, player in pairs(game.Players:GetPlayers()) do
-    if player ~= localPlayer then createESP(player) end
-end
-game.Players.PlayerAdded:Connect(createESP)
-
--- Aim & Lock Functions
-local function updateCamLock()
-    if camLockEnabled and hasGun() then
-        local target = getClosestPlayer()
-        if target and target.Character and target.Character:FindFirstChild("Head") then
-            camera.CFrame = camera.CFrame:Lerp(CFrame.new(camera.CFrame.Position, target.Character.Head.Position), camLockSmoothness / 10)
-        end
+-- Auto-Lock on Damage
+local function onDamageTaken()
+    if autoLockEnabled then
+        targetPlayer = getClosestPlayer()
     end
 end
 
-local function updateSilentAim()
-    if silentAimEnabled and hasGun() then
-        local target = getClosestPlayer()
-        if target and target.Character and target.Character:FindFirstChild("Head") then
-            camera.CFrame = camera.CFrame:Lerp(CFrame.new(camera.CFrame.Position, target.Character.Head.Position), silentAimStrength / 20)
+localPlayer.Character.Humanoid.HealthChanged:Connect(onDamageTaken)
+
+-- Silent Aim & Cam Lock
+RunService.RenderStepped:Connect(function()
+    if hasGunEquipped() then
+        if camLockEnabled and targetPlayer then
+            camera.CFrame = camera.CFrame:Lerp(CFrame.new(camera.CFrame.Position, targetPlayer.Character.Head.Position), camLockSmoothness / 10)
+        end
+        if silentAimEnabled and targetPlayer then
+            camera.CFrame = camera.CFrame:Lerp(CFrame.new(camera.CFrame.Position, targetPlayer.Character.Head.Position), silentAimStrength / 20)
         end
     end
-end
+end)
 
-local function updateTriggerBot()
-    if triggerBotEnabled and hasGun() then
-        local target = getClosestPlayer()
-        if target and target.Character and target.Character:FindFirstChild("Head") then
-            if (localPlayer.Character.Head.Position - target.Character.Head.Position).Magnitude <= triggerBotRange then
-                mouse1click()
-            end
-        end
-    end
-end
-
-RunService.RenderStepped:Connect(updateSilentAim)
-RunService.RenderStepped:Connect(updateCamLock)
-RunService.RenderStepped:Connect(updateTriggerBot)
-
--- UI Buttons
-table.insert({"Cam Lock", "Silent Aim", "Trigger Bot", "ESP", "FOV Circle"}, function(name)
+-- Toggle Buttons
+local function createButton(text, callback)
     local button = Instance.new("TextButton")
-    button.Size, button.Text, button.Parent = UDim2.new(0, 150, 0, 40), "Toggle "..name, mainFrame
-    button.BackgroundColor3, button.TextColor3 = Color3.fromRGB(50, 50, 50), Color3.fromRGB(255, 255, 255)
-    button.MouseButton1Click:Connect(function()
-        if name == "Cam Lock" then camLockEnabled = not camLockEnabled
-        elseif name == "Silent Aim" then silentAimEnabled = not silentAimEnabled
-        elseif name == "Trigger Bot" then triggerBotEnabled = not triggerBotEnabled
-        elseif name == "ESP" then ESPEnabled = not ESPEnabled
-        elseif name == "FOV Circle" then FOVCircleEnabled = not FOVCircleEnabled
-        end
-    end)
+    button.Size = UDim2.new(0, 150, 0, 40)
+    button.Text = text
+    button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    button.Parent = mainFrame
+    button.MouseButton1Click:Connect(callback)
+end
+
+createButton("Toggle Cam Lock", function()
+    camLockEnabled = not camLockEnabled
 end)
+createButton("Toggle Silent Aim", function()
+    silentAimEnabled = not silentAimEnabled
+end)
+createButton("Toggle Trigger Bot", function()
+    triggerBotEnabled = not triggerBotEnabled
+end)
+createButton("Toggle ESP", function()
+    espEnabled = not espEnabled
+    updateESP()
+end)
+createButton("Toggle FOV Circle", function()
+    fovEnabled = not fovEnabled
+    fovCircle.Visible = fovEnabled
+end)
+
+print("Glock - made by snoopy loaded!")
