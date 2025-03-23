@@ -12,34 +12,15 @@ local camLockSmoothness = 5
 local triggerBotRange = 10
 local silentAimStrength = 5
 
--- Track focus state
-UserInputService.WindowFocused:Connect(function()
-    isFocused = true
-end)
-UserInputService.WindowFocusReleased:Connect(function()
-    isFocused = false
-end)
-
 -- UI Setup
 local glockGui = Instance.new("ScreenGui")
-glockGui.Name = "Glock"
 glockGui.Parent = localPlayer:WaitForChild("PlayerGui")
-glockGui.ResetOnSpawn = false
 
 local mainFrame = Instance.new("Frame")
 mainFrame.Size = UDim2.new(0, 400, 0, 500)
 mainFrame.Position = UDim2.new(0.5, -200, 0.5, -250)
 mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-mainFrame.BorderSizePixel = 0
-mainFrame.Active = true
-mainFrame.Draggable = true
 mainFrame.Parent = glockGui
-
-local contentFrame = Instance.new("Frame")
-contentFrame.Size = UDim2.new(1, 0, 1, -50)
-contentFrame.Position = UDim2.new(0, 0, 0, 50)
-contentFrame.BackgroundTransparency = 1
-contentFrame.Parent = mainFrame
 
 local function createSlider(parent, label, min, max, default, callback)
     local frame = Instance.new("Frame")
@@ -53,19 +34,40 @@ local function createSlider(parent, label, min, max, default, callback)
     sliderLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
     sliderLabel.Parent = frame
 
-    local slider = Instance.new("TextButton")
-    slider.Size = UDim2.new(0, 200, 0, 50)
-    slider.Position = UDim2.new(0, 100, 0, 0)
-    slider.Text = tostring(default)
-    slider.BackgroundColor3 = Color3.fromRGB(100, 100, 255)
-    slider.Parent = frame
+    local sliderBar = Instance.new("Frame")
+    sliderBar.Size = UDim2.new(0, 200, 0, 10)
+    sliderBar.Position = UDim2.new(0, 100, 0, 20)
+    sliderBar.BackgroundColor3 = Color3.fromRGB(70, 70, 255)
+    sliderBar.Parent = frame
 
-    slider.MouseButton1Click:Connect(function()
-        local newValue = math.clamp(default + 1, min, max)
-        if newValue > max then newValue = min end -- Loop back if max reached
-        slider.Text = tostring(newValue)
+    local sliderButton = Instance.new("Frame")
+    sliderButton.Size = UDim2.new(0, 10, 0, 20)
+    sliderButton.Position = UDim2.new((default - min) / (max - min), -5, 0, 15)
+    sliderButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    sliderButton.Parent = sliderBar
+    sliderButton.Active = true
+    sliderButton.Draggable = true
+
+    local function updateSlider(positionX)
+        local newValue = math.clamp(math.floor(min + ((positionX - sliderBar.AbsolutePosition.X) / sliderBar.AbsoluteSize.X) * (max - min)), min, max)
+        sliderButton.Position = UDim2.new((newValue - min) / (max - min), -5, 0, 15)
         sliderLabel.Text = label .. ": " .. tostring(newValue)
         callback(newValue)
+    end
+
+    sliderButton.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            local connection
+            connection = RunService.RenderStepped:Connect(function()
+                updateSlider(UserInputService:GetMouseLocation().X)
+            end)
+
+            UserInputService.InputEnded:Connect(function(inputEnd)
+                if inputEnd.UserInputType == Enum.UserInputType.MouseButton1 then
+                    connection:Disconnect()
+                end
+            end)
+        end
     end)
 end
 
@@ -133,17 +135,7 @@ end)
 local silentAimTab = Instance.new("Frame")
 silentAimTab.Size = UDim2.new(1, 0, 1, -50)
 silentAimTab.BackgroundTransparency = 1
-silentAimTab.Parent = contentFrame
-
-local camLockTab = Instance.new("Frame")
-camLockTab.Size = UDim2.new(1, 0, 1, -50)
-camLockTab.BackgroundTransparency = 1
-camLockTab.Parent = contentFrame
-
-local triggerBotTab = Instance.new("Frame")
-triggerBotTab.Size = UDim2.new(1, 0, 1, -50)
-triggerBotTab.BackgroundTransparency = 1
-triggerBotTab.Parent = contentFrame
+silentAimTab.Parent = mainFrame
 
 local function createToggle(parent, text, default, callback)
     local button = Instance.new("TextButton")
@@ -163,10 +155,8 @@ end
 createToggle(silentAimTab, "Enable Silent Aim", false, function(value) silentAimEnabled = value end)
 createSlider(silentAimTab, "Silent Aim Strength", 1, 20, silentAimStrength, function(value) silentAimStrength = value end)
 
-createToggle(camLockTab, "Enable Cam Lock", false, function(value) camLockEnabled = value end)
-createSlider(camLockTab, "Cam Lock Speed", 1, 10, camLockSmoothness, function(value) camLockSmoothness = value end)
+createToggle(silentAimTab, "Enable Cam Lock", false, function(value) camLockEnabled = value end)
+createSlider(silentAimTab, "Cam Lock Speed", 1, 10, camLockSmoothness, function(value) camLockSmoothness = value end)
 
-createToggle(triggerBotTab, "Enable Trigger Bot", false, function(value) triggerBotEnabled = value end)
-createSlider(triggerBotTab, "Trigger Bot Range", 5, 50, triggerBotRange, function(value) triggerBotRange = value end)
-
-silentAimTab.Visible = true -- Default active tab
+createToggle(silentAimTab, "Enable Trigger Bot", false, function(value) triggerBotEnabled = value end)
+createSlider(silentAimTab, "Trigger Bot Range", 5, 50, triggerBotRange, function(value) triggerBotRange = value end)
