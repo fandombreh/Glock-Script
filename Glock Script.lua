@@ -90,19 +90,20 @@ silentAimTab.Name = "SilentAimTab"
 silentAimTab.Size = UDim2.new(1, 0, 1, -50)
 silentAimTab.BackgroundTransparency = 1
 silentAimTab.Parent = contentFrame
-silentAimTab.Visible = false
 createToggle(silentAimTab, "Enable Silent Aim", false, function(value) silentAimEnabled = value end)
 
-local camLockTab = silentAimTab:Clone()
+local camLockTab = Instance.new("Frame")
 camLockTab.Name = "CamLockTab"
+camLockTab.Size = UDim2.new(1, 0, 1, -50)
+camLockTab.BackgroundTransparency = 1
 camLockTab.Parent = contentFrame
-camLockTab.Visible = false
 createToggle(camLockTab, "Enable Cam Lock", false, function(value) camLockEnabled = value end)
 
-local triggerBotTab = silentAimTab:Clone()
+local triggerBotTab = Instance.new("Frame")
 triggerBotTab.Name = "TriggerBotTab"
+triggerBotTab.Size = UDim2.new(1, 0, 1, -50)
+triggerBotTab.BackgroundTransparency = 1
 triggerBotTab.Parent = contentFrame
-triggerBotTab.Visible = false
 createToggle(triggerBotTab, "Enable Trigger Bot", false, function(value) triggerBotEnabled = value end)
 
 createTab("Silent Aim", 0, silentAimTab)
