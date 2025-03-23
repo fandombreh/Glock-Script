@@ -10,7 +10,7 @@ local espEnabled = false
 local triggerBotRange = 15
 local silentAimStrength = 100
 
--- 🔴 Function to get closest player
+-- 🎯 Function to get closest enemy
 local function getClosestPlayer()
     local closestPlayer = nil
     local shortestDistance = math.huge
@@ -29,7 +29,7 @@ local function getClosestPlayer()
     return closestPlayer
 end
 
--- 🎯 **Silent Aim**
+-- 🔫 Silent Aim Fix (Redirects Aim Properly)
 local mt = getrawmetatable(game)
 setreadonly(mt, false)
 local oldNamecall = mt.__namecall
@@ -45,7 +45,7 @@ mt.__namecall = newcclosure(function(self, ...)
     return oldNamecall(self, unpack(args))
 end)
 
--- 🔫 **Trigger Bot**
+-- 🔥 Trigger Bot (Auto-Shoot)
 local triggerBotConnection
 local function toggleTriggerBot()
     triggerBotEnabled = not triggerBotEnabled
@@ -68,29 +68,31 @@ local function toggleTriggerBot()
     end
 end
 
--- 🟦 **ESP (Wallhack)**
+-- 🔵 ESP (Highlights Enemies)
 local function toggleESP()
     espEnabled = not espEnabled
-    if not espEnabled then
-        for _, v in pairs(game.Workspace:GetChildren()) do
-            if v:IsA("Highlight") then v:Destroy() end
-        end
-        return
-    end
-
     for _, player in pairs(game.Players:GetPlayers()) do
         if player ~= localPlayer and player.Character then
-            local highlight = Instance.new("Highlight")
-            highlight.Parent = player.Character
-            highlight.FillColor = Color3.fromRGB(255, 0, 0)
-            highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
-            highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-            highlight.FillTransparency = 0.5
+            local character = player.Character
+            local highlight = character:FindFirstChild("Highlight")
+            if espEnabled then
+                if not highlight then
+                    highlight = Instance.new("Highlight")
+                    highlight.Parent = character
+                    highlight.FillColor = Color3.fromRGB(255, 0, 0)
+                    highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+                    highlight.FillTransparency = 0.5
+                end
+            else
+                if highlight then
+                    highlight:Destroy()
+                end
+            end
         end
     end
 end
 
--- 🛠️ **UI Setup**
+-- 🛠️ UI Setup
 local glockGui = Instance.new("ScreenGui")
 glockGui.Name = "Glock - made by snoopy"
 glockGui.Parent = game:GetService("CoreGui")
