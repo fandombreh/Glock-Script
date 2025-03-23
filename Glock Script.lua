@@ -8,7 +8,7 @@ local camLockEnabled = false
 local triggerBotEnabled = false
 local silentAimEnabled = false
 local aimbotEnabled = false
-local autoLockEnabled = true -- Auto-lock on being shot
+local autoLockEnabled = true -- Auto-lock when shot
 local camLockSmoothness = 5
 local triggerBotRange = 10
 local silentAimStrength = 5
@@ -29,6 +29,18 @@ mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 mainFrame.Parent = glockGui
 mainFrame.Active = true
 mainFrame.Draggable = true
+
+-- Function to check if player has a gun equipped
+local function checkGunEquipped()
+    if localPlayer.Character then
+        local tool = localPlayer.Character:FindFirstChildOfClass("Tool")
+        if tool and tool:FindFirstChild("Handle") then
+            gunEquipped = true
+        else
+            gunEquipped = false
+        end
+    end
+end
 
 -- Function to find the closest enemy
 local function getClosestPlayer()
@@ -51,24 +63,11 @@ local function getClosestPlayer()
     return closestPlayer
 end
 
--- Check if the player has a gun equipped
-local function checkGunEquipped()
-    if localPlayer.Character then
-        local tool = localPlayer.Character:FindFirstChildOfClass("Tool")
-        if tool and tool:FindFirstChild("Handle") then
-            gunEquipped = true
-        else
-            gunEquipped = false
-        end
-    end
-end
-
 -- Cam Lock System (Only when holding a gun)
 local function updateCamLock()
-    if camLockEnabled and gunEquipped then
-        local target = getClosestPlayer()
-        if target and target.Character and target.Character:FindFirstChild("Head") then
-            camera.CFrame = camera.CFrame:Lerp(CFrame.new(camera.CFrame.Position, target.Character.Head.Position), camLockSmoothness / 10)
+    if camLockEnabled and gunEquipped and currentTarget then
+        if currentTarget.Character and currentTarget.Character:FindFirstChild("Head") then
+            camera.CFrame = camera.CFrame:Lerp(CFrame.new(camera.CFrame.Position, currentTarget.Character.Head.Position), camLockSmoothness / 10)
         end
     end
 end
@@ -95,7 +94,7 @@ local function updateTriggerBot()
     end
 end
 
--- Aimbot System (Locks onto enemies when holding right-click and holding a gun)
+-- Aimbot System (Only when holding a gun & Right Click)
 local function updateAimbot()
     if aimbotEnabled and gunEquipped and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
         local target = getClosestPlayer()
@@ -105,7 +104,7 @@ local function updateAimbot()
     end
 end
 
--- Auto Lock System (Locks onto the player that shot you)
+-- Auto Lock System (Locks onto the player who shot you)
 local function autoLock(target)
     if autoLockEnabled and gunEquipped then
         currentTarget = target
@@ -113,27 +112,32 @@ local function autoLock(target)
     end
 end
 
--- Detect when a player is hit
+-- Detect when a player is shot and auto-lock onto shooter
 local function detectHit()
     localPlayer.Character.Humanoid:GetPropertyChangedSignal("Health"):Connect(function()
-        for _, player in pairs(game.Players:GetPlayers()) do
-            if player ~= localPlayer and player.Character then
-                local tool = player.Character:FindFirstChildOfClass("Tool")
-                if tool then
-                    autoLock(player)
+        if localPlayer.Character.Humanoid.Health < localPlayer.Character.Humanoid.MaxHealth then
+            for _, player in pairs(game.Players:GetPlayers()) do
+                if player ~= localPlayer and player.Character then
+                    local tool = player.Character:FindFirstChildOfClass("Tool")
+                    if tool and tool:FindFirstChild("Handle") then
+                        autoLock(player)
+                        return
+                    end
                 end
             end
         end
     end)
 end
 
-RunService.RenderStepped:Connect(updateSilentAim)
-RunService.RenderStepped:Connect(updateCamLock)
-RunService.RenderStepped:Connect(updateTriggerBot)
-RunService.RenderStepped:Connect(updateAimbot)
-
--- Constantly check if a gun is equipped
-RunService.RenderStepped:Connect(checkGunEquipped)
+RunService.RenderStepped:Connect(function()
+    checkGunEquipped()
+    if gunEquipped then
+        updateSilentAim()
+        updateCamLock()
+        updateTriggerBot()
+        updateAimbot()
+    end
+end)
 
 -- Detect hits
 detectHit()
@@ -142,7 +146,7 @@ detectHit()
 local function createToggleButton(name, toggleVar, yOffset)
     local button = Instance.new("TextButton")
     button.Size = UDim2.new(0, 200, 0, 40)
-    button.Position = UDim2.new(0, 25, 0, yOffset) -- Properly spaced
+    button.Position = UDim2.new(0, 25, 0, yOffset)
     button.Text = name .. " [OFF]"
     button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
     button.TextColor3 = Color3.fromRGB(255, 255, 255)
