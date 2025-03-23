@@ -8,7 +8,6 @@ local isFocused = true
 local camLockEnabled = false
 local triggerBotEnabled = false
 local silentAimEnabled = false
-local targetPlayer = nil
 local camLockSmoothness = 5
 local triggerBotRange = 10
 
@@ -35,10 +34,6 @@ mainFrame.Active = true
 mainFrame.Draggable = true
 mainFrame.Parent = glockGui
 
-local mainFrameCorner = Instance.new("UICorner")
-mainFrameCorner.CornerRadius = UDim.new(0, 10)
-mainFrameCorner.Parent = mainFrame
-
 local tabFrame = Instance.new("Frame")
 tabFrame.Size = UDim2.new(1, 0, 0, 50)
 tabFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
@@ -55,21 +50,18 @@ local function createTab(name, position, targetTab)
     tab.Size = UDim2.new(0, 100, 0, 50)
     tab.Position = UDim2.new(0, position * 100, 0, 0)
     tab.Text = name
-    tab.Font = Enum.Font.GothamBold
-    tab.TextSize = 16
-    tab.TextColor3 = Color3.fromRGB(255, 255, 255)
-    tab.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
     tab.Parent = tabFrame
 
     tab.MouseButton1Click:Connect(function()
         for _, frame in pairs(contentFrame:GetChildren()) do
-            frame.Visible = false
+            if frame:IsA("Frame") then -- Ensure only Frames are modified
+                frame.Visible = false
+            end
         end
         targetTab.Visible = true
     end)
 end
 
--- Create Toggle Buttons
 local function createToggle(parent, text, default, callback)
     local button = Instance.new("TextButton")
     button.Size = UDim2.new(0, 200, 0, 50)
@@ -85,7 +77,7 @@ local function createToggle(parent, text, default, callback)
     end)
 end
 
--- Silent Aim Logic
+-- Find Closest Player
 local function getClosestPlayer()
     local closestPlayer = nil
     local shortestDistance = math.huge
@@ -104,17 +96,23 @@ local function getClosestPlayer()
     return closestPlayer
 end
 
+-- Silent Aim
 RunService.RenderStepped:Connect(function()
     if silentAimEnabled and isFocused then
         local target = getClosestPlayer()
         if target and target.Character and target.Character:FindFirstChild("Head") then
             local headPos = camera:WorldToViewportPoint(target.Character.Head.Position)
-            mousemoverel((headPos.X - Mouse.X) / camLockSmoothness, (headPos.Y - Mouse.Y) / camLockSmoothness)
+            local moveX, moveY = (headPos.X - Mouse.X) / camLockSmoothness, (headPos.Y - Mouse.Y) / camLockSmoothness
+            
+            -- Only move the mouse if `mousemoverel` is available
+            if mousemoverel then
+                mousemoverel(moveX, moveY)
+            end
         end
     end
 end)
 
--- Cam Lock Logic
+-- Cam Lock
 RunService.RenderStepped:Connect(function()
     if camLockEnabled and isFocused then
         local target = getClosestPlayer()
@@ -125,14 +123,16 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- Trigger Bot Logic
+-- Trigger Bot
 RunService.RenderStepped:Connect(function()
-    if triggerBotEnabled and isFocused then
+    if triggerBotEnabled and isFocused and localPlayer.Character and localPlayer.Character:FindFirstChild("Head") then
         local target = getClosestPlayer()
         if target and target.Character and target.Character:FindFirstChild("Head") then
             local distance = (localPlayer.Character.Head.Position - target.Character.Head.Position).Magnitude
             if distance <= triggerBotRange then
-                mouse1click()
+                if mouse1click then
+                    mouse1click() -- Ensure the function is available before calling it
+                end
             end
         end
     end
@@ -140,21 +140,18 @@ end)
 
 -- Creating Tabs
 local silentAimTab = Instance.new("Frame")
-silentAimTab.Name = "SilentAimTab"
 silentAimTab.Size = UDim2.new(1, 0, 1, -50)
 silentAimTab.BackgroundTransparency = 1
 silentAimTab.Parent = contentFrame
 createToggle(silentAimTab, "Enable Silent Aim", false, function(value) silentAimEnabled = value end)
 
 local camLockTab = Instance.new("Frame")
-camLockTab.Name = "CamLockTab"
 camLockTab.Size = UDim2.new(1, 0, 1, -50)
 camLockTab.BackgroundTransparency = 1
 camLockTab.Parent = contentFrame
 createToggle(camLockTab, "Enable Cam Lock", false, function(value) camLockEnabled = value end)
 
 local triggerBotTab = Instance.new("Frame")
-triggerBotTab.Name = "TriggerBotTab"
 triggerBotTab.Size = UDim2.new(1, 0, 1, -50)
 triggerBotTab.BackgroundTransparency = 1
 triggerBotTab.Parent = contentFrame
@@ -165,3 +162,4 @@ createTab("Cam Lock", 1, camLockTab)
 createTab("Trigger Bot", 2, triggerBotTab)
 
 silentAimTab.Visible = true -- Default active tab
+
