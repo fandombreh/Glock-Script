@@ -27,8 +27,8 @@ mainFrame.Position = UDim2.new(0.5, -200, 0.5, -125)
 mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 mainFrame.Parent = glockGui
 mainFrame.Active = true
-mainFrame.Draggable = true -- Enables native dragging support
-mainFrame.ZIndex = 10  -- Ensure UI is visible
+mainFrame.Draggable = true
+mainFrame.ZIndex = 10
 
 -- FOV Circle
 local fovCircle = Drawing.new("Circle")
@@ -71,37 +71,50 @@ local function createButton(text, parent, callback, position)
     button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
     button.TextColor3 = Color3.fromRGB(255, 255, 255)
     button.Parent = parent
-    button.ZIndex = 11  -- Ensure buttons are above background
+    button.ZIndex = 11
     button.MouseButton1Click:Connect(callback)
+    return button
 end
 
-local buttonSpacing = 45  -- Adjusted for better visibility
-local startY = 10  -- Start closer to the top
+local buttonSpacing = 45
+local startY = 10
 
+-- Cam Lock
+local camLockConnection
 createButton("Toggle Cam Lock", mainFrame, function()
     camLockEnabled = not camLockEnabled
     print("Cam Lock:", camLockEnabled)
+
     if camLockEnabled then
-        RunService.RenderStepped:Connect(function()
+        camLockConnection = RunService.RenderStepped:Connect(function()
             local target = getClosestPlayer()
             if target and target.Character and target.Character:FindFirstChild("Head") then
                 local targetPos = target.Character.Head.Position
                 camera.CFrame = CFrame.new(camera.CFrame.Position, targetPos)
             end
         end)
+    else
+        if camLockConnection then
+            camLockConnection:Disconnect()
+            camLockConnection = nil
+        end
     end
 end, startY + buttonSpacing * 0)
 
+-- Silent Aim
 createButton("Toggle Silent Aim", mainFrame, function()
     silentAimEnabled = not silentAimEnabled
     print("Silent Aim:", silentAimEnabled)
 end, startY + buttonSpacing * 1)
 
+-- Trigger Bot
+local triggerBotConnection
 createButton("Toggle Trigger Bot", mainFrame, function()
     triggerBotEnabled = not triggerBotEnabled
     print("Trigger Bot:", triggerBotEnabled)
+
     if triggerBotEnabled then
-        RunService.RenderStepped:Connect(function()
+        triggerBotConnection = RunService.RenderStepped:Connect(function()
             local target = getClosestPlayer()
             if target and target.Character and target.Character:FindFirstChild("Head") then
                 local distance = (target.Character.Head.Position - camera.CFrame.Position).Magnitude
@@ -110,14 +123,21 @@ createButton("Toggle Trigger Bot", mainFrame, function()
                 end
             end
         end)
+    else
+        if triggerBotConnection then
+            triggerBotConnection:Disconnect()
+            triggerBotConnection = nil
+        end
     end
 end, startY + buttonSpacing * 2)
 
+-- ESP
 createButton("Toggle ESP", mainFrame, function()
     espEnabled = not espEnabled
     print("ESP:", espEnabled)
 end, startY + buttonSpacing * 3)
 
+-- FOV Circle
 createButton("Toggle FOV Circle", mainFrame, function()
     fovCircleEnabled = not fovCircleEnabled
     fovCircle.Visible = fovCircleEnabled
