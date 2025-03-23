@@ -9,7 +9,7 @@ local lockAimbotEnabled = false
 local espEnabled = false
 local fovCircleEnabled = false
 local triggerBotRange = 15
-local aimbotStrength = 100
+local aimbotSmoothness = 0.2  -- Lower = Faster
 local espConnections = {}
 
 -- 🎯 Get Closest Player Function
@@ -31,7 +31,7 @@ local function getClosestPlayer()
     return closestPlayer
 end
 
--- 🔒 Lock Aimbot
+-- 🔒 Smooth Aimbot
 local function lockAimbot()
     lockAimbotEnabled = not lockAimbotEnabled
     lockAimbotButton.Text = "Lock Aimbot: " .. (lockAimbotEnabled and "ON" or "OFF")
@@ -39,7 +39,29 @@ local function lockAimbot()
         if lockAimbotEnabled then
             local target = getClosestPlayer()
             if target and target.Character and target.Character:FindFirstChild("Head") then
-                camera.CFrame = CFrame.new(camera.CFrame.Position, target.Character.Head.Position)
+                local targetPosition = target.Character.Head.Position
+                camera.CFrame = camera.CFrame:Lerp(CFrame.new(camera.CFrame.Position, targetPosition), aimbotSmoothness)
+            end
+        end
+    end)
+end
+
+-- 🔫 Toggle Trigger Bot
+local function toggleTriggerBot()
+    triggerBotEnabled = not triggerBotEnabled
+    triggerBotButton.Text = "Trigger Bot: " .. (triggerBotEnabled and "ON" or "OFF")
+
+    RunService.RenderStepped:Connect(function()
+        if triggerBotEnabled then
+            local target = getClosestPlayer()
+            if target and target.Character and target.Character:FindFirstChild("Head") then
+                local headPos, onScreen = camera:WorldToViewportPoint(target.Character.Head.Position)
+                local distance = (UserInputService:GetMouseLocation() - Vector2.new(headPos.X, headPos.Y)).Magnitude
+                if onScreen and distance <= triggerBotRange then
+                    VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 1)
+                    task.wait(0.05)
+                    VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 1)
+                end
             end
         end
     end)
@@ -49,10 +71,12 @@ end
 local function toggleESP()
     espEnabled = not espEnabled
     espButton.Text = "ESP: " .. (espEnabled and "ON" or "OFF")
+
     for _, conn in ipairs(espConnections) do
         conn:Disconnect()
     end
     table.clear(espConnections)
+
     if not espEnabled then
         for _, player in pairs(game.Players:GetPlayers()) do
             if player.Character then
@@ -64,6 +88,7 @@ local function toggleESP()
         end
         return
     end
+
     local conn = RunService.RenderStepped:Connect(function()
         for _, player in pairs(game.Players:GetPlayers()) do
             if player ~= localPlayer and player.Character then
@@ -89,11 +114,13 @@ fovCircle.Color = Color3.fromRGB(0, 255, 0)
 fovCircle.Thickness = 2
 fovCircle.Radius = 100
 fovCircle.Position = UserInputService:GetMouseLocation()
+
 local function toggleFOVCircle()
     fovCircleEnabled = not fovCircleEnabled
     fovButton.Text = "FOV Circle: " .. (fovCircleEnabled and "ON" or "OFF")
     fovCircle.Visible = fovCircleEnabled
 end
+
 RunService.RenderStepped:Connect(function()
     fovCircle.Position = UserInputService:GetMouseLocation()
 end)
