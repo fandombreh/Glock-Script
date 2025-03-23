@@ -95,14 +95,14 @@ RunService.RenderStepped:Connect(updateTriggerBot)
 RunService.RenderStepped:Connect(updateAimbot)
 
 -- Function to create toggle buttons
-local function createToggleButton(text, parent, toggleVar, yOffset)
+local function createToggleButton(name, toggleVar, yOffset)
     local button = Instance.new("TextButton")
     button.Size = UDim2.new(0, 200, 0, 40)
-    button.Position = UDim2.new(0.5, -100, 0, yOffset) -- Spacing buttons properly
-    button.Text = text .. " [OFF]"
+    button.Position = UDim2.new(0, 25, 0, yOffset) -- FIXED SPACING!
+    button.Text = name .. " [OFF]"
     button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
     button.TextColor3 = Color3.fromRGB(255, 255, 255)
-    button.Parent = parent
+    button.Parent = mainFrame
 
     button.MouseButton1Click:Connect(function()
         if toggleVar == "camLock" then
@@ -122,7 +122,7 @@ local function createToggleButton(text, parent, toggleVar, yOffset)
 end
 
 -- Create buttons with proper spacing
-createToggleButton("Cam Lock", mainFrame, "camLock", 10)
-createToggleButton("Silent Aim", mainFrame, "silentAim", 60)
-createToggleButton("Trigger Bot", mainFrame, "triggerBot", 110)
-createToggleButton("Aimbot", mainFrame, "aimbot", 160)
+createToggleButton("Cam Lock", "camLock", 10)
+createToggleButton("Silent Aim", "silentAim", 60)
+createToggleButton("Trigger Bot", "triggerBot", 110)
+createToggleButton("Aimbot", "aimbot", 160)
