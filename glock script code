@@ -1,0 +1,170 @@
+cal Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local player = Players.LocalPlayer
+local camera = workspace.CurrentCamera
+
+-- Default Lock-On Settings
+local lockOnEnabled = false
+local lockOnRange = 10 -- Default to 10 studs
+local smoothSpeed = 0.13
+local lockOnEnemy = nil
+
+-- Function to check if player has a gun equipped
+local function isGunEquipped()
+    local character = player.Character
+    if character then
+        for _, item in pairs(character:GetChildren()) do
+            if item:IsA("Tool") and item:FindFirstChild("GunScript") then -- Change "GunScript" to match your gun tools
+                return true
+            end
+        end
+    end
+    return false
+end
+
+-- Function to get distance between two points
+local function getDistance(pos1, pos2)
+    return (pos1 - pos2).Magnitude
+end
+
+-- Function to find the closest enemy within range
+local function findClosestEnemy()
+    local closestEnemy = nil
+    local closestDistance = lockOnRange
+
+    for _, enemy in pairs(workspace.Enemies:GetChildren()) do
+        if enemy:FindFirstChild("HumanoidRootPart") then
+            local enemyPosition = enemy.HumanoidRootPart.Position
+            local playerPosition = player.Character and player.Character:FindFirstChild("HumanoidRootPart") and player.Character.HumanoidRootPart.Position
+            if playerPosition then
+                local distance = getDistance(playerPosition, enemyPosition)
+                if distance < closestDistance then
+                    closestEnemy = enemy
+                    closestDistance = distance
+                end
+            end
+        end
+    end
+
+    return closestEnemy
+end
+
+-- Function to smoothly track an enemy
+local function trackEnemy(enemy)
+    if enemy and enemy:FindFirstChild("HumanoidRootPart") then
+        local enemyPosition = enemy.HumanoidRootPart.Position
+        local cameraPosition = camera.CFrame.Position
+        local lookAt = CFrame.new(cameraPosition, enemyPosition)
+
+        camera.CFrame = camera.CFrame:Lerp(lookAt, smoothSpeed)
+    end
+end
+
+-- Main loop to update tracking
+RunService.RenderStepped:Connect(function()
+    if lockOnEnabled and isGunEquipped() then
+        if not lockOnEnemy or getDistance(player.Character.HumanoidRootPart.Position, lockOnEnemy.HumanoidRootPart.Position) > lockOnRange then
+            lockOnEnemy = findClosestEnemy()
+        end
+
+        if lockOnEnemy then
+            trackEnemy(lockOnEnemy)
+        end
+    else
+        lockOnEnemy = nil
+    end
+end)
+
+-------------------------------
+-- GUI SETUP (GLOCK MENU)
+-------------------------------
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+ScreenGui.Name = "GlockGUI"
+
+-- Main Frame
+local Frame = Instance.new("Frame")
+Frame.Parent = ScreenGui
+Frame.BackgroundColor3 = Color3.new(0, 0, 0)
+Frame.BackgroundTransparency = 0.3
+Frame.Position = UDim2.new(0.8, 0, 0.3, 0)
+Frame.Size = UDim2.new(0, 200, 0, 150)
+
+-- Title
+local Title = Instance.new("TextLabel")
+Title.Parent = Frame
+Title.Text = "Glock Settings"
+Title.Size = UDim2.new(1, 0, 0, 30)
+Title.BackgroundTransparency = 1
+Title.TextColor3 = Color3.new(1, 1, 1)
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 16
+
+-- Lock-On Toggle Button
+local LockButton = Instance.new("TextButton")
+LockButton.Parent = Frame
+LockButton.Text = "Lock: OFF"
+LockButton.Size = UDim2.new(1, -10, 0, 30)
+LockButton.Position = UDim2.new(0, 5, 0, 40)
+LockButton.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
+LockButton.TextColor3 = Color3.new(1, 1, 1)
+LockButton.Font = Enum.Font.Gotham
+LockButton.TextSize = 14
+LockButton.MouseButton1Click:Connect(function()
+    lockOnEnabled = not lockOnEnabled
+    LockButton.Text = lockOnEnabled and "Lock: ON" or "Lock: OFF"
+end)
+
+-- Range Slider
+local RangeLabel = Instance.new("TextLabel")
+RangeLabel.Parent = Frame
+RangeLabel.Text = "Range: " .. lockOnRange
+RangeLabel.Size = UDim2.new(1, 0, 0, 20)
+RangeLabel.Position = UDim2.new(0, 0, 0, 75)
+RangeLabel.BackgroundTransparency = 1
+RangeLabel.TextColor3 = Color3.new(1, 1, 1)
+RangeLabel.Font = Enum.Font.Gotham
+RangeLabel.TextSize = 14
+
+local RangeSlider = Instance.new("TextButton")
+RangeSlider.Parent = Frame
+RangeSlider.Text = "Increase Range"
+RangeSlider.Size = UDim2.new(1, -10, 0, 25)
+RangeSlider.Position = UDim2.new(0, 5, 0, 100)
+RangeSlider.BackgroundColor3 = Color3.new(0.3, 0.3, 0.3)
+RangeSlider.TextColor3 = Color3.new(1, 1, 1)
+RangeSlider.Font = Enum.Font.Gotham
+RangeSlider.TextSize = 14
+RangeSlider.MouseButton1Click:Connect(function()
+    lockOnRange = lockOnRange + 2
+    if lockOnRange > 50 then lockOnRange = 10 end
+    RangeLabel.Text = "Range: " .. lockOnRange
+end)
+
+-- Smoothness Slider
+local SmoothnessLabel = Instance.new("TextLabel")
+SmoothnessLabel.Parent = Frame
+SmoothnessLabel.Text = "Smoothness: " .. smoothSpeed
+SmoothnessLabel.Size = UDim2.new(1, 0, 0, 20)
+SmoothnessLabel.Position = UDim2.new(0, 0, 0, 125)
+SmoothnessLabel.BackgroundTransparency = 1
+SmoothnessLabel.TextColor3 = Color3.new(1, 1, 1)
+SmoothnessLabel.Font = Enum.Font.Gotham
+SmoothnessLabel.TextSize = 14
+
+local SmoothnessSlider = Instance.new("TextButton")
+SmoothnessSlider.Parent = Frame
+SmoothnessSlider.Text = "Increase Smoothness"
+SmoothnessSlider.Size = UDim2.new(1, -10, 0, 25)
+SmoothnessSlider.Position = UDim2.new(0, 5, 0, 145)
+SmoothnessSlider.BackgroundColor3 = Color3.new(0.3, 0.3, 0.3)
+SmoothnessSlider.TextColor3 = Color3.new(1, 1, 1)
+SmoothnessSlider.Font = Enum.Font.Gotham
+SmoothnessSlider.TextSize = 14
+SmoothnessSlider.MouseButton1Click:Connect(function()
+    smoothSpeed = smoothSpeed + 0.02
+    if smoothSpeed > 0.3 then smoothSpeed = 0.05 end
+    SmoothnessLabel.Text = "Smoothness: " .. string.format("%.2f", smoothSpeed)
+end)
