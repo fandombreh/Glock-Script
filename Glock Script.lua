@@ -44,7 +44,7 @@ end
 local triggerBotConnection
 local function toggleTriggerBot()
     triggerBotEnabled = not triggerBotEnabled
-    print("Trigger Bot:", triggerBotEnabled)
+    triggerBotButton.Text = "Trigger Bot: " .. (triggerBotEnabled and "ON" or "OFF")
     if triggerBotEnabled then
         triggerBotConnection = RunService.RenderStepped:Connect(function()
             local target = getClosestPlayer()
@@ -68,6 +68,7 @@ end
 -- 🔵 ESP (Fix Cleanup)
 local function toggleESP()
     espEnabled = not espEnabled
+    espButton.Text = "ESP: " .. (espEnabled and "ON" or "OFF")
     if not espEnabled then
         for _, player in pairs(game.Players:GetPlayers()) do
             if player.Character then
@@ -125,10 +126,10 @@ end
 local buttonSpacing = 45
 local startY = 10
 
-createButton("Toggle Silent Aim", mainFrame, function()
+silentAimButton = createButton("Silent Aim: OFF", mainFrame, function()
     silentAimEnabled = not silentAimEnabled
-    print("Silent Aim:", silentAimEnabled)
+    silentAimButton.Text = "Silent Aim: " .. (silentAimEnabled and "ON" or "OFF")
 end, startY)
 
-createButton("Toggle Trigger Bot", mainFrame, toggleTriggerBot, startY + buttonSpacing)
-createButton("Toggle ESP", mainFrame, toggleESP, startY + buttonSpacing * 2)
+triggerBotButton = createButton("Trigger Bot: OFF", mainFrame, toggleTriggerBot, startY + buttonSpacing)
+espButton = createButton("ESP: OFF", mainFrame, toggleESP, startY + buttonSpacing * 2)
