@@ -29,7 +29,7 @@ local function getClosestPlayer()
     return closestPlayer
 end
 
--- 🔫 Silent Aim Fix (Redirects Aim Properly)
+-- 🔫 Silent Aim (Redirects Aim Properly)
 local mt = getrawmetatable(game)
 if mt then
     setreadonly(mt, false)
@@ -41,9 +41,10 @@ if mt then
             local target = getClosestPlayer()
             if target and target.Character and target.Character:FindFirstChild("Head") then
                 args[1] = Ray.new(camera.CFrame.Position, (target.Character.Head.Position - camera.CFrame.Position).unit * silentAimStrength)
+                return oldNamecall(self, unpack(args))
             end
         end
-        return oldNamecall(self, unpack(args))
+        return oldNamecall(self, ...)
     end)
     setreadonly(mt, true)
 end
@@ -132,4 +133,3 @@ end, startY)
 
 createButton("Toggle Trigger Bot", mainFrame, toggleTriggerBot, startY + buttonSpacing)
 createButton("Toggle ESP", mainFrame, toggleESP, startY + buttonSpacing * 2)
-
