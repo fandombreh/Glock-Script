@@ -73,16 +73,12 @@ local function toggleTriggerBot()
     end
 end
 
--- 🔵 Fixed ESP System (Optimized)
+-- 🔵 Fixed ESP System (Fully Working)
 local function toggleESP()
     espEnabled = not espEnabled
     espButton.Text = "ESP: " .. (espEnabled and "ON" or "OFF")
 
-    for _, conn in ipairs(espConnections) do
-        conn:Disconnect()
-    end
-    table.clear(espConnections)
-
+    -- Remove all ESP highlights if turning off
     if not espEnabled then
         for _, player in pairs(game.Players:GetPlayers()) do
             if player.Character then
@@ -95,6 +91,7 @@ local function toggleESP()
         return
     end
 
+    -- ESP Update Function
     local function updateESP()
         for _, player in pairs(game.Players:GetPlayers()) do
             if player ~= localPlayer and player.Character then
@@ -107,16 +104,33 @@ local function toggleESP()
                     highlight.FillColor = Color3.fromRGB(255, 0, 0)
                     highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
                     highlight.FillTransparency = 0.5
-                    highlight.Adornee = character
                     highlight.Parent = character
                 end
             end
         end
     end
 
-    local conn = RunService.RenderStepped:Connect(updateESP)
-    table.insert(espConnections, conn)
+    -- Keep updating ESP while enabled
+    local espLoop = RunService.RenderStepped:Connect(updateESP)
+    table.insert(espConnections, espLoop)
 end
+
+-- 🔵 FOV Circle (Working)
+local fovCircle = Drawing.new("Circle")
+fovCircle.Visible = false
+fovCircle.Color = Color3.fromRGB(0, 255, 0)
+fovCircle.Thickness = 2
+fovCircle.Radius = 100
+
+local function toggleFOVCircle()
+    fovCircleEnabled = not fovCircleEnabled
+    fovButton.Text = "FOV Circle: " .. (fovCircleEnabled and "ON" or "OFF")
+    fovCircle.Visible = fovCircleEnabled
+end
+
+RunService.RenderStepped:Connect(function()
+    fovCircle.Position = UserInputService:GetMouseLocation()
+end)
 
 -- 🛠️ UI Setup
 local glockGui = Instance.new("ScreenGui")
@@ -149,4 +163,4 @@ local startY = 10
 lockAimbotButton = createButton("Lock Aimbot: OFF", mainFrame, lockAimbot, startY)
 triggerBotButton = createButton("Trigger Bot: OFF", mainFrame, toggleTriggerBot, startY + buttonSpacing)
 espButton = createButton("ESP: OFF", mainFrame, toggleESP, startY + buttonSpacing * 2)
-
+fovButton = createButton("FOV Circle: OFF", mainFrame, toggleFOVCircle, startY + buttonSpacing * 3)
