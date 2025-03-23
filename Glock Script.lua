@@ -15,18 +15,20 @@ local silentAimStrength = 5
 local glockGui = Instance.new("ScreenGui")
 glockGui.Parent = localPlayer:WaitForChild("PlayerGui")
 
+the main frame
 local mainFrame = Instance.new("Frame")
 mainFrame.Size = UDim2.new(0, 400, 0, 500)
 mainFrame.Position = UDim2.new(0.5, -200, 0.5, -250)
 mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+mainFrame.ClipsDescendants = true
 mainFrame.Parent = glockGui
 
--- UI Layout
+-- UI Layout Fix
 local layout = Instance.new("UIListLayout")
 layout.Parent = mainFrame
 layout.FillDirection = Enum.FillDirection.Vertical
 layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-layout.Padding = UDim.new(0, 10)
+layout.Padding = UDim.new(0, 20) -- Increase padding to avoid overlapping
 
 -- Function to create sliders
 local function createSlider(parent, label, min, max, default, callback)
@@ -36,29 +38,31 @@ local function createSlider(parent, label, min, max, default, callback)
     frame.Parent = parent
     
     local sliderLabel = Instance.new("TextLabel")
-    sliderLabel.Size = UDim2.new(0, 100, 0, 50)
+    sliderLabel.Size = UDim2.new(0, 150, 0, 50)
+    sliderLabel.Position = UDim2.new(0, 10, 0, 0)
     sliderLabel.Text = label .. ": " .. tostring(default)
     sliderLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
     sliderLabel.Parent = frame
     
-    local slider = Instance.new("Frame")
-    slider.Size = UDim2.new(0, 200, 0, 20)
-    slider.Position = UDim2.new(0, 100, 0, 15)
-    slider.BackgroundColor3 = Color3.fromRGB(70, 70, 255)
-    slider.Parent = frame
+    local sliderBar = Instance.new("Frame")
+    sliderBar.Size = UDim2.new(0, 120, 0, 10)
+    sliderBar.Position = UDim2.new(0, 160, 0, 20)
+    sliderBar.BackgroundColor3 = Color3.fromRGB(70, 70, 255)
+    sliderBar.Parent = frame
     
     local dragBar = Instance.new("TextButton")
     dragBar.Size = UDim2.new(0, 10, 0, 20)
+    dragBar.Position = UDim2.new(0, (default - min) / (max - min) * 120, 0, -5)
     dragBar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    dragBar.Parent = slider
+    dragBar.Parent = sliderBar
     
     dragBar.MouseButton1Down:Connect(function()
         local moveConn
         moveConn = RunService.RenderStepped:Connect(function()
             local mouseX = UserInputService:GetMouseLocation().X
-            local posX = math.clamp(mouseX - slider.AbsolutePosition.X, 0, slider.AbsoluteSize.X)
-            local value = math.floor(min + ((posX / slider.AbsoluteSize.X) * (max - min)))
-            dragBar.Position = UDim2.new(0, posX - 5, 0, 0)
+            local posX = math.clamp(mouseX - sliderBar.AbsolutePosition.X, 0, sliderBar.AbsoluteSize.X)
+            local value = math.floor(min + ((posX / sliderBar.AbsoluteSize.X) * (max - min)))
+            dragBar.Position = UDim2.new(0, posX - 5, 0, -5)
             sliderLabel.Text = label .. ": " .. tostring(value)
             callback(value)
         end)
