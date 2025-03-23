@@ -22,6 +22,7 @@ mainFrame.Position = UDim2.new(0.5, -200, 0.5, -250)
 mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 mainFrame.Parent = glockGui
 
+-- Function to create sliders
 local function createSlider(parent, label, min, max, default, callback)
     local frame = Instance.new("Frame")
     frame.Size = UDim2.new(0, 300, 0, 50)
