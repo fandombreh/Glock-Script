@@ -6,6 +6,7 @@ local UserInputService = game:GetService("UserInputService")
 local isFocused = true
 local camLockEnabled = false
 local triggerBotEnabled = false
+local silentAimEnabled = false
 local targetPlayer = nil
 local camLockSmoothness = 5
 local triggerBotRange = 10
@@ -67,37 +68,42 @@ local function createTab(name, position, targetTab)
     end)
 end
 
--- Creating Tabs
-local function createTabContent(tab, name)
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1, 0, 1, 0)
-    label.Text = name
-    label.TextColor3 = Color3.fromRGB(255, 255, 255)
-    label.BackgroundTransparency = 1
-    label.Font = Enum.Font.GothamBold
-    label.TextSize = 24
-    label.Parent = tab
+-- Create Toggle Buttons
+local function createToggle(parent, text, default, callback)
+    local button = Instance.new("TextButton")
+    button.Size = UDim2.new(0, 200, 0, 50)
+    button.Text = text .. ": " .. (default and "ON" or "OFF")
+    button.BackgroundColor3 = default and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+    button.Parent = parent
+
+    button.MouseButton1Click:Connect(function()
+        default = not default
+        button.Text = text .. ": " .. (default and "ON" or "OFF")
+        button.BackgroundColor3 = default and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+        callback(default)
+    end)
 end
 
+-- Creating Tabs
 local silentAimTab = Instance.new("Frame")
 silentAimTab.Name = "SilentAimTab"
 silentAimTab.Size = UDim2.new(1, 0, 1, -50)
 silentAimTab.BackgroundTransparency = 1
 silentAimTab.Parent = contentFrame
 silentAimTab.Visible = false
-createTabContent(silentAimTab, "Silent Aim Settings")
+createToggle(silentAimTab, "Enable Silent Aim", false, function(value) silentAimEnabled = value end)
 
 local camLockTab = silentAimTab:Clone()
 camLockTab.Name = "CamLockTab"
 camLockTab.Parent = contentFrame
 camLockTab.Visible = false
-createTabContent(camLockTab, "Cam Lock Settings")
+createToggle(camLockTab, "Enable Cam Lock", false, function(value) camLockEnabled = value end)
 
 local triggerBotTab = silentAimTab:Clone()
 triggerBotTab.Name = "TriggerBotTab"
 triggerBotTab.Parent = contentFrame
 triggerBotTab.Visible = false
-createTabContent(triggerBotTab, "Trigger Bot Settings")
+createToggle(triggerBotTab, "Enable Trigger Bot", false, function(value) triggerBotEnabled = value end)
 
 createTab("Silent Aim", 0, silentAimTab)
 createTab("Cam Lock", 1, camLockTab)
