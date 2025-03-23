@@ -15,12 +15,14 @@ local silentAimStrength = 5
 local glockGui = Instance.new("ScreenGui")
 glockGui.Parent = localPlayer:WaitForChild("PlayerGui")
 
--- Main Frame
+-- Main Frame (Draggable)
 local mainFrame = Instance.new("Frame")
 mainFrame.Size = UDim2.new(0, 400, 0, 500)
 mainFrame.Position = UDim2.new(0.5, -200, 0.5, -250)
 mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 mainFrame.ClipsDescendants = true
+mainFrame.Active = true
+mainFrame.Draggable = true -- Makes the UI draggable
 mainFrame.Parent = glockGui
 
 -- UI Layout
@@ -56,10 +58,8 @@ local function createSlider(parent, label, min, max, default, callback)
     dragBar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     dragBar.Parent = sliderBar
 
-    local moveConn, releaseConn
-
     local function updateSlider(input)
-        local mouseX = input.Position.X
+        local mouseX = UserInputService:GetMouseLocation().X
         local posX = math.clamp(mouseX - sliderBar.AbsolutePosition.X, 0, sliderBar.AbsoluteSize.X)
         local value = math.floor(min + ((posX / sliderBar.AbsoluteSize.X) * (max - min)))
         dragBar.Position = UDim2.new(0, posX - 5, 0, -5)
@@ -68,14 +68,13 @@ local function createSlider(parent, label, min, max, default, callback)
     end
 
     dragBar.MouseButton1Down:Connect(function()
-        moveConn = RunService.RenderStepped:Connect(function()
-            updateSlider(UserInputService:GetMouseLocation())
-        end)
-
+        local moveConn
+        moveConn = RunService.RenderStepped:Connect(updateSlider)
+        local releaseConn
         releaseConn = UserInputService.InputEnded:Connect(function(input)
             if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                if moveConn then moveConn:Disconnect() end
-                if releaseConn then releaseConn:Disconnect() end
+                moveConn:Disconnect()
+                releaseConn:Disconnect()
             end
         end)
     end)
@@ -106,7 +105,7 @@ local function updateSilentAim()
         local target = getClosestPlayer()
         if target and target.Character and target.Character:FindFirstChild("Head") then
             local targetPosition = target.Character.Head.Position
-            camera.CFrame = camera.CFrame:Lerp(CFrame.new(camera.CFrame.Position, targetPosition), silentAimStrength / 10)
+            camera.CFrame = camera.CFrame:Lerp(CFrame.new(camera.CFrame.Position, targetPosition), silentAimStrength / 20)
         end
     end
 end
@@ -127,7 +126,6 @@ local function updateTriggerBot()
         local target = getClosestPlayer()
         if target and target.Character and target.Character:FindFirstChild("Head") then
             if (localPlayer.Character.Head.Position - target.Character.Head.Position).Magnitude <= triggerBotRange then
-                -- Alternative: Use a remote event to fire a weapon
                 print("Trigger Bot Activated!")
             end
         end
