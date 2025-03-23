@@ -3,13 +3,17 @@ local camera = game.Workspace.CurrentCamera
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
-local isFocused = true -- Assume focused initially
+local isFocused = true
+local camLockEnabled = false
+local triggerBotEnabled = false
+local targetPlayer = nil
+local camLockSmoothness = 5
+local triggerBotRange = 10
 
 -- Track focus state
 UserInputService.WindowFocused:Connect(function()
     isFocused = true
 end)
-
 UserInputService.WindowFocusReleased:Connect(function()
     isFocused = false
 end)
@@ -22,10 +26,11 @@ glockGui.ResetOnSpawn = false
 
 local mainFrame = Instance.new("Frame")
 mainFrame.Size = UDim2.new(0, 400, 0, 500)
-mainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
-mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+mainFrame.Position = UDim2.new(0.5, -200, 0.5, -250)
 mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 mainFrame.BorderSizePixel = 0
+mainFrame.Active = true
+mainFrame.Draggable = true
 mainFrame.Parent = glockGui
 
 local mainFrameCorner = Instance.new("UICorner")
@@ -43,7 +48,6 @@ contentFrame.Position = UDim2.new(0, 0, 0, 50)
 contentFrame.BackgroundTransparency = 1
 contentFrame.Parent = mainFrame
 
--- Create Tabs
 local function createTab(name, position, targetTab)
     local tab = Instance.new("TextButton")
     tab.Size = UDim2.new(0, 100, 0, 50)
@@ -63,65 +67,58 @@ local function createTab(name, position, targetTab)
     end)
 end
 
--- Create Slider
-local function createSlider(parent, text, min, max, default, callback)
-    local sliderFrame = Instance.new("Frame")
-    sliderFrame.Size = UDim2.new(0, 350, 0, 50)
-    sliderFrame.Parent = parent
-    sliderFrame.BackgroundTransparency = 1
-
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1, 0, 0, 20)
-    label.Text = text .. ": " .. default
-    label.TextColor3 = Color3.fromRGB(230, 230, 230)
-    label.BackgroundTransparency = 1
-    label.Parent = sliderFrame
-
-    local slider = Instance.new("TextButton")
-    slider.Size = UDim2.new(0, 350, 0, 20)
-    slider.Position = UDim2.new(0, 0, 0, 25)
-    slider.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-    slider.Text = ""
-    slider.Parent = sliderFrame
-
-    local fill = Instance.new("Frame")
-    fill.Size = UDim2.new(0.5, 0, 1, 0) -- Start at 50%
-    fill.BackgroundColor3 = Color3.fromRGB(100, 100, 255)
-    fill.Parent = slider
-
-    local moving = false
-
-    local function updateSlider(input)
-        if not moving then return end
-        local mousePos = input.Position.X
-        local sliderPos = slider.AbsolutePosition.X
-        local percent = math.clamp((mousePos - sliderPos) / slider.AbsoluteSize.X, 0, 1)
-        local value = math.floor(min + (max - min) * percent)
-        label.Text = text .. ": " .. value
-        fill.Size = UDim2.new(percent, 0, 1, 0)
-        callback(value)
+-- Find nearest player to crosshair
+local function getNearestPlayer()
+    local closest, minDist = nil, math.huge
+    for _, player in ipairs(game.Players:GetPlayers()) do
+        if player ~= localPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local screenPos, onScreen = camera:WorldToViewportPoint(player.Character.HumanoidRootPart.Position)
+            if onScreen then
+                local dist = (Vector2.new(screenPos.X, screenPos.Y) - UserInputService:GetMouseLocation()).Magnitude
+                if dist < minDist and dist < 200 then
+                    closest, minDist = player, dist
+                end
+            end
+        end
     end
-
-    slider.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            moving = true
-            updateSlider(input)
-        end
-    end)
-
-    local inputChangedConn
-    inputChangedConn = UserInputService.InputChanged:Connect(function(input)
-        if moving and input.UserInputType == Enum.UserInputType.MouseMovement then
-            updateSlider(input)
-        end
-    end)
-
-    UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            moving = false
-        end
-    end)
+    return closest
 end
+
+-- Cam Lock Function
+RunService.RenderStepped:Connect(function()
+    if camLockEnabled and targetPlayer and targetPlayer.Character then
+        local hrp = targetPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            camera.CFrame = camera.CFrame:Lerp(CFrame.new(camera.CFrame.Position, hrp.Position), camLockSmoothness / 100)
+        end
+    end
+end)
+
+-- Trigger Bot Function
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if input.UserInputType == Enum.UserInputType.MouseButton2 and triggerBotEnabled then
+        local target = getNearestPlayer()
+        if target and (target.Character.HumanoidRootPart.Position - camera.CFrame.Position).Magnitude < triggerBotRange then
+            task.wait(0.1)
+            mouse1click()
+        end
+    end
+end)
+
+-- Toggle Cam Lock
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if input.KeyCode == Enum.KeyCode.E then
+        camLockEnabled = not camLockEnabled
+        targetPlayer = getNearestPlayer()
+    end
+end)
+
+-- Toggle Trigger Bot
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if input.KeyCode == Enum.KeyCode.T then
+        triggerBotEnabled = not triggerBotEnabled
+    end
+end)
 
 -- Creating Tabs
 local silentAimTab = Instance.new("Frame")
@@ -144,11 +141,5 @@ triggerBotTab.Visible = false
 createTab("Silent Aim", 0, silentAimTab)
 createTab("Cam Lock", 1, camLockTab)
 createTab("Trigger Bot", 2, triggerBotTab)
-
--- Sliders
-createSlider(silentAimTab, "Smoothness", 1, 10, 5, function(value) end)
-createSlider(camLockTab, "Smoothness", 1, 10, 5, function(value) end)
-createSlider(triggerBotTab, "Trigger Range", 1, 50, 10, function(value) end)
-createSlider(camLockTab, "Lock Range", 1, 50, 10, function(value) end)
 
 silentAimTab.Visible = true -- Default active tab
