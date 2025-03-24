@@ -1,3 +1,4 @@
+-- GUI Setup
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "Glock.lol"
 screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
@@ -48,6 +49,43 @@ local triggerBotButton = createButton("Trigger Bot", 0.4)
 local espButton = createButton("ESP", 0.6)
 local speedHackButton = createButton("Speed Hack", 0.8)
 
+-- Slider for smoothness control (customizable)
+local smoothnessSliderLabel = Instance.new("TextLabel")
+smoothnessSliderLabel.Text = "Camera Lock Smoothness"
+smoothnessSliderLabel.Size = UDim2.new(1, 0, 0, 40)
+smoothnessSliderLabel.Position = UDim2.new(0, 0, 1, 0)
+smoothnessSliderLabel.BackgroundTransparency = 1
+smoothnessSliderLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+smoothnessSliderLabel.TextSize = 18
+smoothnessSliderLabel.TextStrokeTransparency = 0.8
+smoothnessSliderLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+smoothnessSliderLabel.TextXAlignment = Enum.TextXAlignment.Center
+smoothnessSliderLabel.Parent = frame
+
+local smoothnessSlider = Instance.new("TextBox")
+smoothnessSlider.Text = "0.1"  -- Default smoothness value
+smoothnessSlider.Size = UDim2.new(0, 200, 0, 40)
+smoothnessSlider.Position = UDim2.new(0.5, -100, 1.1, 0)
+smoothnessSlider.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
+smoothnessSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
+smoothnessSlider.TextSize = 18
+smoothnessSlider.TextAlign = Enum.TextXAlignment.Center
+smoothnessSlider.Parent = frame
+
+-- Smoothness variable
+local smoothnessValue = 0.1  -- Default smoothness value
+
+smoothnessSlider.FocusLost:Connect(function(enterPressed)
+    if enterPressed then
+        local input = tonumber(smoothnessSlider.Text)
+        if input and input >= 0 and input <= 1 then
+            smoothnessValue = input
+        else
+            smoothnessSlider.Text = tostring(smoothnessValue)  -- Reset to last valid value
+        end
+    end
+end)
+
 -- Smooth Drag Function for GUI
 local dragging, dragStart, startPos
 local function update(input)
@@ -84,9 +122,8 @@ local triggerBot = false
 local lockCamera = false
 local speedHackEnabled = false
 local espEnabled = false
-local fov = 50 -- Field of view for Trigger Bot
 
--- Camera Lock (Track Head)
+-- Camera Lock (Track Head with Smoothness)
 local function toggleCameraLock()
     lockCamera = not lockCamera
 
@@ -112,9 +149,13 @@ local function toggleCameraLock()
                 end
             end
 
+            -- Smoothly move camera to the target player's head
             if closestPlayer then
+                -- Calculate the target CFrame
                 local targetCFrame = CFrame.new(camera.CFrame.Position, closestPlayer.Position)
-                camera.CFrame = camera.CFrame:Lerp(targetCFrame, 0.1)
+
+                -- Smoothly interpolate between current camera CFrame and target
+                camera.CFrame = camera.CFrame:Lerp(targetCFrame, smoothnessValue)  -- Use smoothnessValue from slider
             end
         end)
     else
@@ -134,63 +175,60 @@ end
 
 triggerBotButton.MouseButton1Click:Connect(toggleTriggerBot)
 
--- Trigger Bot Functionality with Accuracy & FOV Check
-game:GetService("RunService").Heartbeat:Connect(function()
-    if triggerBot then
-        local closestEnemy = nil
-        local closestDistance = math.huge
-
-        for _, player in pairs(game.Players:GetPlayers()) do
-            if player ~= game.Players.LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                local distance = (camera.CFrame.Position - player.Character.HumanoidRootPart.Position).Magnitude
-                if distance < closestDistance then
-                    closestDistance = distance
-                    closestEnemy = player.Character
-                end
-            end
-
-            if closestEnemy then
-                local enemyRootPart = closestEnemy:FindFirstChild("HumanoidRootPart")
-                if enemyRootPart then
-                    local screenPos = camera:WorldToScreenPoint(enemyRootPart.Position)
-                    local mousePos = game:GetService("UserInputService"):GetMouseLocation()
-
-                    local angle = (mousePos - screenPos).Magnitude
-                    if angle < fov then
-                        local tool = game.Players.LocalPlayer.Character:FindFirstChildOfClass("Tool")
-                        if tool and tool:IsA("Tool") then
-                            tool:Activate()
-                        end
-                    end
-                end
-            end
-        end
-    end
-end)
-
--- Toggle the camera lock button functionality
-cameraLockButton.MouseButton1Click:Connect(toggleCameraLock)
-
 -- ESP (as before)
 local function toggleESP()
     espEnabled = not espEnabled
     if espEnabled then
         print("ESP Enabled")
+        -- Create ESP for every player
         for _, player in pairs(game.Players:GetPlayers()) do
             if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                -- Create ESP box
-                local humanoidRootPart = player.Character.HumanoidRootPart
-                local boundingBox = Instance.new("Frame")
-                boundingBox.Size = UDim2.new(0, 100, 0, 100)  -- Size of the box
-                boundingBox.Position = UDim2.new(0, humanoidRootPart.Position.X, 0, humanoidRootPart.Position.Y)  -- Position of the box
-                boundingBox.BackgroundColor3 = Color3.fromRGB(255, 0, 0)  -- Red box color
-                boundingBox.BackgroundTransparency = 0.5  -- Slight transparency
-                boundingBox.BorderSizePixel = 0  -- No border
-                boundingBox.Parent = screenGui
-
-                -- Add a billboard GUI with the player's name
                 local billboardGui = Instance.new("BillboardGui")
-                billboardGui.Adornee = humanoidRootPart
-                billboardGui.Parent = humanoidRootPart
+                billboardGui.Adornee = player.Character.HumanoidRootPart
+                billboardGui.Parent = player.Character.HumanoidRootPart
                 billboardGui.Size = UDim2.new(0, 100, 0, 50)
-                billboardGui.
+                billboardGui.StudsOffset = Vector3.new(0, 3, 0)
+
+                local nameLabel = Instance.new("TextLabel")
+                nameLabel.Text = player.Name
+                nameLabel.Size = UDim2.new(1, 0, 1, 0)
+                nameLabel.BackgroundTransparency = 1
+                nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+                nameLabel.TextStrokeTransparency = 0.8
+                nameLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+                nameLabel.TextSize = 16
+                nameLabel.Parent = billboardGui
+            end
+        end
+    else
+        print("ESP Disabled")
+        -- Remove ESP
+        for _, player in pairs(game.Players:GetPlayers()) do
+            if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                local billboardGui = player.Character.HumanoidRootPart:FindFirstChildOfClass("BillboardGui")
+                if billboardGui then
+                    billboardGui:Destroy()
+                end
+            end
+        end
+    end
+end
+
+espButton.MouseButton1Click:Connect(toggleESP)
+
+-- Speed Hack
+local function toggleSpeedHack()
+    speedHackEnabled = not speedHackEnabled
+    if speedHackEnabled then
+        print("Speed Hack Enabled")
+        game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 100  -- Set to a high value for faster movement
+    else
+        print("Speed Hack Disabled")
+        game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 16  -- Reset to normal walk speed
+    end
+end
+
+speedHackButton.MouseButton1Click:Connect(toggleSpeedHack)
+
+-- Toggle the camera lock button functionality
+cameraLockButton.MouseButton1Click:Connect(toggleCameraLock)
