@@ -1,5 +1,4 @@
 local localPlayer = game.Players.LocalPlayer
-local localPlayer = game.Players.LocalPlayer
 local camera = workspace.CurrentCamera
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -29,12 +28,16 @@ local function saveSettings()
         aimbotSmoothness = aimbotSmoothness,
         triggerBotSmoothness = triggerBotSmoothness
     }
-    writefile(SETTINGS_FILE, HttpService:JSONEncode(settings))
+    if writefile then
+        writefile(SETTINGS_FILE, HttpService:JSONEncode(settings))
+    else
+        warn("Writefile function is not available.")
+    end
 end
 
 -- Load Settings
 local function loadSettings()
-    if isfile(SETTINGS_FILE) then
+    if isfile and isfile(SETTINGS_FILE) then
         local settings = HttpService:JSONDecode(readfile(SETTINGS_FILE))
         triggerBotEnabled = settings.triggerBotEnabled
         lockAimbotEnabled = settings.lockAimbotEnabled
@@ -109,7 +112,11 @@ local function updateESP()
                     espBox.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
                     espBox.BackgroundTransparency = 0.5
                     espBox.BorderSizePixel = 0
-                    espBox.Parent = game.Players.LocalPlayer.PlayerGui
+                    if localPlayer.PlayerGui then
+                        espBox.Parent = localPlayer.PlayerGui
+                    else
+                        warn("PlayerGui is not available.")
+                    end
                     table.insert(espConnections, espBox)
                 end
             end
