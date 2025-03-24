@@ -138,17 +138,8 @@ fovCircle.Radius = silentAimFOV
 fovCircle.Color3 = Color3.fromRGB(255, 255, 255)
 fovCircle.Transparency = 0.5
 fovCircle.Adornee = camera
-fovCircle.Parent = glockGui
 
-RunService.RenderStepped:Connect(function()
-    if fovCircleEnabled then
-        fovCircle.Visible = true
-    else
-        fovCircle.Visible = false
-    end
-end)
-
--- UI Setup with Minimize Feature
+-- Create UI
 local glockGui = Instance.new("ScreenGui")
 glockGui.Name = "Glock - made by snoopy"
 glockGui.Parent = game:GetService("CoreGui")
@@ -230,3 +221,7 @@ end
 -- Add Sliders for Smoothness
 createSlider(mainFrame, "Aimbot Smoothness", "aimbotSmoothness", 260)
 createSlider(mainFrame, "TriggerBot Smoothness", "triggerBotSmoothness", 300)
+
+-- Parent FOV Circle to glockGui after creation
+fovCircle.Parent = glockGui
+
