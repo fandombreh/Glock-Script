@@ -12,8 +12,8 @@ local silentAimEnabled = false
 local espEnabled = false
 local fovCircleEnabled = false
 local triggerBotRange = 15
-_G.aimbotSmoothness = 0.2
-_G.triggerBotSmoothness = 0.2
+local aimbotSmoothness = 0.2
+local triggerBotSmoothness = 0.2
 local silentAimFOV = 130
 local espConnections = {}
 
@@ -25,8 +25,8 @@ local function saveSettings()
         silentAimEnabled = silentAimEnabled,
         espEnabled = espEnabled,
         fovCircleEnabled = fovCircleEnabled,
-        aimbotSmoothness = _G.aimbotSmoothness,
-        triggerBotSmoothness = _G.triggerBotSmoothness
+        aimbotSmoothness = aimbotSmoothness,
+        triggerBotSmoothness = triggerBotSmoothness
     }
     writefile(SETTINGS_FILE, HttpService:JSONEncode(settings))
 end
@@ -40,8 +40,8 @@ local function loadSettings()
         silentAimEnabled = settings.silentAimEnabled
         espEnabled = settings.espEnabled
         fovCircleEnabled = settings.fovCircleEnabled
-        _G.aimbotSmoothness = settings.aimbotSmoothness
-        _G.triggerBotSmoothness = settings.triggerBotSmoothness
+        aimbotSmoothness = settings.aimbotSmoothness
+        triggerBotSmoothness = settings.triggerBotSmoothness
     end
 end
 
@@ -91,7 +91,7 @@ RunService.RenderStepped:Connect(function()
         local target = getClosestPlayer()
         if target and target.Character and target.Character:FindFirstChild("Head") then
             local targetPosition = target.Character.Head.Position
-            camera.CFrame = camera.CFrame:Lerp(CFrame.new(camera.CFrame.Position, targetPosition), _G.aimbotSmoothness)
+            camera.CFrame = camera.CFrame:Lerp(CFrame.new(camera.CFrame.Position, targetPosition), aimbotSmoothness)
         end
     end
 end)
@@ -109,46 +109,28 @@ mainFrame.Parent = glockGui
 mainFrame.Active = true
 mainFrame.Draggable = true
 
-local function createButton(text, parent, callback, position)
-    local button = Instance.new("TextButton")
-    button.Size = UDim2.new(0, 180, 0, 40)
-    button.Position = UDim2.new(0, 10, 0, position)
-    button.Text = text
-    button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-    button.TextColor3 = Color3.fromRGB(255, 255, 255)
-    button.Parent = parent
-    button.MouseButton1Click:Connect(callback)
-    return button
-end
-
-local buttonSpacing = 45
-local startY = 10
-
-silentAimButton = createButton("Silent Aim: OFF", mainFrame, function()
-    silentAimEnabled = not silentAimEnabled
-    silentAimButton.Text = "Silent Aim: " .. (silentAimEnabled and "ON" or "OFF")
-    saveSettings()
-end, startY)
-
-lockAimbotButton = createButton("Lock Aimbot: OFF", mainFrame, lockAimbot, startY + buttonSpacing)
-
--- Smoothness Slider
 local function createSlider(parent, text, settingName, position)
     local slider = Instance.new("TextBox")
     slider.Size = UDim2.new(0, 180, 0, 40)
     slider.Position = UDim2.new(0, 10, 0, position)
     slider.Text = text .. ": " .. tostring(_G[settingName])
     slider.Parent = parent
-
+    slider.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    slider.TextColor3 = Color3.fromRGB(255, 255, 255)
+    
     slider.FocusLost:Connect(function()
         local newValue = tonumber(slider.Text:match("%d+%.?%d*"))
         if newValue then
-            _G[settingName] = newValue
+            if settingName == "aimbotSmoothness" then
+                aimbotSmoothness = newValue
+            elseif settingName == "triggerBotSmoothness" then
+                triggerBotSmoothness = newValue
+            end
             slider.Text = text .. ": " .. tostring(newValue)
             saveSettings()
         end
     end)
 end
 
-createSlider(mainFrame, "Aimbot Smoothness", "aimbotSmoothness", startY + buttonSpacing * 2)
-createSlider(mainFrame, "TriggerBot Smoothness", "triggerBotSmoothness", startY + buttonSpacing * 3)
+createSlider(mainFrame, "Aimbot Smoothness", "aimbotSmoothness", 100)
+createSlider(mainFrame, "TriggerBot Smoothness", "triggerBotSmoothness", 150)
