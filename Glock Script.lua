@@ -113,4 +113,56 @@ local function toggleCameraLock()
             end
 
             if closestPlayer then
-                camera.CFrame = CFrame.new(camera.CFrame.Position
+                camera.CFrame = CFrame.new(camera.CFrame.Position, closestPlayer.Position)
+            end
+        end)
+    else
+        print("Camera Lock Disabled")
+    end
+end
+
+-- Trigger Bot
+local function toggleTriggerBot()
+    triggerBot = not triggerBot
+    if triggerBot then
+        print("Trigger Bot Enabled")
+    else
+        print("Trigger Bot Disabled")
+    end
+end
+
+triggerBotButton.MouseButton1Click:Connect(toggleTriggerBot)
+
+-- Trigger Bot Functionality
+game:GetService("RunService").Heartbeat:Connect(function()
+    if triggerBot then
+        local closestEnemy = nil
+        local closestDistance = math.huge
+
+        for _, player in pairs(game.Players:GetPlayers()) do
+            if player ~= game.Players.LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                local distance = (camera.CFrame.Position - player.Character.HumanoidRootPart.Position).Magnitude
+                if distance < closestDistance then
+                    closestDistance = distance
+                    closestEnemy = player.Character
+                end
+            end
+        end
+
+        if closestEnemy and closestDistance < 100 then
+            local humanoid = closestEnemy:FindFirstChildOfClass("Humanoid")
+            if humanoid and humanoid.Health > 0 then
+                -- Fire the weapon automatically
+                local tool = game.Players.LocalPlayer.Character:FindFirstChildOfClass("Tool")
+                if tool and tool:IsA("Tool") then
+                    -- Trigger firing mechanism here
+                    -- You may need to simulate a click or use the tool’s Fire function if applicable
+                    tool:Activate()  -- Simulating the tool's activation (i.e., firing)
+                end
+            end
+        end
+    end
+end)
+
+-- Toggle the camera lock button functionality
+cameraLockButton.MouseButton1Click:Connect(toggleCameraLock)
