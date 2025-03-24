@@ -29,7 +29,9 @@ local function saveSettings()
         triggerBotSmoothness = triggerBotSmoothness
     }
     if writefile then
-        writefile(SETTINGS_FILE, HttpService:JSONEncode(settings))
+        pcall(function()
+            writefile(SETTINGS_FILE, HttpService:JSONEncode(settings))
+        end)
     else
         warn("Writefile function is not available.")
     end
@@ -38,14 +40,20 @@ end
 -- Load Settings
 local function loadSettings()
     if isfile and isfile(SETTINGS_FILE) then
-        local settings = HttpService:JSONDecode(readfile(SETTINGS_FILE))
-        triggerBotEnabled = settings.triggerBotEnabled
-        lockAimbotEnabled = settings.lockAimbotEnabled
-        silentAimEnabled = settings.silentAimEnabled
-        espEnabled = settings.espEnabled
-        fovCircleEnabled = settings.fovCircleEnabled
-        aimbotSmoothness = settings.aimbotSmoothness
-        triggerBotSmoothness = settings.triggerBotSmoothness
+        local success, settings = pcall(function()
+            return HttpService:JSONDecode(readfile(SETTINGS_FILE))
+        end)
+        if success then
+            triggerBotEnabled = settings.triggerBotEnabled
+            lockAimbotEnabled = settings.lockAimbotEnabled
+            silentAimEnabled = settings.silentAimEnabled
+            espEnabled = settings.espEnabled
+            fovCircleEnabled = settings.fovCircleEnabled
+            aimbotSmoothness = settings.aimbotSmoothness
+            triggerBotSmoothness = settings.triggerBotSmoothness
+        else
+            warn("Failed to decode settings, using default values.")
+        end
     else
         warn("Settings file not found, using default settings.")
     end
@@ -112,7 +120,7 @@ local function updateESP()
                     espBox.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
                     espBox.BackgroundTransparency = 0.5
                     espBox.BorderSizePixel = 0
-                    if localPlayer.PlayerGui then
+                    if localPlayer:FindFirstChild("PlayerGui") then
                         espBox.Parent = localPlayer.PlayerGui
                     else
                         warn("PlayerGui is not available.")
