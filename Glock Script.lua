@@ -1,4 +1,4 @@
--local localPlayer = game.Players.LocalPlayer
+local localPlayer = game.Players.LocalPlayer
 local camera = game.Workspace.CurrentCamera
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -73,15 +73,8 @@ local function silentAim()
         local target = getClosestPlayer()
         if target and target.Character and target.Character:FindFirstChild("Head") then
             local headPosition = target.Character.Head.Position
-            local rayDirection = (headPosition - camera.CFrame.Position).unit * 1000
-            local raycastParams = RaycastParams.new()
-            raycastParams.FilterDescendantsInstances = {localPlayer.Character}
-            raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
-            
-            local rayResult = workspace:Raycast(camera.CFrame.Position, rayDirection, raycastParams)
-            if rayResult and rayResult.Instance and rayResult.Instance:IsDescendantOf(target.Character) then
-                camera.CFrame = CFrame.new(camera.CFrame.Position, headPosition)
-            end
+            local direction = (headPosition - camera.CFrame.Position).unit
+            camera.CFrame = CFrame.new(camera.CFrame.Position, camera.CFrame.Position + direction)
         end
     end
 end
@@ -122,7 +115,7 @@ closeButton.Position = UDim2.new(1, -60, 0, 10)
 closeButton.Text = "X"
 closeButton.Parent = mainFrame
 closeButton.MouseButton1Click:Connect(function()
-    glockGui.Enabled = false
+    glockGui:Destroy()
 end)
 
 local minimizeButton = Instance.new("TextButton")
@@ -159,3 +152,4 @@ end
 
 createSlider(mainFrame, "Aimbot Smoothness", "aimbotSmoothness", 100)
 createSlider(mainFrame, "TriggerBot Smoothness", "triggerBotSmoothness", 150)
+
