@@ -1,4 +1,3 @@
--- GUI Setup
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "Glock.lol"
 screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
@@ -113,10 +112,9 @@ local function toggleCameraLock()
                 end
             end
 
-            -- Make sure to smoothly lock the camera to the closest player's head
             if closestPlayer then
                 local targetCFrame = CFrame.new(camera.CFrame.Position, closestPlayer.Position)
-                camera.CFrame = camera.CFrame:Lerp(targetCFrame, 0.1)  -- Smoothing the transition
+                camera.CFrame = camera.CFrame:Lerp(targetCFrame, 0.1)
             end
         end)
     else
@@ -141,7 +139,6 @@ game:GetService("RunService").Heartbeat:Connect(function()
     if triggerBot then
         local closestEnemy = nil
         local closestDistance = math.huge
-        local fovCircle = camera.CFrame:pointToWorldSpace(Vector3.new(0, 0, -fov))  -- Create FOV circle
 
         for _, player in pairs(game.Players:GetPlayers()) do
             if player ~= game.Players.LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
@@ -151,23 +148,19 @@ game:GetService("RunService").Heartbeat:Connect(function()
                     closestEnemy = player.Character
                 end
             end
-        end
 
-        if closestEnemy then
-            local enemyRootPart = closestEnemy:FindFirstChild("HumanoidRootPart")
-            if enemyRootPart then
-                -- Check if enemy is within the FOV range
-                local screenPos = camera:WorldToScreenPoint(enemyRootPart.Position)
-                local mousePos = game:GetService("UserInputService"):GetMouseLocation()
+            if closestEnemy then
+                local enemyRootPart = closestEnemy:FindFirstChild("HumanoidRootPart")
+                if enemyRootPart then
+                    local screenPos = camera:WorldToScreenPoint(enemyRootPart.Position)
+                    local mousePos = game:GetService("UserInputService"):GetMouseLocation()
 
-                local angle = (mousePos - screenPos).Magnitude
-                if angle < fov then  -- Only trigger if enemy is within FOV
-                    -- Fire the weapon automatically
-                    local tool = game.Players.LocalPlayer.Character:FindFirstChildOfClass("Tool")
-                    if tool and tool:IsA("Tool") then
-                        -- Trigger firing mechanism here
-                        -- You may need to simulate a click or use the tool’s Fire function if applicable
-                        tool:Activate()  -- Simulating the tool's activation (i.e., firing)
+                    local angle = (mousePos - screenPos).Magnitude
+                    if angle < fov then
+                        local tool = game.Players.LocalPlayer.Character:FindFirstChildOfClass("Tool")
+                        if tool and tool:IsA("Tool") then
+                            tool:Activate()
+                        end
                     end
                 end
             end
@@ -183,7 +176,6 @@ local function toggleESP()
     espEnabled = not espEnabled
     if espEnabled then
         print("ESP Enabled")
-        -- Create ESP for every player
         for _, player in pairs(game.Players:GetPlayers()) do
             if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
                 local billboardGui = Instance.new("BillboardGui")
@@ -205,7 +197,6 @@ local function toggleESP()
         end
     else
         print("ESP Disabled")
-        -- Remove ESP
         for _, player in pairs(game.Players:GetPlayers()) do
             if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
                 local billboardGui = player.Character.HumanoidRootPart:FindFirstChildOfClass("BillboardGui")
@@ -224,10 +215,10 @@ local function toggleSpeedHack()
     speedHackEnabled = not speedHackEnabled
     if speedHackEnabled then
         print("Speed Hack Enabled")
-        game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 100  -- Set to a high value for faster movement
+        game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 100
     else
         print("Speed Hack Disabled")
-        game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 16  -- Reset to normal walk speed
+        game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 16
     end
 end
 
