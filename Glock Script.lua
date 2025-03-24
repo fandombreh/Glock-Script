@@ -127,7 +127,7 @@ local function createButton(text, parent, callback, position)
     return button
 end
 
-local function createSlider(text, parent, position, callback, settingKey)
+local function createSlider(text, parent, position, settingKey)
     local slider = Instance.new("TextBox")
     slider.Size = UDim2.new(0, 180, 0, 40)
     slider.Position = UDim2.new(0, 10, 0, position)
@@ -138,7 +138,11 @@ local function createSlider(text, parent, position, callback, settingKey)
     slider.FocusLost:Connect(function()
         local value = tonumber(slider.Text)
         if value then
-            _G[settingKey] = value
+            if settingKey == "aimbotSmoothness" then
+                aimbotSmoothness = value
+            elseif settingKey == "triggerBotSmoothness" then
+                triggerBotSmoothness = value
+            end
             saveSettings()
         end
     end)
@@ -149,8 +153,8 @@ local buttonSpacing = 45
 local startY = 10
 
 lockAimbotButton = createButton("Lock Aimbot: OFF", mainFrame, lockAimbot, startY)
-createSlider("Aimbot Smoothness", mainFrame, startY + buttonSpacing, function(value) aimbotSmoothness = value end, "aimbotSmoothness")
+createSlider("Aimbot Smoothness", mainFrame, startY + buttonSpacing, "aimbotSmoothness")
 triggerBotButton = createButton("Trigger Bot: OFF", mainFrame, toggleTriggerBot, startY + buttonSpacing * 2)
-createSlider("Trigger Bot Smoothness", mainFrame, startY + buttonSpacing * 3, function(value) triggerBotSmoothness = value end, "triggerBotSmoothness")
+createSlider("Trigger Bot Smoothness", mainFrame, startY + buttonSpacing * 3, "triggerBotSmoothness")
 espButton = createButton("ESP: OFF", mainFrame, toggleESP, startY + buttonSpacing * 4)
 fovButton = createButton("FOV Circle: OFF", mainFrame, toggleFOVCircle, startY + buttonSpacing * 5)
