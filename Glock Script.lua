@@ -17,11 +17,6 @@ local triggerBotSmoothness = 0.2
 local silentAimFOV = 130
 local espConnections = {}
 
--- Debugging function
-local function debugPrint(msg)
-    print("[DEBUG]: " .. msg)
-end
-
 -- Save Settings
 local function saveSettings()
     local settings = {
@@ -33,14 +28,12 @@ local function saveSettings()
         aimbotSmoothness = aimbotSmoothness,
         triggerBotSmoothness = triggerBotSmoothness
     }
-    debugPrint("Saving settings...")
     writefile(SETTINGS_FILE, HttpService:JSONEncode(settings))
 end
 
 -- Load Settings
 local function loadSettings()
     if isfile(SETTINGS_FILE) then
-        debugPrint("Loading settings...")
         local settings = HttpService:JSONDecode(readfile(SETTINGS_FILE))
         triggerBotEnabled = settings.triggerBotEnabled
         lockAimbotEnabled = settings.lockAimbotEnabled
@@ -49,8 +42,6 @@ local function loadSettings()
         fovCircleEnabled = settings.fovCircleEnabled
         aimbotSmoothness = settings.aimbotSmoothness
         triggerBotSmoothness = settings.triggerBotSmoothness
-    else
-        debugPrint("No settings file found.")
     end
 end
 
@@ -88,7 +79,6 @@ local function silentAim()
 end
 
 RunService.RenderStepped:Connect(function()
-    debugPrint("RenderStepped Triggered")
     silentAim()
 
     if lockAimbotEnabled then
@@ -155,7 +145,7 @@ createToggleButton(mainFrame, "Silent Aim", "silentAimEnabled", 140)
 createToggleButton(mainFrame, "ESP", "espEnabled", 180)
 createToggleButton(mainFrame, "FOV Circle", "fovCircleEnabled", 220)
 
--- Create Sliders
+-- Create Sliders for Smoothness
 local function createSlider(parent, text, settingName, position)
     local slider = Instance.new("TextBox")
     slider.Size = UDim2.new(0, 180, 0, 40)
@@ -182,3 +172,4 @@ end
 -- Add Sliders for Smoothness
 createSlider(mainFrame, "Aimbot Smoothness", "aimbotSmoothness", 260)
 createSlider(mainFrame, "TriggerBot Smoothness", "triggerBotSmoothness", 300)
+
