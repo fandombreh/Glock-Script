@@ -82,7 +82,6 @@ RunService.RenderStepped:Connect(silentAim)
 -- Toggle Aimbot
 local function lockAimbot()
     lockAimbotEnabled = not lockAimbotEnabled
-    lockAimbotButton.Text = "Lock Aimbot: " .. (lockAimbotEnabled and "ON" or "OFF")
     saveSettings()
 end
 
@@ -99,7 +98,8 @@ end)
 -- UI Setup
 local glockGui = Instance.new("ScreenGui")
 glockGui.Name = "Glock - made by snoopy"
-glockGui.Parent = game:GetService("CoreGui")
+glockGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+glockGui.ResetOnSpawn = false -- Prevents UI from disappearing after respawn
 
 local mainFrame = Instance.new("Frame")
 mainFrame.Size = UDim2.new(0, 400, 0, 450)
@@ -109,21 +109,21 @@ mainFrame.Parent = glockGui
 mainFrame.Active = true
 mainFrame.Draggable = true
 
-local function createSlider(parent, text, settingName, position)
+local function createSlider(parent, text, settingVar, position)
     local slider = Instance.new("TextBox")
     slider.Size = UDim2.new(0, 180, 0, 40)
     slider.Position = UDim2.new(0, 10, 0, position)
-    slider.Text = text .. ": " .. tostring(_G[settingName])
+    slider.Text = text .. ": " .. tostring(_G[settingVar] or 0) -- Added fallback
     slider.Parent = parent
     slider.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
     slider.TextColor3 = Color3.fromRGB(255, 255, 255)
-    
+
     slider.FocusLost:Connect(function()
         local newValue = tonumber(slider.Text:match("%d+%.?%d*"))
         if newValue then
-            if settingName == "aimbotSmoothness" then
+            if settingVar == "aimbotSmoothness" then
                 aimbotSmoothness = newValue
-            elseif settingName == "triggerBotSmoothness" then
+            elseif settingVar == "triggerBotSmoothness" then
                 triggerBotSmoothness = newValue
             end
             slider.Text = text .. ": " .. tostring(newValue)
@@ -134,3 +134,5 @@ end
 
 createSlider(mainFrame, "Aimbot Smoothness", "aimbotSmoothness", 100)
 createSlider(mainFrame, "TriggerBot Smoothness", "triggerBotSmoothness", 150)
+
+print("GUI Loaded Successfully!")
