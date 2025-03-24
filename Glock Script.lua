@@ -85,6 +85,7 @@ local triggerBot = false
 local lockCamera = false
 local speedHackEnabled = false
 local espEnabled = false
+local fov = 50 -- Field of view for Trigger Bot
 
 -- Camera Lock
 local function toggleCameraLock()
@@ -112,8 +113,10 @@ local function toggleCameraLock()
                 end
             end
 
+            -- Make sure to smoothly lock the camera to the closest player
             if closestPlayer then
-                camera.CFrame = CFrame.new(camera.CFrame.Position, closestPlayer.Position)
+                local targetCFrame = CFrame.new(camera.CFrame.Position, closestPlayer.Position)
+                camera.CFrame = camera.CFrame:Lerp(targetCFrame, 0.1)  -- Smoothing the transition
             end
         end)
     else
@@ -133,11 +136,12 @@ end
 
 triggerBotButton.MouseButton1Click:Connect(toggleTriggerBot)
 
--- Trigger Bot Functionality
+-- Trigger Bot Functionality with Accuracy & FOV Check
 game:GetService("RunService").Heartbeat:Connect(function()
     if triggerBot then
         local closestEnemy = nil
         local closestDistance = math.huge
+        local fovCircle = camera.CFrame:pointToWorldSpace(Vector3.new(0, 0, -fov))  -- Create FOV circle
 
         for _, player in pairs(game.Players:GetPlayers()) do
             if player ~= game.Players.LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
@@ -149,15 +153,22 @@ game:GetService("RunService").Heartbeat:Connect(function()
             end
         end
 
-        if closestEnemy and closestDistance < 100 then
-            local humanoid = closestEnemy:FindFirstChildOfClass("Humanoid")
-            if humanoid and humanoid.Health > 0 then
-                -- Fire the weapon automatically
-                local tool = game.Players.LocalPlayer.Character:FindFirstChildOfClass("Tool")
-                if tool and tool:IsA("Tool") then
-                    -- Trigger firing mechanism here
-                    -- You may need to simulate a click or use the tool’s Fire function if applicable
-                    tool:Activate()  -- Simulating the tool's activation (i.e., firing)
+        if closestEnemy then
+            local enemyRootPart = closestEnemy:FindFirstChild("HumanoidRootPart")
+            if enemyRootPart then
+                -- Check if enemy is within the FOV range
+                local screenPos = camera:WorldToScreenPoint(enemyRootPart.Position)
+                local mousePos = game:GetService("UserInputService"):GetMouseLocation()
+
+                local angle = (mousePos - screenPos).Magnitude
+                if angle < fov then  -- Only trigger if enemy is within FOV
+                    -- Fire the weapon automatically
+                    local tool = game.Players.LocalPlayer.Character:FindFirstChildOfClass("Tool")
+                    if tool and tool:IsA("Tool") then
+                        -- Trigger firing mechanism here
+                        -- You may need to simulate a click or use the tool’s Fire function if applicable
+                        tool:Activate()  -- Simulating the tool's activation (i.e., firing)
+                    end
                 end
             end
         end
@@ -167,7 +178,7 @@ end)
 -- Toggle the camera lock button functionality
 cameraLockButton.MouseButton1Click:Connect(toggleCameraLock)
 
--- ESP
+-- ESP (as before)
 local function toggleESP()
     espEnabled = not espEnabled
     if espEnabled then
