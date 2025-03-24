@@ -73,7 +73,8 @@ local function silentAim()
         if target and target.Character and target.Character:FindFirstChild("Head") then
             local headPosition = target.Character.Head.Position
             local direction = (headPosition - camera.CFrame.Position).unit
-            camera.CFrame = CFrame.new(camera.CFrame.Position, camera.CFrame.Position + direction)
+            -- Adjusting the aim direction using CFrame
+            camera.CFrame = CFrame.new(camera.CFrame.Position, camera.CFrame.Position + direction * 10)
         end
     end
 end
