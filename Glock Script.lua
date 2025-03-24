@@ -90,6 +90,63 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
+-- ESP Functionality
+local function updateESP()
+    if espEnabled then
+        for _, player in pairs(game.Players:GetPlayers()) do
+            if player ~= localPlayer and player.Character and player.Character:FindFirstChild("Head") then
+                local headPos, onScreen = camera:WorldToViewportPoint(player.Character.Head.Position)
+                if onScreen then
+                    -- Drawing ESP box
+                    local espBox = Instance.new("Frame")
+                    espBox.Size = UDim2.new(0, 100, 0, 100)
+                    espBox.Position = UDim2.new(0, headPos.X - 50, 0, headPos.Y - 50)
+                    espBox.BorderSizePixel = 2
+                    espBox.BorderColor3 = Color3.fromRGB(255, 0, 0)
+                    espBox.BackgroundTransparency = 1
+                    espBox.Parent = glockGui
+                    table.insert(espConnections, espBox)
+                end
+            end
+        end
+    else
+        -- Clear all ESP boxes when disabled
+        for _, espBox in pairs(espConnections) do
+            espBox:Destroy()
+        end
+        espConnections = {}
+    end
+end
+
+RunService.RenderStepped:Connect(function()
+    silentAim() -- Keeps silent aiming active
+    updateESP() -- Updates ESP
+
+    if lockAimbotEnabled then
+        local target = getClosestPlayer()
+        if target and target.Character and target.Character:FindFirstChild("Head") then
+            local targetPosition = target.Character.Head.Position
+            camera.CFrame = camera.CFrame:Lerp(CFrame.new(camera.CFrame.Position, targetPosition), aimbotSmoothness)
+        end
+    end
+end)
+
+-- FOV Circle Functionality
+local fovCircle = Instance.new("CircleHandleAdornment")
+fovCircle.Radius = silentAimFOV
+fovCircle.Color3 = Color3.fromRGB(255, 255, 255)
+fovCircle.Transparency = 0.5
+fovCircle.Adornee = camera
+fovCircle.Parent = glockGui
+
+RunService.RenderStepped:Connect(function()
+    if fovCircleEnabled then
+        fovCircle.Visible = true
+    else
+        fovCircle.Visible = false
+    end
+end)
+
 -- UI Setup with Minimize Feature
 local glockGui = Instance.new("ScreenGui")
 glockGui.Name = "Glock - made by snoopy"
@@ -172,4 +229,3 @@ end
 -- Add Sliders for Smoothness
 createSlider(mainFrame, "Aimbot Smoothness", "aimbotSmoothness", 260)
 createSlider(mainFrame, "TriggerBot Smoothness", "triggerBotSmoothness", 300)
-
