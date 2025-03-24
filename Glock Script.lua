@@ -131,6 +131,31 @@ minimizeButton.MouseButton1Click:Connect(function()
     mainFrame.Visible = not mainFrame.Visible
 end)
 
+-- Toggle Checkbox
+local function createToggleButton(parent, text, settingName, position)
+    local toggleButton = Instance.new("TextButton")
+    toggleButton.Size = UDim2.new(0, 180, 0, 40)
+    toggleButton.Position = UDim2.new(0, 10, 0, position)
+    toggleButton.Text = text .. ": " .. tostring(_G[settingName])
+    toggleButton.Parent = parent
+    toggleButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    toggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    
+    toggleButton.MouseButton1Click:Connect(function()
+        _G[settingName] = not _G[settingName]
+        toggleButton.Text = text .. ": " .. tostring(_G[settingName])
+        saveSettings()
+    end)
+end
+
+-- Create Toggle Buttons
+createToggleButton(mainFrame, "TriggerBot", "triggerBotEnabled", 60)
+createToggleButton(mainFrame, "Aimbot", "lockAimbotEnabled", 100)
+createToggleButton(mainFrame, "Silent Aim", "silentAimEnabled", 140)
+createToggleButton(mainFrame, "ESP", "espEnabled", 180)
+createToggleButton(mainFrame, "FOV Circle", "fovCircleEnabled", 220)
+
+-- Create Sliders
 local function createSlider(parent, text, settingName, position)
     local slider = Instance.new("TextBox")
     slider.Size = UDim2.new(0, 180, 0, 40)
@@ -154,6 +179,6 @@ local function createSlider(parent, text, settingName, position)
     end)
 end
 
-createSlider(mainFrame, "Aimbot Smoothness", "aimbotSmoothness", 100)
-createSlider(mainFrame, "TriggerBot Smoothness", "triggerBotSmoothness", 150)
-
+-- Add Sliders for Smoothness
+createSlider(mainFrame, "Aimbot Smoothness", "aimbotSmoothness", 260)
+createSlider(mainFrame, "TriggerBot Smoothness", "triggerBotSmoothness", 300)
