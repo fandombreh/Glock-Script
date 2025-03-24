@@ -3,14 +3,20 @@ local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "Glock.lol"
 screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 
+-- Check if ScreenGui is created correctly
+print("ScreenGui created successfully!")
+
 -- Frame for the GUI
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 400, 0, 400)  -- Increased size for better visibility
-frame.Position = UDim2.new(0.5, -200, 0.5, -200)
-frame.BackgroundColor3 = Color3.fromRGB(255, 0, 0)  -- Solid red color
-frame.BackgroundTransparency = 0  -- Fully opaque to remove transparency
-frame.BorderSizePixel = 0
+frame.Size = UDim2.new(0, 400, 0, 400)  -- Size of the GUI frame
+frame.Position = UDim2.new(0.5, -200, 0.5, -200)  -- Centered
+frame.BackgroundColor3 = Color3.fromRGB(100, 0, 0)  -- Dark red color for visibility
+frame.BackgroundTransparency = 0  -- No transparency
+frame.BorderSizePixel = 0  -- No border
 frame.Parent = screenGui
+
+-- Check if Frame is created successfully
+print("Frame created successfully!")
 
 -- Title Label
 local titleLabel = Instance.new("TextLabel")
@@ -23,6 +29,9 @@ titleLabel.TextStrokeTransparency = 0.8
 titleLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
 titleLabel.TextAlign = Enum.TextXAlignment.Center
 titleLabel.Parent = frame
+
+-- Check if Title Label is created successfully
+print("Title Label created successfully!")
 
 -- Buttons for toggling features
 local cameraLockButton = Instance.new("TextButton")
@@ -65,6 +74,9 @@ speedHackButton.TextSize = 18
 speedHackButton.BorderSizePixel = 0
 speedHackButton.Parent = frame
 
+-- Check if Buttons are created successfully
+print("Buttons created successfully!")
+
 -- Smooth Drag Function for GUI
 local dragging, dragInput, dragStart, startPos
 local function update(input)
@@ -93,7 +105,7 @@ frame.InputEnded:Connect(function(input)
     end
 end)
 
--- Features
+-- Features Logic (basic setup)
 local camera = game.Workspace.CurrentCamera
 local lockCamera = false
 local triggerBot = false
