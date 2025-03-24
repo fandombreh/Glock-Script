@@ -89,9 +89,19 @@ local espEnabled = false
 -- Camera Lock
 local function toggleCameraLock()
     lockCamera = not lockCamera
+
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player:WaitForChild("Character")
+    local humanoidRootPart = character and character:FindFirstChild("HumanoidRootPart")
+
     if lockCamera then
-        camera.CameraType = Enum.CameraType.Scriptable
-        print("Camera Lock Enabled")
+        if humanoidRootPart then
+            camera.CameraType = Enum.CameraType.Scriptable
+            camera.CFrame = CFrame.new(camera.CFrame.Position, humanoidRootPart.Position) -- Focus on the player
+            print("Camera Lock Enabled")
+        else
+            warn("HumanoidRootPart not found. Camera Lock could not function.")
+        end
     else
         camera.CameraType = Enum.CameraType.Custom
         print("Camera Lock Disabled")
