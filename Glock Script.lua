@@ -213,12 +213,15 @@ espButton.MouseButton1Click:Connect(toggleESP)
 -- Speed Hack
 local function toggleSpeedHack()
     speedHackEnabled = not speedHackEnabled
-    if speedHackEnabled then
-        print("Speed Hack Enabled")
-        game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 100
-    else
-        print("Speed Hack Disabled")
-        game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 16
+    local character = game.Players.LocalPlayer.Character
+    if character and character:FindFirstChild("Humanoid") then
+        if speedHackEnabled then
+            print("Speed Hack Enabled")
+            character.Humanoid.WalkSpeed = 100
+        else
+            print("Speed Hack Disabled")
+            character.Humanoid.WalkSpeed = 16
+        end
     end
 end
 
