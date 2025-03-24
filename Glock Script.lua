@@ -97,7 +97,14 @@ local function toggleCameraLock()
     if lockCamera then
         if humanoidRootPart then
             camera.CameraType = Enum.CameraType.Scriptable
-            camera.CFrame = CFrame.new(camera.CFrame.Position, humanoidRootPart.Position) -- Focus on the player
+            local renderSteppedConnection
+            renderSteppedConnection = game:GetService("RunService").RenderStepped:Connect(function()
+                if lockCamera and humanoidRootPart then
+                    camera.CFrame = CFrame.new(camera.CFrame.Position, humanoidRootPart.Position)
+                else
+                    renderSteppedConnection:Disconnect()
+                end
+            end)
             print("Camera Lock Enabled")
         else
             warn("HumanoidRootPart not found. Camera Lock could not function.")
