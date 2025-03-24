@@ -90,10 +90,7 @@ end)
 local dragging, dragStart, startPos
 local function update(input)
     local delta = input.Position - dragStart
-    frame.Position = UDim2.new(
-        startPos.X.Scale, startPos.X.Offset + delta.X,
-        startPos.Y.Scale, startPos.Y.Offset + delta.Y
-    )
+    frame.Position = UDim2.new(0, startPos.X.Offset + delta.X, 0, startPos.Y.Offset + delta.Y)
 end
 
 frame.InputBegan:Connect(function(input)
@@ -168,6 +165,8 @@ local function toggleTriggerBot()
     triggerBot = not triggerBot
     if triggerBot then
         print("Trigger Bot Enabled")
+        -- Add trigger bot logic here (check for enemies in the crosshair and auto-shoot)
+        -- For now, this is just a placeholder. You need to implement auto-shoot logic.
     else
         print("Trigger Bot Disabled")
     end
@@ -233,5 +232,9 @@ speedHackButton.MouseButton1Click:Connect(toggleSpeedHack)
 -- Toggle the camera lock button functionality
 cameraLockButton.MouseButton1Click:Connect(toggleCameraLock)
 
--- Toggle the camera lock button functionality
-cameraLockButton.MouseButton1Click:Connect(toggleCameraLock)
+-- Ensure speed hack resets on respawn
+game.Players.LocalPlayer.CharacterAdded:Connect(function(character)
+    if not speedHackEnabled then
+        character.Humanoid.WalkSpeed = 16
+    end
+end)
