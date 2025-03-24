@@ -49,7 +49,7 @@ local triggerBotButton = createButton("Trigger Bot", 0.4)
 local espButton = createButton("ESP", 0.6)
 local speedHackButton = createButton("Speed Hack", 0.8)
 
--- Slider for smoothness control (customizable)
+-- Smoothness Slider
 local smoothnessSliderLabel = Instance.new("TextLabel")
 smoothnessSliderLabel.Text = "Camera Lock Smoothness"
 smoothnessSliderLabel.Size = UDim2.new(1, 0, 0, 40)
@@ -90,7 +90,10 @@ end)
 local dragging, dragStart, startPos
 local function update(input)
     local delta = input.Position - dragStart
-    frame.Position = UDim2.new(0, startPos.X.Offset + delta.X, 0, startPos.Y.Offset + delta.Y)
+    frame.Position = UDim2.new(
+        startPos.X.Scale, startPos.X.Offset + delta.X,
+        startPos.Y.Scale, startPos.Y.Offset + delta.Y
+    )
 end
 
 frame.InputBegan:Connect(function(input)
@@ -115,20 +118,20 @@ end)
 
 -- Features Logic
 local camera = game.Workspace.CurrentCamera
-local triggerBot = false
-local lockCamera = false
+local triggerBotEnabled = false
+local lockCameraEnabled = false
 local speedHackEnabled = false
 local espEnabled = false
 
 -- Camera Lock (Track Head with Smoothness)
 local function toggleCameraLock()
-    lockCamera = not lockCamera
+    lockCameraEnabled = not lockCameraEnabled
 
-    if lockCamera then
+    if lockCameraEnabled then
         print("Camera Lock Enabled")
         local renderSteppedConnection
         renderSteppedConnection = game:GetService("RunService").RenderStepped:Connect(function()
-            if not lockCamera then
+            if not lockCameraEnabled then
                 renderSteppedConnection:Disconnect()
                 return
             end
@@ -162,11 +165,9 @@ end
 
 -- Trigger Bot
 local function toggleTriggerBot()
-    triggerBot = not triggerBot
-    if triggerBot then
+    triggerBotEnabled = not triggerBotEnabled
+    if triggerBotEnabled then
         print("Trigger Bot Enabled")
-        -- Add trigger bot logic here (check for enemies in the crosshair and auto-shoot)
-        -- For now, this is just a placeholder. You need to implement auto-shoot logic.
     else
         print("Trigger Bot Disabled")
     end
@@ -231,10 +232,3 @@ speedHackButton.MouseButton1Click:Connect(toggleSpeedHack)
 
 -- Toggle the camera lock button functionality
 cameraLockButton.MouseButton1Click:Connect(toggleCameraLock)
-
--- Ensure speed hack resets on respawn
-game.Players.LocalPlayer.CharacterAdded:Connect(function(character)
-    if not speedHackEnabled then
-        character.Humanoid.WalkSpeed = 16
-    end
-end)
