@@ -85,7 +85,7 @@ frame.InputBegan:Connect(function(input)
         startPos = frame.Position
 
         input.Changed:Connect(function()
-            if dragging == false then
+            if not dragging then
                 return
             end
             update(input)
@@ -194,5 +194,7 @@ local function onUpdate()
         end
     end
 end
+
+game:GetService("RunService").Heartbeat:Connect(onUpdate)
 
 game:GetService("RunService").Heartbeat:Connect(onUpdate)
