@@ -10,13 +10,15 @@ local espEnabled = false
 local fovCircleEnabled = false
 local triggerBotRange = 15
 local aimbotSmoothness = 0.2
+local triggerBotSmoothness = 0.2
+local silentAimFOV = 130
 local espConnections = {}
 local triggerBotConnection
 
--- 🎯 Get Closest Player Function
+-- Get Closest Player within FOV
 local function getClosestPlayer()
     local closestPlayer = nil
-    local shortestDistance = math.huge
+    local shortestDistance = silentAimFOV
     for _, player in pairs(game.Players:GetPlayers()) do
         if player ~= localPlayer and player.Character and player.Character:FindFirstChild("Head") then
             local headPos, onScreen = camera:WorldToViewportPoint(player.Character.Head.Position)
@@ -32,7 +34,7 @@ local function getClosestPlayer()
     return closestPlayer
 end
 
--- 🔒 Smooth Aimbot
+-- Toggle Aimbot
 local function lockAimbot()
     lockAimbotEnabled = not lockAimbotEnabled
     lockAimbotButton.Text = "Lock Aimbot: " .. (lockAimbotEnabled and "ON" or "OFF")
@@ -47,101 +49,32 @@ local function lockAimbot()
     end)
 end
 
--- 🔫 Toggle Trigger Bot
-local function toggleTriggerBot()
-    triggerBotEnabled = not triggerBotEnabled
-    triggerBotButton.Text = "Trigger Bot: " .. (triggerBotEnabled and "ON" or "OFF")
-
-    if triggerBotEnabled then
-        triggerBotConnection = RunService.RenderStepped:Connect(function()
-            local target = getClosestPlayer()
-            if target and target.Character and target.Character:FindFirstChild("Head") then
-                local headPos, onScreen = camera:WorldToViewportPoint(target.Character.Head.Position)
-                local distance = (UserInputService:GetMouseLocation() - Vector2.new(headPos.X, headPos.Y)).Magnitude
-                if onScreen and distance <= triggerBotRange then
-                    VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 1)
-                    task.wait(0.05)
-                    VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 1)
-                end
-            end
-        end)
-    else
-        if triggerBotConnection then
-            triggerBotConnection:Disconnect()
-            triggerBotConnection = nil
-        end
-    end
-end
-
--- 🔵 Fully Working ESP System
+-- Toggle ESP
 local function toggleESP()
     espEnabled = not espEnabled
     espButton.Text = "ESP: " .. (espEnabled and "ON" or "OFF")
-
-    -- Remove ESP highlights when disabled
-    if not espEnabled then
-        for _, player in pairs(game.Players:GetPlayers()) do
-            if player.Character then
-                local highlight = player.Character:FindFirstChild("Highlight")
-                if highlight then
-                    highlight:Destroy()
-                end
-            end
-        end
-        return
-    end
-
-    -- ESP Update Function
-    local function updateESP()
-        for _, player in pairs(game.Players:GetPlayers()) do
-            if player ~= localPlayer and player.Character then
-                local character = player.Character
-                local highlight = character:FindFirstChild("Highlight")
-
-                if not highlight then
-                    highlight = Instance.new("Highlight")
-                    highlight.Name = "Highlight"
-                    highlight.FillColor = Color3.fromRGB(255, 0, 0)
-                    highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
-                    highlight.FillTransparency = 0.5
-                    highlight.Parent = character
-                end
-            end
-        end
-    end
-
-    -- Keep updating ESP while enabled
-    local espLoop = RunService.RenderStepped:Connect(updateESP)
-    table.insert(espConnections, espLoop)
 end
 
--- 🔵 Re-Added FOV Circle (Fully Working)
-local fovCircle = Drawing.new("Circle")
-fovCircle.Visible = false
-fovCircle.Color = Color3.fromRGB(0, 255, 0)
-fovCircle.Thickness = 2
-fovCircle.Radius = 100
-
+-- Toggle FOV Circle
 local function toggleFOVCircle()
     fovCircleEnabled = not fovCircleEnabled
     fovButton.Text = "FOV Circle: " .. (fovCircleEnabled and "ON" or "OFF")
-    fovCircle.Visible = fovCircleEnabled
 end
 
-RunService.RenderStepped:Connect(function()
-    if fovCircleEnabled then
-        fovCircle.Position = UserInputService:GetMouseLocation()
-    end
-end)
+-- Toggle Trigger Bot
+local function toggleTriggerBot()
+    triggerBotEnabled = not triggerBotEnabled
+    triggerBotButton.Text = "Trigger Bot: " .. (triggerBotEnabled and "ON" or "OFF")
+end
 
--- 🛠️ UI Setup
+-- UI Setup
 local glockGui = Instance.new("ScreenGui")
 glockGui.Name = "Glock - made by snoopy"
 glockGui.Parent = game:GetService("CoreGui")
 
 local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 400, 0, 300)
-mainFrame.Position = UDim2.new(0.5, -200, 0.5, -150)
+mainFrame.Size = UDim2.new(0, 400, 0, 350)
+mainFrame.Position = UDim2.new(0.5, -200, 0.5, -175)
 mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 mainFrame.Parent = glockGui
 mainFrame.Active = true
@@ -159,10 +92,29 @@ local function createButton(text, parent, callback, position)
     return button
 end
 
+local function createSlider(text, parent, position, callback)
+    local slider = Instance.new("TextBox")
+    slider.Size = UDim2.new(0, 180, 0, 40)
+    slider.Position = UDim2.new(0, 10, 0, position)
+    slider.Text = text
+    slider.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    slider.TextColor3 = Color3.fromRGB(255, 255, 255)
+    slider.Parent = parent
+    slider.FocusLost:Connect(function()
+        local value = tonumber(slider.Text)
+        if value then
+            callback(value)
+        end
+    end)
+    return slider
+end
+
 local buttonSpacing = 45
 local startY = 10
 
 lockAimbotButton = createButton("Lock Aimbot: OFF", mainFrame, lockAimbot, startY)
-triggerBotButton = createButton("Trigger Bot: OFF", mainFrame, toggleTriggerBot, startY + buttonSpacing)
-espButton = createButton("ESP: OFF", mainFrame, toggleESP, startY + buttonSpacing * 2)
-fovButton = createButton("FOV Circle: OFF", mainFrame, toggleFOVCircle, startY + buttonSpacing * 3)
+createSlider("Aimbot Smoothness", mainFrame, startY + buttonSpacing, function(value) aimbotSmoothness = value end)
+triggerBotButton = createButton("Trigger Bot: OFF", mainFrame, toggleTriggerBot, startY + buttonSpacing * 2)
+createSlider("Trigger Bot Smoothness", mainFrame, startY + buttonSpacing * 3, function(value) triggerBotSmoothness = value end)
+espButton = createButton("ESP: OFF", mainFrame, toggleESP, startY + buttonSpacing * 4)
+fovButton = createButton("FOV Circle: OFF", mainFrame, toggleFOVCircle, startY + buttonSpacing * 5)
