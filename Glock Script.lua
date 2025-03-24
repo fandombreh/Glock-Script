@@ -11,6 +11,7 @@ local lockAimbotEnabled = false
 local silentAimEnabled = false
 local espEnabled = false
 local fovCircleEnabled = false
+local triggerBotRange = 15
 local aimbotSmoothness = 0.2
 local triggerBotSmoothness = 0.2
 local silentAimFOV = 130
@@ -46,6 +47,105 @@ end
 
 loadSettings()
 
+-- Get Closest Player within FOV
+local function getClosestPlayer()
+    local closestPlayer = nil
+    local shortestDistance = silentAimFOV
+    for _, player in pairs(game.Players:GetPlayers()) do
+        if player ~= localPlayer and player.Character and player.Character:FindFirstChild("Head") then
+            local headPos, onScreen = camera:WorldToViewportPoint(player.Character.Head.Position)
+            if onScreen then
+                local distance = (UserInputService:GetMouseLocation() - Vector2.new(headPos.X, headPos.Y)).Magnitude
+                if distance < shortestDistance then
+                    closestPlayer = player
+                    shortestDistance = distance
+                end
+            end
+        end
+    end
+    return closestPlayer
+end
+
+-- Silent Aim Function
+RunService.RenderStepped:Connect(function()
+    if silentAimEnabled then
+        local target = getClosestPlayer()
+        if target and target.Character and target.Character:FindFirstChild("Head") then
+            local headPosition = target.Character.Head.Position
+            local direction = (headPosition - camera.CFrame.Position).unit
+            camera.CFrame = CFrame.new(camera.CFrame.Position, camera.CFrame.Position + direction)
+        end
+    end
+end)
+
+-- Lock Aimbot
+RunService.RenderStepped:Connect(function()
+    if lockAimbotEnabled then
+        local target = getClosestPlayer()
+        if target and target.Character and target.Character:FindFirstChild("Head") then
+            local targetPosition = target.Character.Head.Position
+            camera.CFrame = camera.CFrame:Lerp(CFrame.new(camera.CFrame.Position, targetPosition), aimbotSmoothness)
+        end
+    end
+end)
+
+-- Trigger Bot
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 and triggerBotEnabled then
+        local target = getClosestPlayer()
+        if target and target.Character and target.Character:FindFirstChild("Head") then
+            wait(triggerBotSmoothness) -- Add slight delay for smoothness
+            mouse1click() -- Fire shot
+        end
+    end
+end)
+
+-- ESP Function
+local function updateESP()
+    for _, connection in pairs(espConnections) do
+        connection:Disconnect()
+    end
+    table.clear(espConnections)
+
+    if espEnabled then
+        for _, player in pairs(game.Players:GetPlayers()) do
+            if player ~= localPlayer and player.Character and player.Character:FindFirstChild("Head") then
+                local highlight = Instance.new("BoxHandleAdornment")
+                highlight.Adornee = player.Character.Head
+                highlight.Size = Vector3.new(3, 3, 3)
+                highlight.Color3 = Color3.fromRGB(255, 0, 0)
+                highlight.AlwaysOnTop = true
+                highlight.ZIndex = 5
+                highlight.Parent = player.Character.Head
+
+                local connection = player.CharacterRemoving:Connect(function()
+                    highlight:Destroy()
+                end)
+                table.insert(espConnections, connection)
+            end
+        end
+    end
+end
+
+updateESP()
+game.Players.PlayerAdded:Connect(updateESP)
+game.Players.PlayerRemoving:Connect(updateESP)
+
+-- FOV Circle
+local fovCircle = Drawing.new("Circle")
+fovCircle.Color = Color3.fromRGB(255, 255, 255)
+fovCircle.Thickness = 2
+fovCircle.NumSides = 30
+fovCircle.Radius = silentAimFOV
+fovCircle.Visible = fovCircleEnabled
+fovCircle.Filled = false
+
+RunService.RenderStepped:Connect(function()
+    fovCircle.Visible = fovCircleEnabled
+    fovCircle.Position = UserInputService:GetMouseLocation()
+    fovCircle.Radius = silentAimFOV
+end)
+
 -- UI Setup
 local glockGui = Instance.new("ScreenGui")
 glockGui.Name = "Glock - made by snoopy"
@@ -61,7 +161,7 @@ mainFrame.Active = true
 mainFrame.Draggable = true
 
 -- Function to Create Toggle Buttons
-local function createToggleButton(parent, text, settingName, position)
+local function createToggleButton(parent, text, settingVar, position)
     local button = Instance.new("TextButton")
     button.Size = UDim2.new(0, 180, 0, 40)
     button.Position = UDim2.new(0, 10, 0, position)
@@ -70,35 +170,16 @@ local function createToggleButton(parent, text, settingName, position)
     button.Parent = parent
 
     local function updateButton()
-        button.Text = text .. ": " .. (settingName and "ON" or "OFF")
+        button.Text = text .. ": " .. (settingVar and "ON" or "OFF")
     end
 
     updateButton()
 
     button.MouseButton1Click:Connect(function()
-        settingName = not settingName
+        settingVar = not settingVar
         updateButton()
         saveSettings()
-    end)
-end
-
--- Function to Create Sliders
-local function createSlider(parent, text, settingName, position)
-    local slider = Instance.new("TextBox")
-    slider.Size = UDim2.new(0, 180, 0, 40)
-    slider.Position = UDim2.new(0, 10, 0, position)
-    slider.Text = text .. ": " .. tostring(settingName)
-    slider.Parent = parent
-    slider.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-    slider.TextColor3 = Color3.fromRGB(255, 255, 255)
-
-    slider.FocusLost:Connect(function()
-        local newValue = tonumber(slider.Text:match("%d+%.?%d*"))
-        if newValue then
-            settingName = newValue
-            slider.Text = text .. ": " .. tostring(newValue)
-            saveSettings()
-        end
+        if text == "ESP" then updateESP() end
     end)
 end
 
@@ -113,4 +194,4 @@ createToggleButton(mainFrame, "FOV Circle", fovCircleEnabled, 210)
 createSlider(mainFrame, "Aimbot Smoothness", aimbotSmoothness, 260)
 createSlider(mainFrame, "TriggerBot Smoothness", triggerBotSmoothness, 310)
 
-print("GUI Loaded Successfully!")
+print("Glock GUI Loaded Successfully!")
