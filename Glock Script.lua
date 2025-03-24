@@ -27,55 +27,36 @@ titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 titleLabel.TextSize = 24
 titleLabel.TextStrokeTransparency = 0.8
 titleLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-titleLabel.TextAlign = Enum.TextXAlignment.Center
+titleLabel.TextXAlignment = Enum.TextXAlignment.Center -- Fixed property name
 titleLabel.Parent = frame
 
 -- Buttons for toggling features
-local cameraLockButton = Instance.new("TextButton")
-cameraLockButton.Text = "Camera Lock"
-cameraLockButton.Size = UDim2.new(1, 0, 0, 40)
-cameraLockButton.Position = UDim2.new(0, 0, 0.2, 0)
-cameraLockButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
-cameraLockButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-cameraLockButton.TextSize = 18
-cameraLockButton.BorderSizePixel = 0
-cameraLockButton.Parent = frame
+local function createButton(text, positionY)
+    local button = Instance.new("TextButton")
+    button.Text = text
+    button.Size = UDim2.new(1, 0, 0, 40)
+    button.Position = UDim2.new(0, 0, positionY, 0)
+    button.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+    button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    button.TextSize = 18
+    button.BorderSizePixel = 0
+    button.Parent = frame
+    return button
+end
 
-local triggerBotButton = Instance.new("TextButton")
-triggerBotButton.Text = "Trigger Bot"
-triggerBotButton.Size = UDim2.new(1, 0, 0, 40)
-triggerBotButton.Position = UDim2.new(0, 0, 0.4, 0)
-triggerBotButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
-triggerBotButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-triggerBotButton.TextSize = 18
-triggerBotButton.BorderSizePixel = 0
-triggerBotButton.Parent = frame
-
-local espButton = Instance.new("TextButton")
-espButton.Text = "ESP"
-espButton.Size = UDim2.new(1, 0, 0, 40)
-espButton.Position = UDim2.new(0, 0, 0.6, 0)
-espButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
-espButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-espButton.TextSize = 18
-espButton.BorderSizePixel = 0
-espButton.Parent = frame
-
-local speedHackButton = Instance.new("TextButton")
-speedHackButton.Text = "Speed Hack"
-speedHackButton.Size = UDim2.new(1, 0, 0, 40)
-speedHackButton.Position = UDim2.new(0, 0, 0.8, 0)
-speedHackButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
-speedHackButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-speedHackButton.TextSize = 18
-speedHackButton.BorderSizePixel = 0
-speedHackButton.Parent = frame
+local cameraLockButton = createButton("Camera Lock", 0.2)
+local triggerBotButton = createButton("Trigger Bot", 0.4)
+local espButton = createButton("ESP", 0.6)
+local speedHackButton = createButton("Speed Hack", 0.8)
 
 -- Smooth Drag Function for GUI
 local dragging, dragStart, startPos
 local function update(input)
     local delta = input.Position - dragStart
-    frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    frame.Position = UDim2.new(
+        startPos.X.Scale, startPos.X.Offset + delta.X,
+        startPos.Y.Scale, startPos.Y.Offset + delta.Y
+    )
 end
 
 frame.InputBegan:Connect(function(input)
@@ -98,7 +79,7 @@ frame.InputEnded:Connect(function(input)
     end
 end)
 
--- Features Logic (basic setup)
+-- Features Logic
 local camera = game.Workspace.CurrentCamera
 local lockCamera = false
 local triggerBot = false
@@ -110,7 +91,6 @@ local function toggleCameraLock()
     lockCamera = not lockCamera
     if lockCamera then
         camera.CameraType = Enum.CameraType.Scriptable
-        camera.CFrame = camera.CFrame
     else
         camera.CameraType = Enum.CameraType.Custom
     end
@@ -137,30 +117,27 @@ end
 
 speedHackButton.MouseButton1Click:Connect(toggleSpeedHack)
 
--- ESP (Enemy Wallhack)
+-- ESP
 local function toggleESP()
     espEnabled = not espEnabled
     for _, player in pairs(game.Players:GetPlayers()) do
         if player.Character and player ~= game.Players.LocalPlayer then
-            if espEnabled then
-                local box = Instance.new("BillboardGui")
-                box.Parent = player.Character
+            local billboard = player.Character:FindFirstChild("BillboardGui")
+            if espEnabled and not billboard then
+                local box = Instance.new("BillboardGui", player.Character)
                 box.Size = UDim2.new(0, 100, 0, 50)
                 box.StudsOffset = Vector3.new(0, 3, 0)
                 box.AlwaysOnTop = true
 
-                local label = Instance.new("TextLabel")
+                local label = Instance.new("TextLabel", box)
                 label.Text = player.Name
                 label.Size = UDim2.new(1, 0, 1, 0)
                 label.BackgroundTransparency = 1
                 label.TextColor3 = Color3.fromRGB(255, 0, 0)
                 label.TextSize = 18
-                label.TextAlign = Enum.TextXAlignment.Center
-                label.Parent = box
-            else
-                if player.Character:FindFirstChild("BillboardGui") then
-                    player.Character.BillboardGui:Destroy()
-                end
+                label.TextXAlignment = Enum.TextXAlignment.Center
+            elseif not espEnabled and billboard then
+                billboard:Destroy()
             end
         end
     end
@@ -168,13 +145,12 @@ end
 
 espButton.MouseButton1Click:Connect(toggleESP)
 
--- Trigger Bot Logic (Aimbot + Auto-Shoot)
+-- Trigger Bot Logic
 local function onUpdate()
     if triggerBot then
         local closestPlayer = nil
         local closestDistance = math.huge
 
-        -- Find the closest enemy player
         for _, player in pairs(game.Players:GetPlayers()) do
             if player.Character and player ~= game.Players.LocalPlayer and player.Character:FindFirstChild("HumanoidRootPart") then
                 local distance = (camera.CFrame.Position - player.Character.HumanoidRootPart.Position).Magnitude
@@ -185,11 +161,8 @@ local function onUpdate()
             end
         end
 
-        -- Aim and shoot at closest player
         if closestPlayer then
-            -- Aim at closest player (add your shooting mechanism here)
             camera.CFrame = CFrame.new(camera.CFrame.Position, closestPlayer.Position)
-            -- Implement auto-shoot logic here (e.g., fire weapon or trigger action)
         end
     end
 end
