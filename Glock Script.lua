@@ -178,51 +178,19 @@ local function toggleESP()
         print("ESP Enabled")
         for _, player in pairs(game.Players:GetPlayers()) do
             if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                -- Create ESP box
+                local humanoidRootPart = player.Character.HumanoidRootPart
+                local boundingBox = Instance.new("Frame")
+                boundingBox.Size = UDim2.new(0, 100, 0, 100)  -- Size of the box
+                boundingBox.Position = UDim2.new(0, humanoidRootPart.Position.X, 0, humanoidRootPart.Position.Y)  -- Position of the box
+                boundingBox.BackgroundColor3 = Color3.fromRGB(255, 0, 0)  -- Red box color
+                boundingBox.BackgroundTransparency = 0.5  -- Slight transparency
+                boundingBox.BorderSizePixel = 0  -- No border
+                boundingBox.Parent = screenGui
+
+                -- Add a billboard GUI with the player's name
                 local billboardGui = Instance.new("BillboardGui")
-                billboardGui.Adornee = player.Character.HumanoidRootPart
-                billboardGui.Parent = player.Character.HumanoidRootPart
+                billboardGui.Adornee = humanoidRootPart
+                billboardGui.Parent = humanoidRootPart
                 billboardGui.Size = UDim2.new(0, 100, 0, 50)
-                billboardGui.StudsOffset = Vector3.new(0, 3, 0)
-
-                local nameLabel = Instance.new("TextLabel")
-                nameLabel.Text = player.Name
-                nameLabel.Size = UDim2.new(1, 0, 1, 0)
-                nameLabel.BackgroundTransparency = 1
-                nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-                nameLabel.TextStrokeTransparency = 0.8
-                nameLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-                nameLabel.TextSize = 16
-                nameLabel.Parent = billboardGui
-            end
-        end
-    else
-        print("ESP Disabled")
-        for _, player in pairs(game.Players:GetPlayers()) do
-            if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                local billboardGui = player.Character.HumanoidRootPart:FindFirstChildOfClass("BillboardGui")
-                if billboardGui then
-                    billboardGui:Destroy()
-                end
-            end
-        end
-    end
-end
-
-espButton.MouseButton1Click:Connect(toggleESP)
-
--- Speed Hack
-local function toggleSpeedHack()
-    speedHackEnabled = not speedHackEnabled
-    local character = game.Players.LocalPlayer.Character
-    if character and character:FindFirstChild("Humanoid") then
-        if speedHackEnabled then
-            print("Speed Hack Enabled")
-            character.Humanoid.WalkSpeed = 100
-        else
-            print("Speed Hack Disabled")
-            character.Humanoid.WalkSpeed = 16
-        end
-    end
-end
-
-speedHackButton.MouseButton1Click:Connect(toggleSpeedHack)
+                billboardGui.
