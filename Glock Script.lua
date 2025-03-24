@@ -5,10 +5,10 @@ screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 
 -- Frame for the GUI
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 300, 0, 250)
-frame.Position = UDim2.new(0.5, -150, 0.5, -125)
-frame.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-frame.BackgroundTransparency = 0.85
+frame.Size = UDim2.new(0, 300, 0, 300)  -- Increased size for visibility
+frame.Position = UDim2.new(0.5, -150, 0.5, -150)
+frame.BackgroundColor3 = Color3.fromRGB(255, 0, 0)  -- Solid red color
+frame.BackgroundTransparency = 0  -- Set to fully opaque for better visibility
 frame.BorderSizePixel = 0
 frame.Parent = screenGui
 
