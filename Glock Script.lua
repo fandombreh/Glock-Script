@@ -81,12 +81,12 @@ end)
 
 -- Features Logic
 local camera = game.Workspace.CurrentCamera
-local lockCamera = false
 local triggerBot = false
+local lockCamera = false
 local speedHackEnabled = false
 local espEnabled = false
 
--- Updated Camera Lock
+-- Camera Lock
 local function toggleCameraLock()
     lockCamera = not lockCamera
 
@@ -123,7 +123,7 @@ end
 
 cameraLockButton.MouseButton1Click:Connect(toggleCameraLock)
 
--- Trigger Bot
+-- Trigger Bot (New and Fixed)
 local function toggleTriggerBot()
     triggerBot = not triggerBot
     if triggerBot then
@@ -134,6 +134,19 @@ local function toggleTriggerBot()
 end
 
 triggerBotButton.MouseButton1Click:Connect(toggleTriggerBot)
+
+local function triggerBotAction()
+    if triggerBot then
+        local mouseTarget = game:GetService("Players").LocalPlayer:GetMouse().Target
+
+        if mouseTarget and mouseTarget:IsA("BasePart") and mouseTarget.Parent:FindFirstChild("Humanoid") then
+            -- Automatically shoot (replace this print with actual shooting logic)
+            print("Trigger Bot activated on:", mouseTarget.Parent.Name)
+        end
+    end
+end
+
+game:GetService("RunService").RenderStepped:Connect(triggerBotAction)
 
 -- Speed Hack
 local function toggleSpeedHack()
@@ -183,26 +196,3 @@ end
 
 espButton.MouseButton1Click:Connect(toggleESP)
 
--- Trigger Bot Logic
-local function triggerBotAction()
-    if triggerBot then
-        local closestPlayer = nil
-        local closestDistance = math.huge
-
-        for _, player in pairs(game.Players:GetPlayers()) do
-            if player.Character and player ~= game.Players.LocalPlayer and player.Character:FindFirstChild("HumanoidRootPart") then
-                local distance = (camera.CFrame.Position - player.Character.HumanoidRootPart.Position).Magnitude
-                if distance < closestDistance then
-                    closestDistance = distance
-                    closestPlayer = player.Character.HumanoidRootPart
-                end
-            end
-        end
-
-        if closestPlayer then
-            print("Trigger Bot targeting:", closestPlayer.Parent.Name)
-        end
-    end
-end
-
-game:GetService("RunService").Heartbeat:Connect(triggerBotAction)
