@@ -1,234 +1,208 @@
+-- Roblox Script for Glock GUI with Silent Aim, ESP, Speedhacks, Lock
+
+local Player = game.Players.LocalPlayer
+local Mouse = Player:GetMouse()
+
 -- GUI Setup
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "Glock.lol"
-screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Parent = Player.PlayerGui
 
--- Ensure the GUI is visible across all executors
-if not screenGui.Parent then
-    warn("Unable to attach GUI to PlayerGui. Please check executor permissions.")
-    return
-end
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 500, 0, 400)
+mainFrame.Position = UDim2.new(0.5, -250, 0.5, -200)
+mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+mainFrame.BorderSizePixel = 0
+mainFrame.Parent = ScreenGui
 
--- Frame for the GUI
-local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 400, 0, 400)  -- Size of the GUI frame
-frame.Position = UDim2.new(0.5, -200, 0.5, -200)  -- Centered
-frame.BackgroundColor3 = Color3.fromRGB(100, 0, 0)  -- Dark red color for visibility
-frame.BackgroundTransparency = 0  -- No transparency
-frame.BorderSizePixel = 0  -- No border
-frame.Parent = screenGui
+-- Tabs
+local tabButtonFrame = Instance.new("Frame")
+tabButtonFrame.Size = UDim2.new(0, 100, 1, 0)
+tabButtonFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+tabButtonFrame.BorderSizePixel = 0
+tabButtonFrame.Position = UDim2.new(0, 0, 0, 0)
+tabButtonFrame.Parent = mainFrame
 
--- Title Label
-local titleLabel = Instance.new("TextLabel")
-titleLabel.Text = "Glock.lol"
-titleLabel.Size = UDim2.new(1, 0, 0, 40)
-titleLabel.BackgroundTransparency = 1
-titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-titleLabel.TextSize = 24
-titleLabel.TextStrokeTransparency = 0.8
-titleLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-titleLabel.TextXAlignment = Enum.TextXAlignment.Center
-titleLabel.Parent = frame
+local silentAimTab = Instance.new("TextButton")
+silentAimTab.Size = UDim2.new(1, 0, 0, 40)
+silentAimTab.Position = UDim2.new(0, 0, 0, 0)
+silentAimTab.Text = "Silent Aim"
+silentAimTab.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+silentAimTab.TextColor3 = Color3.fromRGB(255, 255, 255)
+silentAimTab.Parent = tabButtonFrame
 
--- Buttons for toggling features
-local function createButton(text, positionY)
-    local button = Instance.new("TextButton")
-    button.Text = text
-    button.Size = UDim2.new(1, 0, 0, 40)
-    button.Position = UDim2.new(0, 0, positionY, 0)
-    button.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
-    button.TextColor3 = Color3.fromRGB(255, 255, 255)
-    button.TextSize = 18
-    button.BorderSizePixel = 0
-    button.Parent = frame
-    return button
-end
+local espTab = Instance.new("TextButton")
+espTab.Size = UDim2.new(1, 0, 0, 40)
+espTab.Position = UDim2.new(0, 0, 0, 40)
+espTab.Text = "ESP"
+espTab.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+espTab.TextColor3 = Color3.fromRGB(255, 255, 255)
+espTab.Parent = tabButtonFrame
 
-local cameraLockButton = createButton("Camera Lock", 0.2)
-local triggerBotButton = createButton("Trigger Bot", 0.4)
-local espButton = createButton("ESP", 0.6)
-local speedHackButton = createButton("Speed Hack", 0.8)
+local speedhackTab = Instance.new("TextButton")
+speedhackTab.Size = UDim2.new(1, 0, 0, 40)
+speedhackTab.Position = UDim2.new(0, 0, 0, 80)
+speedhackTab.Text = "Speedhacks"
+speedhackTab.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+speedhackTab.TextColor3 = Color3.fromRGB(255, 255, 255)
+speedhackTab.Parent = tabButtonFrame
 
--- Smoothness Slider
-local smoothnessSliderLabel = Instance.new("TextLabel")
-smoothnessSliderLabel.Text = "Camera Lock Smoothness"
-smoothnessSliderLabel.Size = UDim2.new(1, 0, 0, 40)
-smoothnessSliderLabel.Position = UDim2.new(0, 0, 1, 0)
-smoothnessSliderLabel.BackgroundTransparency = 1
-smoothnessSliderLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-smoothnessSliderLabel.TextSize = 18
-smoothnessSliderLabel.TextStrokeTransparency = 0.8
-smoothnessSliderLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-smoothnessSliderLabel.TextXAlignment = Enum.TextXAlignment.Center
-smoothnessSliderLabel.Parent = frame
+local lockTab = Instance.new("TextButton")
+lockTab.Size = UDim2.new(1, 0, 0, 40)
+lockTab.Position = UDim2.new(0, 0, 0, 120)
+lockTab.Text = "Lock"
+lockTab.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+lockTab.TextColor3 = Color3.fromRGB(255, 255, 255)
+lockTab.Parent = tabButtonFrame
 
-local smoothnessSlider = Instance.new("TextBox")
-smoothnessSlider.Text = "0.1"  -- Default smoothness value
-smoothnessSlider.Size = UDim2.new(0, 200, 0, 40)
-smoothnessSlider.Position = UDim2.new(0.5, -100, 1.1, 0)
-smoothnessSlider.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
-smoothnessSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
-smoothnessSlider.TextSize = 18
-smoothnessSlider.TextAlign = Enum.TextXAlignment.Center
-smoothnessSlider.Parent = frame
+-- Tab Content Frames
+local contentFrame = Instance.new("Frame")
+contentFrame.Size = UDim2.new(0, 400, 1, 0)
+contentFrame.Position = UDim2.new(0, 100, 0, 0)
+contentFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+contentFrame.BorderSizePixel = 0
+contentFrame.Parent = mainFrame
 
--- Smoothness variable
-local smoothnessValue = 0.1  -- Default smoothness value
+-- Silent Aim Section
+local silentAimFrame = Instance.new("Frame")
+silentAimFrame.Size = UDim2.new(1, 0, 1, 0)
+silentAimFrame.BackgroundTransparency = 1
+silentAimFrame.Visible = false
+silentAimFrame.Parent = contentFrame
 
-smoothnessSlider.FocusLost:Connect(function(enterPressed)
-    if enterPressed then
-        local input = tonumber(smoothnessSlider.Text)
-        if input and input >= 0 and input <= 1 then
-            smoothnessValue = input
-        else
-            smoothnessSlider.Text = tostring(smoothnessValue)  -- Reset to last valid value
-        end
+local silentAimToggle = Instance.new("TextButton")
+silentAimToggle.Size = UDim2.new(0, 200, 0, 40)
+silentAimToggle.Position = UDim2.new(0, 100, 0, 20)
+silentAimToggle.Text = "Enable Silent Aim"
+silentAimToggle.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+silentAimToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+silentAimToggle.Parent = silentAimFrame
+
+-- ESP Section
+local espFrame = Instance.new("Frame")
+espFrame.Size = UDim2.new(1, 0, 1, 0)
+espFrame.BackgroundTransparency = 1
+espFrame.Visible = false
+espFrame.Parent = contentFrame
+
+local espToggle = Instance.new("TextButton")
+espToggle.Size = UDim2.new(0, 200, 0, 40)
+espToggle.Position = UDim2.new(0, 100, 0, 20)
+espToggle.Text = "Enable ESP"
+espToggle.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+espToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+espToggle.Parent = espFrame
+
+-- Speedhacks Section
+local speedhackFrame = Instance.new("Frame")
+speedhackFrame.Size = UDim2.new(1, 0, 1, 0)
+speedhackFrame.BackgroundTransparency = 1
+speedhackFrame.Visible = false
+speedhackFrame.Parent = contentFrame
+
+local speedhackToggle = Instance.new("TextButton")
+speedhackToggle.Size = UDim2.new(0, 200, 0, 40)
+speedhackToggle.Position = UDim2.new(0, 100, 0, 20)
+speedhackToggle.Text = "Enable Speedhack"
+speedhackToggle.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+speedhackToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+speedhackToggle.Parent = speedhackFrame
+
+-- Lock Section
+local lockFrame = Instance.new("Frame")
+lockFrame.Size = UDim2.new(1, 0, 1, 0)
+lockFrame.BackgroundTransparency = 1
+lockFrame.Visible = false
+lockFrame.Parent = contentFrame
+
+local lockToggle = Instance.new("TextButton")
+lockToggle.Size = UDim2.new(0, 200, 0, 40)
+lockToggle.Position = UDim2.new(0, 100, 0, 20)
+lockToggle.Text = "Enable Lock"
+lockToggle.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+lockToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+lockToggle.Parent = lockFrame
+
+-- Toggle Functions
+silentAimTab.MouseButton1Click:Connect(function()
+    silentAimFrame.Visible = true
+    espFrame.Visible = false
+    speedhackFrame.Visible = false
+    lockFrame.Visible = false
+end)
+
+espTab.MouseButton1Click:Connect(function()
+    silentAimFrame.Visible = false
+    espFrame.Visible = true
+    speedhackFrame.Visible = false
+    lockFrame.Visible = false
+end)
+
+speedhackTab.MouseButton1Click:Connect(function()
+    silentAimFrame.Visible = false
+    espFrame.Visible = false
+    speedhackFrame.Visible = true
+    lockFrame.Visible = false
+end)
+
+lockTab.MouseButton1Click:Connect(function()
+    silentAimFrame.Visible = false
+    espFrame.Visible = false
+    speedhackFrame.Visible = false
+    lockFrame.Visible = true
+end)
+
+-- Silent Aim Logic (Simple Example)
+silentAimToggle.MouseButton1Click:Connect(function()
+    local enableSilentAim = not silentAimToggle.Text:match("Disable")
+    if enableSilentAim then
+        silentAimToggle.Text = "Disable Silent Aim"
+        -- Add Silent Aim Logic here (target head, top-tier accuracy)
+    else
+        silentAimToggle.Text = "Enable Silent Aim"
+        -- Disable Silent Aim Logic
     end
 end)
 
--- Smooth Drag Function for GUI
-local dragging, dragStart, startPos
-local function update(input)
-    local delta = input.Position - dragStart
-    frame.Position = UDim2.new(
-        startPos.X.Scale, startPos.X.Offset + delta.X,
-        startPos.Y.Scale, startPos.Y.Offset + delta.Y
-    )
-end
-
-frame.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = true
-        dragStart = input.Position
-        startPos = frame.Position
+-- ESP Logic (simple example)
+espToggle.MouseButton1Click:Connect(function()
+    local enableESP = not espToggle.Text:match("Disable")
+    if enableESP then
+        espToggle.Text = "Disable ESP"
+        -- Add ESP Logic here
+    else
+        espToggle.Text = "Enable ESP"
+        -- Disable ESP Logic
     end
 end)
 
-frame.InputChanged:Connect(function(input)
-    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-        update(input)
+-- Speedhack Logic
+speedhackToggle.MouseButton1Click:Connect(function()
+    local enableSpeedhack = not speedhackToggle.Text:match("Disable")
+    if enableSpeedhack then
+        speedhackToggle.Text = "Disable Speedhack"
+        -- Add Speedhack Logic here
+    else
+        speedhackToggle.Text = "Enable Speedhack"
+        -- Disable Speedhack Logic
     end
 end)
 
-frame.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = false
-    end
-end)
-
--- Features Logic
-local camera = game.Workspace.CurrentCamera
-local triggerBotEnabled = false
-local lockCameraEnabled = false
-local speedHackEnabled = false
-local espEnabled = false
-
--- Camera Lock (Track Head with Smoothness)
-local function toggleCameraLock()
-    lockCameraEnabled = not lockCameraEnabled
-
-    if lockCameraEnabled then
-        print("Camera Lock Enabled")
-        local renderSteppedConnection
-        renderSteppedConnection = game:GetService("RunService").RenderStepped:Connect(function()
-            if not lockCameraEnabled then
-                renderSteppedConnection:Disconnect()
-                return
-            end
-
-            local closestPlayer = nil
-            local closestDistance = math.huge
-
-            for _, player in pairs(game.Players:GetPlayers()) do
-                if player ~= game.Players.LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
-                    local distance = (camera.CFrame.Position - player.Character.Head.Position).Magnitude
-                    if distance < closestDistance then
-                        closestDistance = distance
-                        closestPlayer = player.Character.Head
-                    end
-                end
-            end
-
-            -- Smoothly move camera to the target player's head
-            if closestPlayer then
-                -- Calculate the target CFrame
-                local targetCFrame = CFrame.new(camera.CFrame.Position, closestPlayer.Position)
-
-                -- Smoothly interpolate between current camera CFrame and target
-                camera.CFrame = camera.CFrame:Lerp(targetCFrame, smoothnessValue)  -- Use smoothnessValue from slider
+-- Lock Logic (Aiming Lock on Enemy Head)
+lockToggle.MouseButton1Click:Connect(function()
+    local enableLock = not lockToggle.Text:match("Disable")
+    if enableLock then
+        lockToggle.Text = "Disable Lock"
+        -- Implement Top-Tier Lock Logic (aim at head with high accuracy)
+        Mouse.Move:Connect(function()
+            -- Example of Locking to Target's Head
+            local target = nil -- Find closest target
+            if target then
+                local headPos = target.Head.Position
+                -- Aim and shoot at the head
             end
         end)
     else
-        print("Camera Lock Disabled")
+        lockToggle.Text = "Enable Lock"
+        -- Disable Lock Logic
     end
-end
-
--- Trigger Bot
-local function toggleTriggerBot()
-    triggerBotEnabled = not triggerBotEnabled
-    if triggerBotEnabled then
-        print("Trigger Bot Enabled")
-    else
-        print("Trigger Bot Disabled")
-    end
-end
-
-triggerBotButton.MouseButton1Click:Connect(toggleTriggerBot)
-
--- ESP (as before)
-local function toggleESP()
-    espEnabled = not espEnabled
-    if espEnabled then
-        print("ESP Enabled")
-        -- Create ESP for every player
-        for _, player in pairs(game.Players:GetPlayers()) do
-            if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                local billboardGui = Instance.new("BillboardGui")
-                billboardGui.Adornee = player.Character.HumanoidRootPart
-                billboardGui.Parent = player.Character.HumanoidRootPart
-                billboardGui.Size = UDim2.new(0, 100, 0, 50)
-                billboardGui.StudsOffset = Vector3.new(0, 3, 0)
-
-                local nameLabel = Instance.new("TextLabel")
-                nameLabel.Text = player.Name
-                nameLabel.Size = UDim2.new(1, 0, 1, 0)
-                nameLabel.BackgroundTransparency = 1
-                nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-                nameLabel.TextStrokeTransparency = 0.8
-                nameLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-                nameLabel.TextSize = 16
-                nameLabel.Parent = billboardGui
-            end
-        end
-    else
-        print("ESP Disabled")
-        -- Remove ESP
-        for _, player in pairs(game.Players:GetPlayers()) do
-            if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                local billboardGui = player.Character.HumanoidRootPart:FindFirstChildOfClass("BillboardGui")
-                if billboardGui then
-                    billboardGui:Destroy()
-                end
-            end
-        end
-    end
-end
-
-espButton.MouseButton1Click:Connect(toggleESP)
-
--- Speed Hack
-local function toggleSpeedHack()
-    speedHackEnabled = not speedHackEnabled
-    if speedHackEnabled then
-        print("Speed Hack Enabled")
-        game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 100  -- Set to a high value for faster movement
-    else
-        print("Speed Hack Disabled")
-        game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 16  -- Reset to normal walk speed
-    end
-end
-
-speedHackButton.MouseButton1Click:Connect(toggleSpeedHack)
-
--- Toggle the camera lock button functionality
-cameraLockButton.MouseButton1Click:Connect(toggleCameraLock)
+end)
