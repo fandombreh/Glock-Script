@@ -5,10 +5,10 @@ screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 
 -- Frame for the GUI
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 300, 0, 300)  -- Set to a fixed size for better visibility
-frame.Position = UDim2.new(0.5, -150, 0.5, -150)
+frame.Size = UDim2.new(0, 400, 0, 400)  -- Increased size for better visibility
+frame.Position = UDim2.new(0.5, -200, 0.5, -200)
 frame.BackgroundColor3 = Color3.fromRGB(255, 0, 0)  -- Solid red color
-frame.BackgroundTransparency = 0  -- Make it fully opaque
+frame.BackgroundTransparency = 0  -- Fully opaque to remove transparency
 frame.BorderSizePixel = 0
 frame.Parent = screenGui
 
@@ -190,3 +190,4 @@ local function onUpdate()
 end
 
 game:GetService("RunService").Heartbeat:Connect(onUpdate)
+
