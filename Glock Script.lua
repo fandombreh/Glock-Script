@@ -33,21 +33,24 @@ end
 
 -- Silent Aim Function
 RunService.RenderStepped:Connect(function()
-    if GlockGUI.SilentAim and GlockGUI.Target then
-        local head = GlockGUI.Target.Character and GlockGUI.Target.Character:FindFirstChild("Head")
-        if head then
-            Camera.CFrame = CFrame.new(Camera.CFrame.Position, head.Position)
+    if GlockGUI.SilentAim then
+        local target = getClosestPlayer()
+        if target and target.Character and target.Character:FindFirstChild("Head") then
+            GlockGUI.Target = target
+            Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Character.Head.Position)
         end
+    else
+        GlockGUI.Target = nil
     end
 end)
 
 -- ESP Function
 RunService.RenderStepped:Connect(function()
-    if GlockGUI.ESP then
-        for _, player in pairs(Players:GetPlayers()) do
-            if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
-                local head = player.Character.Head
-                local billboard = head:FindFirstChild("ESP")
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
+            local head = player.Character.Head
+            local billboard = head:FindFirstChild("ESP")
+            if GlockGUI.ESP then
                 if not billboard then
                     billboard = Instance.new("BillboardGui", head)
                     billboard.Name = "ESP"
@@ -61,15 +64,8 @@ RunService.RenderStepped:Connect(function()
                     text.TextColor3 = Color3.fromRGB(255, 0, 0)
                     text.TextStrokeTransparency = 0.5
                 end
-            end
-        end
-    else
-        for _, player in pairs(Players:GetPlayers()) do
-            if player.Character and player.Character:FindFirstChild("Head") then
-                local esp = player.Character.Head:FindFirstChild("ESP")
-                if esp then
-                    esp:Destroy()
-                end
+            elseif billboard then
+                billboard:Destroy()
             end
         end
     end
@@ -147,7 +143,7 @@ for i, tabName in ipairs(Tabs) do
     frame.Size = UDim2.new(1, 0, 1, -30)
     frame.Position = UDim2.new(0, 0, 0, 30)
     frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    frame.Visible = (i == 1) -- Show first tab by default
+    frame.Visible = (i == 1)
     frame.Parent = MainFrame
     TabFrames[tabName] = frame
 end
