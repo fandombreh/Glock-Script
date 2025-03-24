@@ -28,6 +28,7 @@ local function saveSettings()
         aimbotSmoothness = aimbotSmoothness,
         triggerBotSmoothness = triggerBotSmoothness
     }
+    -- Ensure that writefile is available
     if writefile then
         pcall(function()
             writefile(SETTINGS_FILE, HttpService:JSONEncode(settings))
@@ -39,6 +40,7 @@ end
 
 -- Load Settings
 local function loadSettings()
+    -- Ensure isfile is available and the file exists
     if isfile and isfile(SETTINGS_FILE) then
         local success, settings = pcall(function()
             return HttpService:JSONDecode(readfile(SETTINGS_FILE))
@@ -91,8 +93,10 @@ local function silentAim()
 end
 
 RunService.RenderStepped:Connect(function()
+    -- Apply Silent Aim
     silentAim()
 
+    -- Apply Aimbot if enabled
     if lockAimbotEnabled then
         local target = getClosestPlayer()
         if target and target.Character and target.Character:FindFirstChild("Head") then
@@ -104,11 +108,13 @@ end)
 
 -- ESP Functionality
 local function updateESP()
+    -- Clear existing ESP boxes
     for _, espBox in pairs(espConnections) do
         espBox:Destroy()
     end
     espConnections = {}
 
+    -- Draw ESP boxes for players
     if espEnabled then
         for _, player in pairs(game.Players:GetPlayers()) do
             if player ~= localPlayer and player.Character and player.Character:FindFirstChild("Head") then
@@ -120,11 +126,15 @@ local function updateESP()
                     espBox.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
                     espBox.BackgroundTransparency = 0.5
                     espBox.BorderSizePixel = 0
-                    if localPlayer:FindFirstChild("PlayerGui") then
-                        espBox.Parent = localPlayer.PlayerGui
+
+                    -- Ensure PlayerGui is available for ESP
+                    local playerGui = localPlayer:FindFirstChild("PlayerGui")
+                    if playerGui then
+                        espBox.Parent = playerGui
                     else
-                        warn("PlayerGui is not available.")
+                        warn("PlayerGui is not available, skipping ESP for " .. player.Name)
                     end
+
                     table.insert(espConnections, espBox)
                 end
             end
