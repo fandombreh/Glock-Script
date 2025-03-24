@@ -72,7 +72,7 @@ speedHackButton.BorderSizePixel = 0
 speedHackButton.Parent = frame
 
 -- Smooth Drag Function for GUI
-local dragging, dragInput, dragStart, startPos
+local dragging, dragStart, startPos
 local function update(input)
     local delta = input.Position - dragStart
     frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
@@ -83,13 +83,12 @@ frame.InputBegan:Connect(function(input)
         dragging = true
         dragStart = input.Position
         startPos = frame.Position
+    end
+end)
 
-        input.Changed:Connect(function()
-            if not dragging then
-                return
-            end
-            update(input)
-        end)
+frame.InputChanged:Connect(function(input)
+    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        update(input)
     end
 end)
 
@@ -190,11 +189,9 @@ local function onUpdate()
         if closestPlayer then
             -- Aim at closest player (add your shooting mechanism here)
             camera.CFrame = CFrame.new(camera.CFrame.Position, closestPlayer.Position)
-            -- Implement auto-shoot logic here
+            -- Implement auto-shoot logic here (e.g., fire weapon or trigger action)
         end
     end
 end
-
-game:GetService("RunService").Heartbeat:Connect(onUpdate)
 
 game:GetService("RunService").Heartbeat:Connect(onUpdate)
