@@ -27,7 +27,7 @@ titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 titleLabel.TextSize = 24
 titleLabel.TextStrokeTransparency = 0.8
 titleLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-titleLabel.TextXAlignment = Enum.TextXAlignment.Center -- Fixed property name
+titleLabel.TextXAlignment = Enum.TextXAlignment.Center
 titleLabel.Parent = frame
 
 -- Buttons for toggling features
@@ -91,8 +91,10 @@ local function toggleCameraLock()
     lockCamera = not lockCamera
     if lockCamera then
         camera.CameraType = Enum.CameraType.Scriptable
+        print("Camera Lock Enabled")
     else
         camera.CameraType = Enum.CameraType.Custom
+        print("Camera Lock Disabled")
     end
 end
 
@@ -108,10 +110,18 @@ triggerBotButton.MouseButton1Click:Connect(toggleTriggerBot)
 -- Speed Hack
 local function toggleSpeedHack()
     speedHackEnabled = not speedHackEnabled
-    if speedHackEnabled then
-        game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 100
+    local character = game.Players.LocalPlayer.Character
+    local humanoid = character and character:FindFirstChild("Humanoid")
+    if humanoid then
+        if speedHackEnabled then
+            humanoid.WalkSpeed = 100 -- Increased speed
+            print("Speed Hack Enabled")
+        else
+            humanoid.WalkSpeed = 16 -- Default speed
+            print("Speed Hack Disabled")
+        end
     else
-        game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 16
+        warn("Humanoid not found. Speed Hack cannot be toggled.")
     end
 end
 
