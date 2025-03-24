@@ -86,31 +86,37 @@ local triggerBot = false
 local speedHackEnabled = false
 local espEnabled = false
 
--- Camera Lock
+-- Updated Camera Lock (now works like Trigger Bot)
 local function toggleCameraLock()
     lockCamera = not lockCamera
 
-    local player = game.Players.LocalPlayer
-    local character = player.Character or player:WaitForChild("Character")
-    local humanoidRootPart = character and character:FindFirstChild("HumanoidRootPart")
-
     if lockCamera then
-        if humanoidRootPart then
-            camera.CameraType = Enum.CameraType.Scriptable
-            local renderSteppedConnection
-            renderSteppedConnection = game:GetService("RunService").RenderStepped:Connect(function()
-                if lockCamera and humanoidRootPart then
-                    camera.CFrame = CFrame.new(camera.CFrame.Position, humanoidRootPart.Position)
-                else
-                    renderSteppedConnection:Disconnect()
+        print("Camera Lock Enabled")
+        local renderSteppedConnection
+        renderSteppedConnection = game:GetService("RunService").RenderStepped:Connect(function()
+            if not lockCamera then
+                renderSteppedConnection:Disconnect()
+                return
+            end
+
+            local closestPlayer = nil
+            local closestDistance = math.huge
+
+            for _, player in pairs(game.Players:GetPlayers()) do
+                if player.Character and player ~= game.Players.LocalPlayer and player.Character:FindFirstChild("HumanoidRootPart") then
+                    local distance = (camera.CFrame.Position - player.Character.HumanoidRootPart.Position).Magnitude
+                    if distance < closestDistance then
+                        closestDistance = distance
+                        closestPlayer = player.Character.HumanoidRootPart
+                    end
                 end
-            end)
-            print("Camera Lock Enabled")
-        else
-            warn("HumanoidRootPart not found. Camera Lock could not function.")
-        end
+            end
+
+            if closestPlayer then
+                camera.CFrame = CFrame.new(camera.CFrame.Position, closestPlayer.Position)
+            end
+        end)
     else
-        camera.CameraType = Enum.CameraType.Custom
         print("Camera Lock Disabled")
     end
 end
@@ -120,6 +126,11 @@ cameraLockButton.MouseButton1Click:Connect(toggleCameraLock)
 -- Trigger Bot
 local function toggleTriggerBot()
     triggerBot = not triggerBot
+    if triggerBot then
+        print("Trigger Bot Enabled")
+    else
+        print("Trigger Bot Disabled")
+    end
 end
 
 triggerBotButton.MouseButton1Click:Connect(toggleTriggerBot)
@@ -173,7 +184,7 @@ end
 espButton.MouseButton1Click:Connect(toggleESP)
 
 -- Trigger Bot Logic
-local function onUpdate()
+local function triggerBotAction()
     if triggerBot then
         local closestPlayer = nil
         local closestDistance = math.huge
@@ -189,9 +200,9 @@ local function onUpdate()
         end
 
         if closestPlayer then
-            camera.CFrame = CFrame.new(camera.CFrame.Position, closestPlayer.Position)
+            print("Trigger Bot targeting:", closestPlayer.Parent.Name)
         end
     end
 end
 
-game:GetService("RunService").Heartbeat:Connect(onUpdate)
+game:GetService("RunService").Heartbeat:Connect(triggerBotAction)
