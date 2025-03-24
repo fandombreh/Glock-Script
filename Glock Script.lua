@@ -1,11 +1,10 @@
--- GUI Setup
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UIS = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = game.Workspace.CurrentCamera
 local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-local Humanoid = Character:FindFirstChild("Humanoid")
+local Humanoid = Character:WaitForChild("Humanoid")
 
 -- Screen GUI
 local screenGui = Instance.new("ScreenGui")
@@ -101,6 +100,7 @@ createButton("ESP", 0.6, function()
                 gui.Adornee = root
                 gui.Size = UDim2.new(0, 100, 0, 50)
                 gui.StudsOffset = Vector3.new(0, 3, 0)
+                gui.AlwaysOnTop = true
                 local label = Instance.new("TextLabel", gui)
                 label.Size = UDim2.new(1, 0, 1, 0)
                 label.BackgroundTransparency = 1
@@ -118,6 +118,6 @@ local speedHackEnabled = false
 createButton("Speed Hack", 0.8, function()
     speedHackEnabled = not speedHackEnabled
     if Humanoid then
-        Humanoid.WalkSpeed = speedHackEnabled and 100 or 16
+        Humanoid.WalkSpeed = speedHackEnabled and 50 or 16
     end
 end)
