@@ -206,4 +206,3 @@ local function triggerBotAction()
 end
 
 game:GetService("RunService").Heartbeat:Connect(triggerBotAction)
-
