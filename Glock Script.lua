@@ -3,6 +3,9 @@ local camera = game.Workspace.CurrentCamera
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local VirtualInputManager = game:GetService("VirtualInputManager")
+local HttpService = game:GetService("HttpService")
+
+local SETTINGS_FILE = "GlockSettings.json"
 
 local triggerBotEnabled = false
 local lockAimbotEnabled = false
@@ -14,6 +17,34 @@ local triggerBotSmoothness = 0.2
 local silentAimFOV = 130
 local espConnections = {}
 local triggerBotConnection
+
+-- Save Settings
+local function saveSettings()
+    local settings = {
+        triggerBotEnabled = triggerBotEnabled,
+        lockAimbotEnabled = lockAimbotEnabled,
+        espEnabled = espEnabled,
+        fovCircleEnabled = fovCircleEnabled,
+        aimbotSmoothness = aimbotSmoothness,
+        triggerBotSmoothness = triggerBotSmoothness
+    }
+    writefile(SETTINGS_FILE, HttpService:JSONEncode(settings))
+end
+
+-- Load Settings
+local function loadSettings()
+    if isfile(SETTINGS_FILE) then
+        local settings = HttpService:JSONDecode(readfile(SETTINGS_FILE))
+        triggerBotEnabled = settings.triggerBotEnabled
+        lockAimbotEnabled = settings.lockAimbotEnabled
+        espEnabled = settings.espEnabled
+        fovCircleEnabled = settings.fovCircleEnabled
+        aimbotSmoothness = settings.aimbotSmoothness
+        triggerBotSmoothness = settings.triggerBotSmoothness
+    end
+end
+
+loadSettings()
 
 -- Get Closest Player within FOV
 local function getClosestPlayer()
@@ -38,6 +69,7 @@ end
 local function lockAimbot()
     lockAimbotEnabled = not lockAimbotEnabled
     lockAimbotButton.Text = "Lock Aimbot: " .. (lockAimbotEnabled and "ON" or "OFF")
+    saveSettings()
     RunService.RenderStepped:Connect(function()
         if lockAimbotEnabled then
             local target = getClosestPlayer()
@@ -53,18 +85,21 @@ end
 local function toggleESP()
     espEnabled = not espEnabled
     espButton.Text = "ESP: " .. (espEnabled and "ON" or "OFF")
+    saveSettings()
 end
 
 -- Toggle FOV Circle
 local function toggleFOVCircle()
     fovCircleEnabled = not fovCircleEnabled
     fovButton.Text = "FOV Circle: " .. (fovCircleEnabled and "ON" or "OFF")
+    saveSettings()
 end
 
 -- Toggle Trigger Bot
 local function toggleTriggerBot()
     triggerBotEnabled = not triggerBotEnabled
     triggerBotButton.Text = "Trigger Bot: " .. (triggerBotEnabled and "ON" or "OFF")
+    saveSettings()
 end
 
 -- UI Setup
@@ -92,18 +127,19 @@ local function createButton(text, parent, callback, position)
     return button
 end
 
-local function createSlider(text, parent, position, callback)
+local function createSlider(text, parent, position, callback, settingKey)
     local slider = Instance.new("TextBox")
     slider.Size = UDim2.new(0, 180, 0, 40)
     slider.Position = UDim2.new(0, 10, 0, position)
-    slider.Text = text
+    slider.Text = tostring(_G[settingKey])
     slider.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
     slider.TextColor3 = Color3.fromRGB(255, 255, 255)
     slider.Parent = parent
     slider.FocusLost:Connect(function()
         local value = tonumber(slider.Text)
         if value then
-            callback(value)
+            _G[settingKey] = value
+            saveSettings()
         end
     end)
     return slider
@@ -113,8 +149,8 @@ local buttonSpacing = 45
 local startY = 10
 
 lockAimbotButton = createButton("Lock Aimbot: OFF", mainFrame, lockAimbot, startY)
-createSlider("Aimbot Smoothness", mainFrame, startY + buttonSpacing, function(value) aimbotSmoothness = value end)
+createSlider("Aimbot Smoothness", mainFrame, startY + buttonSpacing, function(value) aimbotSmoothness = value end, "aimbotSmoothness")
 triggerBotButton = createButton("Trigger Bot: OFF", mainFrame, toggleTriggerBot, startY + buttonSpacing * 2)
-createSlider("Trigger Bot Smoothness", mainFrame, startY + buttonSpacing * 3, function(value) triggerBotSmoothness = value end)
+createSlider("Trigger Bot Smoothness", mainFrame, startY + buttonSpacing * 3, function(value) triggerBotSmoothness = value end, "triggerBotSmoothness")
 espButton = createButton("ESP: OFF", mainFrame, toggleESP, startY + buttonSpacing * 4)
 fovButton = createButton("FOV Circle: OFF", mainFrame, toggleFOVCircle, startY + buttonSpacing * 5)
