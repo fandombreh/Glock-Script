@@ -1,4 +1,5 @@
 local localPlayer = game.Players.LocalPlayer
+local localPlayer = game.Players.LocalPlayer
 local camera = workspace.CurrentCamera
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -42,6 +43,8 @@ local function loadSettings()
         fovCircleEnabled = settings.fovCircleEnabled
         aimbotSmoothness = settings.aimbotSmoothness
         triggerBotSmoothness = settings.triggerBotSmoothness
+    else
+        warn("Settings file not found, using default settings.")
     end
 end
 
@@ -115,5 +118,3 @@ local function updateESP()
 end
 
 RunService.RenderStepped:Connect(updateESP)
-
--- Save UI changes and logic integrity
