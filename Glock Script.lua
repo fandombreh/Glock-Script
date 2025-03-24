@@ -3,8 +3,11 @@ local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "Glock.lol"
 screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 
--- Check if ScreenGui is created correctly
-print("ScreenGui created successfully!")
+-- Ensure the GUI is visible across all executors
+if not screenGui.Parent then
+    warn("Unable to attach GUI to PlayerGui. Please check executor permissions.")
+    return
+end
 
 -- Frame for the GUI
 local frame = Instance.new("Frame")
@@ -14,9 +17,6 @@ frame.BackgroundColor3 = Color3.fromRGB(100, 0, 0)  -- Dark red color for visibi
 frame.BackgroundTransparency = 0  -- No transparency
 frame.BorderSizePixel = 0  -- No border
 frame.Parent = screenGui
-
--- Check if Frame is created successfully
-print("Frame created successfully!")
 
 -- Title Label
 local titleLabel = Instance.new("TextLabel")
@@ -29,9 +29,6 @@ titleLabel.TextStrokeTransparency = 0.8
 titleLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
 titleLabel.TextAlign = Enum.TextXAlignment.Center
 titleLabel.Parent = frame
-
--- Check if Title Label is created successfully
-print("Title Label created successfully!")
 
 -- Buttons for toggling features
 local cameraLockButton = Instance.new("TextButton")
@@ -73,9 +70,6 @@ speedHackButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 speedHackButton.TextSize = 18
 speedHackButton.BorderSizePixel = 0
 speedHackButton.Parent = frame
-
--- Check if Buttons are created successfully
-print("Buttons created successfully!")
 
 -- Smooth Drag Function for GUI
 local dragging, dragInput, dragStart, startPos
@@ -202,4 +196,3 @@ local function onUpdate()
 end
 
 game:GetService("RunService").Heartbeat:Connect(onUpdate)
-
