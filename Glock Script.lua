@@ -196,4 +196,39 @@ local function toggleESP()
                 nameLabel.Text = player.Name
                 nameLabel.Size = UDim2.new(1, 0, 1, 0)
                 nameLabel.BackgroundTransparency = 1
-                nameLabel.TextColor3 = Color3.fromRGB(
+                nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+                nameLabel.TextStrokeTransparency = 0.8
+                nameLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+                nameLabel.TextSize = 16
+                nameLabel.Parent = billboardGui
+            end
+        end
+    else
+        print("ESP Disabled")
+        -- Remove ESP
+        for _, player in pairs(game.Players:GetPlayers()) do
+            if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                local billboardGui = player.Character.HumanoidRootPart:FindFirstChildOfClass("BillboardGui")
+                if billboardGui then
+                    billboardGui:Destroy()
+                end
+            end
+        end
+    end
+end
+
+espButton.MouseButton1Click:Connect(toggleESP)
+
+-- Speed Hack
+local function toggleSpeedHack()
+    speedHackEnabled = not speedHackEnabled
+    if speedHackEnabled then
+        print("Speed Hack Enabled")
+        game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 100  -- Set to a high value for faster movement
+    else
+        print("Speed Hack Disabled")
+        game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 16  -- Reset to normal walk speed
+    end
+end
+
+speedHackButton.MouseButton1Click:Connect(toggleSpeedHack)
