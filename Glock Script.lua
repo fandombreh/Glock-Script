@@ -1,145 +1,118 @@
-local localPlayer = game.Players.LocalPlayer
-local camera = workspace.CurrentCamera
-local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
-local HttpService = game:GetService("HttpService")
+-- GUI Setup
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "Glock.lol"
+screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 
-local SETTINGS_FILE = "GlockSettings.json"
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 300, 0, 100)
+frame.Position = UDim2.new(0.5, -150, 0.5, -50)
+frame.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+frame.Parent = screenGui
 
-local triggerBotEnabled = false
-local lockAimbotEnabled = false
-local silentAimEnabled = false
-local espEnabled = false
-local fovCircleEnabled = false
-local triggerBotRange = 15
-local aimbotSmoothness = 0.2
-local triggerBotSmoothness = 0.2
-local silentAimFOV = 130
-local espConnections = {}
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Text = "Glock.lol"
+titleLabel.Size = UDim2.new(1, 0, 0, 40)
+titleLabel.BackgroundTransparency = 1
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleLabel.TextSize = 24
+titleLabel.Parent = frame
 
--- Save Settings
-local function saveSettings()
-    local settings = {
-        triggerBotEnabled = triggerBotEnabled,
-        lockAimbotEnabled = lockAimbotEnabled,
-        silentAimEnabled = silentAimEnabled,
-        espEnabled = espEnabled,
-        fovCircleEnabled = fovCircleEnabled,
-        aimbotSmoothness = aimbotSmoothness,
-        triggerBotSmoothness = triggerBotSmoothness
-    }
-    -- Ensure that writefile is available
-    if writefile then
-        pcall(function()
-            writefile(SETTINGS_FILE, HttpService:JSONEncode(settings))
-        end)
-    else
-        warn("Writefile function is not available.")
-    end
+-- Smooth Drag Function
+local dragging, dragInput, dragStart, startPos
+local function update(input)
+    local delta = input.Position - dragStart
+    frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
 end
 
--- Load Settings
-local function loadSettings()
-    -- Ensure isfile is available and the file exists
-    if isfile and isfile(SETTINGS_FILE) then
-        local success, settings = pcall(function()
-            return HttpService:JSONDecode(readfile(SETTINGS_FILE))
-        end)
-        if success then
-            triggerBotEnabled = settings.triggerBotEnabled
-            lockAimbotEnabled = settings.lockAimbotEnabled
-            silentAimEnabled = settings.silentAimEnabled
-            espEnabled = settings.espEnabled
-            fovCircleEnabled = settings.fovCircleEnabled
-            aimbotSmoothness = settings.aimbotSmoothness
-            triggerBotSmoothness = settings.triggerBotSmoothness
-        else
-            warn("Failed to decode settings, using default values.")
-        end
-    else
-        warn("Settings file not found, using default settings.")
-    end
-end
+frame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = frame.Position
 
-loadSettings()
-
--- Get Closest Player within FOV
-local function getClosestPlayer()
-    local closestPlayer = nil
-    local shortestDistance = silentAimFOV
-    for _, player in pairs(game.Players:GetPlayers()) do
-        if player ~= localPlayer and player.Character and player.Character:FindFirstChild("Head") then
-            local headPos, onScreen = camera:WorldToViewportPoint(player.Character.Head.Position)
-            if onScreen then
-                local distance = (UserInputService:GetMouseLocation() - Vector2.new(headPos.X, headPos.Y)).Magnitude
-                if distance < shortestDistance then
-                    closestPlayer = player
-                    shortestDistance = distance
-                end
+        input.Changed:Connect(function()
+            if dragging == false then
+                return
             end
-        end
-    end
-    return closestPlayer
-end
-
--- Silent Aim Function
-local function silentAim()
-    if silentAimEnabled then
-        local target = getClosestPlayer()
-        if target and target.Character and target.Character:FindFirstChild("Head") then
-            camera.CFrame = CFrame.new(camera.CFrame.Position, target.Character.Head.Position)
-        end
-    end
-end
-
-RunService.RenderStepped:Connect(function()
-    -- Apply Silent Aim
-    silentAim()
-
-    -- Apply Aimbot if enabled
-    if lockAimbotEnabled then
-        local target = getClosestPlayer()
-        if target and target.Character and target.Character:FindFirstChild("Head") then
-            local targetPosition = target.Character.Head.Position
-            camera.CFrame = camera.CFrame:Lerp(CFrame.new(camera.CFrame.Position, targetPosition), aimbotSmoothness)
-        end
+            update(input)
+        end)
     end
 end)
 
--- ESP Functionality
-local function updateESP()
-    -- Clear existing ESP boxes
-    for _, espBox in pairs(espConnections) do
-        espBox:Destroy()
+frame.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = false
     end
-    espConnections = {}
+end)
 
-    -- Draw ESP boxes for players
-    if espEnabled then
+-- Camera Lock Function
+local camera = game.Workspace.CurrentCamera
+local lockCamera = false
+
+local function toggleCameraLock()
+    lockCamera = not lockCamera
+    if lockCamera then
+        camera.CameraType = Enum.CameraType.Scriptable
+    else
+        camera.CameraType = Enum.CameraType.Custom
+    end
+end
+
+-- Trigger Bot Function
+local triggerBot = false
+local function toggleTriggerBot()
+    triggerBot = not triggerBot
+end
+
+local function onUpdate()
+    if triggerBot then
+        local target = nil
+        local closestDistance = math.huge
         for _, player in pairs(game.Players:GetPlayers()) do
-            if player ~= localPlayer and player.Character and player.Character:FindFirstChild("Head") then
-                local headPos, onScreen = camera:WorldToViewportPoint(player.Character.Head.Position)
-                if onScreen then
-                    local espBox = Instance.new("Frame")
-                    espBox.Size = UDim2.new(0, 50, 0, 50)
-                    espBox.Position = UDim2.new(0, headPos.X - 25, 0, headPos.Y - 25)
-                    espBox.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-                    espBox.BackgroundTransparency = 0.5
-                    espBox.BorderSizePixel = 0
-
-                    -- Ensure PlayerGui is available for ESP
-                    local playerGui = localPlayer:FindFirstChild("PlayerGui")
-                    if playerGui then
-                        espBox.Parent = playerGui
-                    else
-                        warn("PlayerGui is not available, skipping ESP for " .. player.Name)
-                    end
-
-                    table.insert(espConnections, espBox)
+            if player.Character and player.Character:FindFirstChild("HumanoidRootPart") and player.Team ~= game.Players.LocalPlayer.Team then
+                local distance = (camera.CFrame.Position - player.Character.HumanoidRootPart.Position).Magnitude
+                if distance < closestDistance then
+                    closestDistance = distance
+                    target = player.Character.HumanoidRootPart
                 end
             end
+        end
+        if target then
+            -- Logic to shoot at the target
+            -- This is where you'd implement the actual trigger bot mechanics (aiming and shooting)
         end
     end
 end
 
-RunService.RenderStepped:Connect(updateESP)
+game:GetService("RunService").Heartbeat:Connect(onUpdate)
+
+-- FOV Circle Function
+local fovCircle = Instance.new("Frame")
+fovCircle.Size = UDim2.new(0, 200, 0, 200)
+fovCircle.Position = UDim2.new(0.5, -100, 0.5, -100)
+fovCircle.AnchorPoint = Vector2.new(0.5, 0.5)
+fovCircle.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+fovCircle.BackgroundTransparency = 0.5
+fovCircle.BorderSizePixel = 0
+fovCircle.Parent = screenGui
+
+-- GUI Buttons for toggling features
+local cameraLockButton = Instance.new("TextButton")
+cameraLockButton.Text = "Toggle Camera Lock"
+cameraLockButton.Size = UDim2.new(1, 0, 0, 40)
+cameraLockButton.Position = UDim2.new(0, 0, 0.5, 50)
+cameraLockButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+cameraLockButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+cameraLockButton.Parent = frame
+
+cameraLockButton.MouseButton1Click:Connect(toggleCameraLock)
+
+local triggerBotButton = Instance.new("TextButton")
+triggerBotButton.Text = "Toggle Trigger Bot"
+triggerBotButton.Size = UDim2.new(1, 0, 0, 40)
+triggerBotButton.Position = UDim2.new(0, 0, 0.5, 0)
+triggerBotButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+triggerBotButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+triggerBotButton.Parent = frame
+
+triggerBotButton.MouseButton1Click:Connect(toggleTriggerBot)
