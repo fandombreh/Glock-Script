@@ -3,7 +3,6 @@ local camera = game.Workspace.CurrentCamera
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local HttpService = game:GetService("HttpService")
-local UIS = game:GetService("UserInputService")
 
 local SETTINGS_FILE = "GlockSettings.json"
 
@@ -152,4 +151,3 @@ end
 
 createSlider(mainFrame, "Aimbot Smoothness", "aimbotSmoothness", 100)
 createSlider(mainFrame, "TriggerBot Smoothness", "triggerBotSmoothness", 150)
-
