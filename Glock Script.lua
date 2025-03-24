@@ -86,7 +86,7 @@ local triggerBot = false
 local speedHackEnabled = false
 local espEnabled = false
 
--- Updated Camera Lock (now works like Trigger Bot)
+-- Updated Camera Lock
 local function toggleCameraLock()
     lockCamera = not lockCamera
 
@@ -103,7 +103,7 @@ local function toggleCameraLock()
             local closestDistance = math.huge
 
             for _, player in pairs(game.Players:GetPlayers()) do
-                if player.Character and player ~= game.Players.LocalPlayer and player.Character:FindFirstChild("HumanoidRootPart") then
+                if player ~= game.Players.LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
                     local distance = (camera.CFrame.Position - player.Character.HumanoidRootPart.Position).Magnitude
                     if distance < closestDistance then
                         closestDistance = distance
@@ -206,3 +206,4 @@ local function triggerBotAction()
 end
 
 game:GetService("RunService").Heartbeat:Connect(triggerBotAction)
+
