@@ -5,7 +5,7 @@ local camera = game.Workspace.CurrentCamera
 -- Create a Screen GUI for cheats
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "CheatMenu"
-screenGui.Parent = player.PlayerGui
+screenGui.Parent = player:FindFirstChildOfClass("PlayerGui")
 
 -- Create a Frame for the cheat buttons
 local frame = Instance.new("Frame")
@@ -13,7 +13,6 @@ frame.Size = UDim2.new(0.3, 0, 0.7, 0)
 frame.Position = UDim2.new(0.35, 0, 0.15, 0)
 frame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 frame.BorderSizePixel = 2
-frame.Visible = true
 frame.Parent = screenGui
 
 -- Function to create buttons in the cheat menu
@@ -32,11 +31,12 @@ end
 -------------------------------
 -- Aim Cheats Section
 -------------------------------
+
 -- Aim Lock: Locks onto the nearest player
 local aimLockEnabled = false
 
 local function aimLock()
-    if aimLockEnabled then
+    if aimLockEnabled and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
         local closestPlayer = nil
         local shortestDistance = math.huge
 
@@ -64,7 +64,7 @@ end)
 local aimAssistEnabled = false
 
 local function aimAssist()
-    if aimAssistEnabled then
+    if aimAssistEnabled and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
         local closestPlayer = nil
         local shortestDistance = math.huge
 
@@ -81,7 +81,7 @@ local function aimAssist()
         if closestPlayer and closestPlayer.Character then
             local aimPosition = closestPlayer.Character.HumanoidRootPart.Position
             local newCFrame = CFrame.new(camera.CFrame.Position, aimPosition)
-            camera.CFrame = camera.CFrame:Lerp(newCFrame, 0.1) -- Lerp for smooth aim assist
+            camera.CFrame = camera.CFrame:Lerp(newCFrame, 0.1) -- Smooth aim assist
         end
     end
 end
@@ -97,7 +97,7 @@ local function triggerBot()
     if triggerBotEnabled then
         local target = mouse.Target
         if target and target.Parent and target.Parent:FindFirstChild("Humanoid") and target.Parent:FindFirstChild("Humanoid").Health > 0 then
-            -- Simulate mouse click
+            -- Simulate mouse click using VirtualUser
             game:GetService("VirtualUser"):Button1Down(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
         end
     end
@@ -110,6 +110,7 @@ end)
 -------------------------------
 -- ESP Cheats Section
 -------------------------------
+
 -- ESP: Show player outlines
 local espEnabled = false
 
@@ -152,7 +153,7 @@ local function toggleHealthESP()
         end
     else
         for _, otherPlayer in pairs(game.Players:GetPlayers()) do
-            if otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            if otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") and otherPlayer.Character:FindFirstChild("Humanoid") then
                 local billboard = Instance.new("BillboardGui", otherPlayer.Character.HumanoidRootPart)
                 billboard.Name = "HealthBillboard"
                 billboard.Size = UDim2.new(4, 0, 1, 0)
@@ -177,7 +178,10 @@ end
 
 createButton("Toggle Health ESP", UDim2.new(0.1, 0, 0.25, 0), toggleHealthESP)
 
--- ESP: Distance ESP
+-------------------------------
+-- Distance ESP Section
+-------------------------------
+
 local distanceESPEnabled = false
 local distanceESPConnections = {}
 
@@ -210,10 +214,13 @@ local function toggleDistanceESP()
                 textLabel.BackgroundTransparency = 1
                 textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
                 textLabel.TextScaled = true
+                textLabel.Text = "Distance"
 
                 local conn = game:GetService("RunService").RenderStepped:Connect(function()
-                    local distance = (otherPlayer.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
-                    textLabel.Text = string.format("Distance: %.1f", distance)
+                    if otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                        local distance = (otherPlayer.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
+                        textLabel.Text = string.format("Distance: %.1f", distance)
+                    end
                 end)
                 table.insert(distanceESPConnections, conn)
             end
@@ -222,4 +229,16 @@ local function toggleDistanceESP()
     distanceESPEnabled = not distanceESPEnabled
 end
 
-createButton("Toggle Distance ESP", UDim2
+createButton("Toggle Distance ESP", UDim2.new(0.1, 0, 0.3, 0), toggleDistanceESP)
+
+-------------------------------
+-- Main Loop
+-------------------------------
+
+-- Connect functions to RenderStepped for continuous execution
+local runService = game:GetService("RunService")
+runService.RenderStepped:Connect(function()
+    aimLock()
+    aimAssist()
+    triggerBot()
+end)
