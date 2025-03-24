@@ -9,6 +9,7 @@ local SETTINGS_FILE = "GlockSettings.json"
 
 local triggerBotEnabled = false
 local lockAimbotEnabled = false
+local silentAimEnabled = false
 local espEnabled = false
 local fovCircleEnabled = false
 local triggerBotRange = 15
@@ -23,6 +24,7 @@ local function saveSettings()
     local settings = {
         triggerBotEnabled = triggerBotEnabled,
         lockAimbotEnabled = lockAimbotEnabled,
+        silentAimEnabled = silentAimEnabled,
         espEnabled = espEnabled,
         fovCircleEnabled = fovCircleEnabled,
         aimbotSmoothness = aimbotSmoothness,
@@ -37,6 +39,7 @@ local function loadSettings()
         local settings = HttpService:JSONDecode(readfile(SETTINGS_FILE))
         triggerBotEnabled = settings.triggerBotEnabled
         lockAimbotEnabled = settings.lockAimbotEnabled
+        silentAimEnabled = settings.silentAimEnabled
         espEnabled = settings.espEnabled
         fovCircleEnabled = settings.fovCircleEnabled
         aimbotSmoothness = settings.aimbotSmoothness
@@ -63,6 +66,24 @@ local function getClosestPlayer()
         end
     end
     return closestPlayer
+end
+
+-- Silent Aim Function
+local function silentAim()
+    if silentAimEnabled then
+        local target = getClosestPlayer()
+        if target and target.Character and target.Character:FindFirstChild("Head") then
+            local headPosition = target.Character.Head.Position
+            camera.CFrame = CFrame.new(camera.CFrame.Position, headPosition)
+        end
+    end
+end
+
+-- Toggle Silent Aim
+local function toggleSilentAim()
+    silentAimEnabled = not silentAimEnabled
+    silentAimButton.Text = "Silent Aim: " .. (silentAimEnabled and "ON" or "OFF")
+    saveSettings()
 end
 
 -- Toggle Aimbot
@@ -108,8 +129,8 @@ glockGui.Name = "Glock - made by snoopy"
 glockGui.Parent = game:GetService("CoreGui")
 
 local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 400, 0, 350)
-mainFrame.Position = UDim2.new(0.5, -200, 0.5, -175)
+mainFrame.Size = UDim2.new(0, 400, 0, 400)
+mainFrame.Position = UDim2.new(0.5, -200, 0.5, -200)
 mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 mainFrame.Parent = glockGui
 mainFrame.Active = true
@@ -127,34 +148,11 @@ local function createButton(text, parent, callback, position)
     return button
 end
 
-local function createSlider(text, parent, position, settingKey)
-    local slider = Instance.new("TextBox")
-    slider.Size = UDim2.new(0, 180, 0, 40)
-    slider.Position = UDim2.new(0, 10, 0, position)
-    slider.Text = tostring(_G[settingKey])
-    slider.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-    slider.TextColor3 = Color3.fromRGB(255, 255, 255)
-    slider.Parent = parent
-    slider.FocusLost:Connect(function()
-        local value = tonumber(slider.Text)
-        if value then
-            if settingKey == "aimbotSmoothness" then
-                aimbotSmoothness = value
-            elseif settingKey == "triggerBotSmoothness" then
-                triggerBotSmoothness = value
-            end
-            saveSettings()
-        end
-    end)
-    return slider
-end
-
 local buttonSpacing = 45
 local startY = 10
 
-lockAimbotButton = createButton("Lock Aimbot: OFF", mainFrame, lockAimbot, startY)
-createSlider("Aimbot Smoothness", mainFrame, startY + buttonSpacing, "aimbotSmoothness")
+silentAimButton = createButton("Silent Aim: OFF", mainFrame, toggleSilentAim, startY)
+lockAimbotButton = createButton("Lock Aimbot: OFF", mainFrame, lockAimbot, startY + buttonSpacing)
 triggerBotButton = createButton("Trigger Bot: OFF", mainFrame, toggleTriggerBot, startY + buttonSpacing * 2)
-createSlider("Trigger Bot Smoothness", mainFrame, startY + buttonSpacing * 3, "triggerBotSmoothness")
-espButton = createButton("ESP: OFF", mainFrame, toggleESP, startY + buttonSpacing * 4)
-fovButton = createButton("FOV Circle: OFF", mainFrame, toggleFOVCircle, startY + buttonSpacing * 5)
+espButton = createButton("ESP: OFF", mainFrame, toggleESP, startY + buttonSpacing * 3)
+fovButton = createButton("FOV Circle: OFF", mainFrame, toggleFOVCircle, startY + buttonSpacing * 4)
