@@ -1,28 +1,30 @@
--- Setup GUI for Cheats
 local player = game.Players.LocalPlayer
 local mouse = player:GetMouse()
 local camera = game.Workspace.CurrentCamera
 
 -- Create a Screen GUI for cheats
-local screenGui = Instance.new("ScreenGui", player.PlayerGui)
+local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "CheatMenu"
+screenGui.Parent = player.PlayerGui
 
 -- Create a Frame for the cheat buttons
-local frame = Instance.new("Frame", screenGui)
+local frame = Instance.new("Frame")
 frame.Size = UDim2.new(0.3, 0, 0.7, 0)
 frame.Position = UDim2.new(0.35, 0, 0.15, 0)
 frame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 frame.BorderSizePixel = 2
 frame.Visible = true
+frame.Parent = screenGui
 
--- Sample Button Template
+-- Function to create buttons in the cheat menu
 local function createButton(name, position, callback)
-    local button = Instance.new("TextButton", frame)
+    local button = Instance.new("TextButton")
     button.Size = UDim2.new(0.8, 0, 0.05, 0)
     button.Position = position
     button.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
     button.Text = name
     button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    button.Parent = frame
     button.MouseButton1Click:Connect(callback)
     return button
 end
@@ -30,7 +32,6 @@ end
 -------------------------------
 -- Aim Cheats Section
 -------------------------------
-
 -- Aim Lock: Locks onto the nearest player
 local aimLockEnabled = false
 
@@ -178,9 +179,15 @@ createButton("Toggle Health ESP", UDim2.new(0.1, 0, 0.25, 0), toggleHealthESP)
 
 -- ESP: Distance ESP
 local distanceESPEnabled = false
+local distanceESPConnections = {}
 
 local function toggleDistanceESP()
     if distanceESPEnabled then
+        for _, conn in pairs(distanceESPConnections) do
+            conn:Disconnect()
+        end
+        distanceESPConnections = {}
+
         for _, otherPlayer in pairs(game.Players:GetPlayers()) do
             if otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") then
                 local billboard = otherPlayer.Character:FindFirstChild("DistanceBillboard")
@@ -195,109 +202,24 @@ local function toggleDistanceESP()
                 local billboard = Instance.new("BillboardGui", otherPlayer.Character.HumanoidRootPart)
                 billboard.Name = "DistanceBillboard"
                 billboard.Size = UDim2.new(4, 0, 1, 0)
-                billboard.StudsOffset = Vector3.new(0, 5, 0)
+                billboard.StudsOffset = Vector3.new(0, 4, 0)
                 billboard.AlwaysOnTop = true
 
                 local textLabel = Instance.new("TextLabel", billboard)
                 textLabel.Size = UDim2.new(1, 0, 1, 0)
                 textLabel.BackgroundTransparency = 1
-                textLabel.Text = "Distance: 0"
+                textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+                textLabel.TextScaled = true
 
-                -- Update distance in real-time
-                game:GetService("RunService").Stepped:Connect(function()
+                local conn = game:GetService("RunService").RenderStepped:Connect(function()
                     local distance = (otherPlayer.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
-                    textLabel.Text = "Distance: " .. math.floor(distance)
+                    textLabel.Text = string.format("Distance: %.1f", distance)
                 end)
+                table.insert(distanceESPConnections, conn)
             end
         end
     end
     distanceESPEnabled = not distanceESPEnabled
 end
 
-createButton("Toggle Distance ESP", UDim2.new(0.1, 0, 0.3, 0), toggleDistanceESP)
-
--------------------------------
--- Movement Cheats Section
--------------------------------
-
--- Speed Boost: Increase player walk speed
-local speedBoostEnabled = false
-
-local function toggleSpeedBoost()
-    local humanoid = player.Character and player.Character:FindFirstChild("Humanoid")
-    if humanoid then
-        if speedBoostEnabled then
-            humanoid.WalkSpeed = 16  -- Default speed
-        else
-            humanoid.WalkSpeed = 50  -- Boosted speed
-        end
-        speedBoostEnabled = not speedBoostEnabled
-    end
-end
-
-createButton("Toggle Speed Boost", UDim2.new(0.1, 0, 0.35, 0), toggleSpeedBoost)
-
--- Teleport to mouse click
-local teleportEnabled = false
-
-local function toggleTeleport()
-    if teleportEnabled then
-        mouse.Button1Down:Connect(function()
-            if mouse.Target then
-                player.Character:MoveTo(mouse.Hit.p)
-            end
-        end)
-    end
-    teleportEnabled = not teleportEnabled
-end
-
-createButton("Toggle Teleport", UDim2.new(0.1, 0, 0.4, 0), toggleTeleport)
-
--------------------------------
--- Utility Cheats Section
--------------------------------
-
--- God Mode: Infinite health
-local godModeEnabled = false
-
-local function toggleGodMode()
-    if player.Character and player.Character:FindFirstChild("Humanoid") then
-        if godModeEnabled then
-            player.Character.Humanoid.MaxHealth = 100
-            player.Character.Humanoid.Health = 100
-        else
-            player.Character.Humanoid.MaxHealth = math.huge
-            player.Character.Humanoid.Health = math.huge
-        end
-        godModeEnabled = not godModeEnabled
-    end
-end
-
-createButton("Toggle God Mode", UDim2.new(0.1, 0, 0.45, 0), toggleGodMode)
-
--- Infinite Stamina: No stamina drain
-local staminaEnabled = false
-
-local function toggleInfiniteStamina()
-    -- Assume a Stamina property exists in the game
-    if player.Character and player.Character:FindFirstChild("Stamina") then
-        if staminaEnabled then
-            player.Character.Stamina.Value = 100  -- Default stamina
-        else
-            player.Character.Stamina.Value = math.huge
-        end
-        staminaEnabled = not staminaEnabled
-    end
-end
-
-createButton("Toggle Infinite Stamina", UDim2.new(0.1, 0, 0.5, 0), toggleInfiniteStamina)
-
--------------------------------
--- Additional Placeholder Features
--------------------------------
-
-for i = 1, 5 do
-    createButton("Feature " .. tostring(i + 15), UDim2.new(0.1, 0, 0.5 + (i * 0.05), 0), function()
-        print("Feature " .. tostring(i + 15) .. " activated!")
-    end)
-end
+createButton("Toggle Distance ESP", UDim2
