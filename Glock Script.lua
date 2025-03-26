@@ -65,10 +65,18 @@ local function createESP(player)
     highlight.FillTransparency = 0.5
 
     local function update()
-        highlight.Enabled = espEnabled
+        if espEnabled and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            highlight.Enabled = true
+        else
+            highlight.Enabled = false
+        end
     end
 
     RunService.RenderStepped:Connect(update)
+    
+    player.CharacterRemoving:Connect(function()
+        highlight:Destroy()
+    end)
 end
 
 for _, player in pairs(Players:GetPlayers()) do
@@ -116,26 +124,27 @@ RunService.RenderStepped:Connect(function()
 end)
 
 -- // FOV Circle
-local fovCircle
+local fovCircle = Instance.new("Frame")
+fovCircle.Size = UDim2.new(0, 100, 0, 100)
+fovCircle.Position = UDim2.new(0.5, -50, 0.5, -50)
+fovCircle.BackgroundTransparency = 1
+fovCircle.Parent = ScreenGui
+
+local uiCorner = Instance.new("UICorner")
+uiCorner.CornerRadius = UDim.new(1, 0)
+uiCorner.Parent = fovCircle
+
+local border = Instance.new("Frame")
+border.Size = UDim2.new(1, 0, 1, 0)
+border.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+border.BorderSizePixel = 2
+border.Parent = fovCircle
 
 RunService.RenderStepped:Connect(function()
     if fovCircleEnabled then
-        if not fovCircle then
-            fovCircle = Drawing.new("Circle")
-            fovCircle.Radius = 100
-            fovCircle.Thickness = 2
-            fovCircle.Color = Color3.fromRGB(0, 255, 0)
-            fovCircle.Filled = false
-            fovCircle.Transparency = 1
-        end
-        fovCircle.Position = UserInputService:GetMouseLocation()
+        fovCircle.Position = UDim2.new(0, Mouse.X - 50, 0, Mouse.Y - 50)
         fovCircle.Visible = true
     else
-        if fovCircle then
-            fovCircle.Visible = false
-        end
+        fovCircle.Visible = false
     end
-end)
-
-    triggerBot()
 end)
