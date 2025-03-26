@@ -1,297 +1,264 @@
+Untitled artifact
+
 local player = game.Players.LocalPlayer
 local mouse = player:GetMouse()
-local camera = game.Workspace.CurrentCamera
+local camera = workspace.CurrentCamera
 
 -- Create a Screen GUI for cheats
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "CheatMenu"
 screenGui.Parent = player:FindFirstChildOfClass("PlayerGui")
+screenGui.ResetOnSpawn = false
 
--- Create a Frame for the cheat buttons (Synapse X-like)
+-- Create a Frame for the cheat buttons
 local frame = Instance.new("Frame")
 frame.Size = UDim2.new(0.3, 0, 0.7, 0)
 frame.Position = UDim2.new(0.35, 0, 0.15, 0)
-frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)  -- Dark background
-frame.BackgroundTransparency = 0.8
+frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+frame.BackgroundTransparency = 0.5
 frame.BorderSizePixel = 0
-frame.RoundedCorner = UDim.new(0, 10)  -- Corrected property name
 frame.Parent = screenGui
 
--- Title label
-local titleLabel = Instance.new("TextLabel")
-titleLabel.Size = UDim2.new(1, 0, 0.1, 0)
-titleLabel.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-titleLabel.Text = "Synapse X Menu"
-titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-titleLabel.TextSize = 18
-titleLabel.TextStrokeTransparency = 0.8
-titleLabel.Font = Enum.Font.GothamBold
-titleLabel.Parent = frame
-
 -- Draggable UI setup
-local dragging = false
-local dragInput, mousePos, framePos
+local function makeDraggable(dragArea)
+    local dragging
+    local dragInput
+    local dragStart
+    local startPos
 
-frame.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = true
-        dragInput = input
-        mousePos = input.Position
-        framePos = frame.Position
+    local function update(input)
+        local delta = input.Position - dragStart
+        dragArea.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
     end
-end)
 
-frame.InputChanged:Connect(function(input)
-    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-        local delta = input.Position - mousePos
-        frame.Position = UDim2.new(framePos.X.Scale, framePos.X.Offset + delta.X, framePos.Y.Scale, framePos.Y.Offset + delta.Y)
-    end
-end)
+    dragArea.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            dragStart = input.Position
+            startPos = dragArea.Position
 
-frame.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = false
-    end
-end)
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+
+    dragArea.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement then
+            dragInput = input
+        end
+    end)
+
+    game:GetService("UserInputService").InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            update(input)
+        end
+    end)
+end
+
+makeDraggable(frame)
 
 -- Function to create buttons in the cheat menu
-local function createButton(name, position, callback)
+local function createButton(name, yPosition, callback)
     local button = Instance.new("TextButton")
     button.Size = UDim2.new(0.8, 0, 0.05, 0)
-    button.Position = position
-    button.BackgroundColor3 = Color3.fromRGB(40, 40, 40)  -- Darker button
+    button.Position = UDim2.new(0.1, 0, yPosition, 0)
+    button.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
     button.Text = name
     button.TextColor3 = Color3.fromRGB(255, 255, 255)
     button.Font = Enum.Font.Gotham
     button.TextSize = 14
     button.Parent = frame
 
-    -- Hover effect for the button
     button.MouseEnter:Connect(function()
-        button.BackgroundColor3 = Color3.fromRGB(60, 60, 60)  -- Lighter on hover
+        button.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
     end)
 
     button.MouseLeave:Connect(function()
-        button.BackgroundColor3 = Color3.fromRGB(40, 40, 40)  -- Back to dark on leave
+        button.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
     end)
 
     button.MouseButton1Click:Connect(callback)
     return button
 end
 
--------------------------------
--- Aim Cheats Section
--------------------------------
+-- Cheat states
+local cheats = {
+    aimLock = false,
+    aimAssist = false,
+    triggerBot = false,
+    esp = false,
+    healthESP = false,
+    distanceESP = false
+}
 
-local aimLockEnabled = false
+-- Find closest player
+local function findClosestPlayer()
+    if not player.Character then return nil end
+    
+    local closestPlayer = nil
+    local shortestDistance = math.huge
 
+    for _, otherPlayer in pairs(game.Players:GetPlayers()) do
+        if otherPlayer ~= player and otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            local distance = (otherPlayer.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
+            if distance < shortestDistance then
+                shortestDistance = distance
+                closestPlayer = otherPlayer
+            end
+        end
+    end
+
+    return closestPlayer
+end
+
+-- Aim Lock
 local function aimLock()
-    if aimLockEnabled and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-        local closestPlayer = nil
-        local shortestDistance = math.huge
-
-        for _, otherPlayer in pairs(game.Players:GetPlayers()) do
-            if otherPlayer ~= player and otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                local distance = (otherPlayer.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
-                if distance < shortestDistance then
-                    shortestDistance = distance
-                    closestPlayer = otherPlayer
-                end
-            end
-        end
-
-        if closestPlayer and closestPlayer.Character then
-            camera.CFrame = CFrame.new(camera.CFrame.Position, closestPlayer.Character.HumanoidRootPart.Position)
-        end
+    if not cheats.aimLock then return end
+    
+    local closestPlayer = findClosestPlayer()
+    if closestPlayer and closestPlayer.Character then
+        camera.CFrame = CFrame.new(camera.CFrame.Position, closestPlayer.Character.HumanoidRootPart.Position)
     end
 end
 
-createButton("Toggle Aim Lock", UDim2.new(0.1, 0, 0.15, 0), function()
-    aimLockEnabled = not aimLockEnabled
-end)
-
--------------------------------
--- Aim Assist Section
--------------------------------
-
-local aimAssistEnabled = false
-
+-- Aim Assist
 local function aimAssist()
-    if aimAssistEnabled and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-        local closestPlayer = nil
-        local shortestDistance = math.huge
-
-        for _, otherPlayer in pairs(game.Players:GetPlayers()) do
-            if otherPlayer ~= player and otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                local distance = (otherPlayer.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
-                if distance < shortestDistance then
-                    shortestDistance = distance
-                    closestPlayer = otherPlayer
-                end
-            end
-        end
-
-        if closestPlayer and closestPlayer.Character then
-            local aimPosition = closestPlayer.Character.HumanoidRootPart.Position
-            local newCFrame = CFrame.new(camera.CFrame.Position, aimPosition)
-            camera.CFrame = camera.CFrame:Lerp(newCFrame, 0.1) -- Smooth aim assist
-        end
+    if not cheats.aimAssist then return end
+    
+    local closestPlayer = findClosestPlayer()
+    if closestPlayer and closestPlayer.Character then
+        local aimPosition = closestPlayer.Character.HumanoidRootPart.Position
+        local newCFrame = CFrame.new(camera.CFrame.Position, aimPosition)
+        camera.CFrame = camera.CFrame:Lerp(newCFrame, 0.1)
     end
 end
 
-createButton("Toggle Aim Assist", UDim2.new(0.1, 0, 0.2, 0), function()
-    aimAssistEnabled = not aimAssistEnabled
-end)
-
--------------------------------
--- Trigger Bot Section
--------------------------------
-
-local triggerBotEnabled = false
-
+-- Trigger Bot
 local function triggerBot()
-    if triggerBotEnabled then
-        local target = mouse.Target
-        if target and target.Parent and target.Parent:FindFirstChild("Humanoid") and target.Parent.Humanoid.Health > 0 then
-            -- Simulate mouse click using VirtualUser
-            game:GetService("VirtualUser"):Button1Down(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
+    if not cheats.triggerBot then return end
+    
+    local target = mouse.Target
+    if target and target.Parent and target.Parent:FindFirstChild("Humanoid") and target.Parent.Humanoid.Health > 0 then
+        game:GetService("VirtualUser"):Button1Down(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
+    end
+end
+
+-- ESP Toggle
+local function toggleESP()
+    cheats.esp = not cheats.esp
+    
+    for _, otherPlayer in pairs(game.Players:GetPlayers()) do
+        if otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            local existingHighlight = otherPlayer.Character:FindFirstChild("Highlight")
+            
+            if cheats.esp then
+                if not existingHighlight then
+                    local highlight = Instance.new("Highlight", otherPlayer.Character)
+                    highlight.FillColor = Color3.fromRGB(255, 0, 0)
+                    highlight.OutlineTransparency = 0.5
+                end
+            elseif existingHighlight then
+                existingHighlight:Destroy()
+            end
         end
     end
 end
 
-createButton("Toggle Trigger Bot", UDim2.new(0.1, 0, 0.25, 0), function()
-    triggerBotEnabled = not triggerBotEnabled
+-- Health ESP Toggle
+local function toggleHealthESP()
+    cheats.healthESP = not cheats.healthESP
+    
+    for _, otherPlayer in pairs(game.Players:GetPlayers()) do
+        if otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") and otherPlayer.Character:FindFirstChild("Humanoid") then
+            local existingBillboard = otherPlayer.Character:FindFirstChild("HealthBillboard")
+            
+            if cheats.healthESP then
+                if not existingBillboard then
+                    local billboard = Instance.new("BillboardGui", otherPlayer.Character.HumanoidRootPart)
+                    billboard.Name = "HealthBillboard"
+                    billboard.Size = UDim2.new(4, 0, 1, 0)
+                    billboard.StudsOffset = Vector3.new(0, 3, 0)
+                    billboard.AlwaysOnTop = true
+
+                    local bar = Instance.new("Frame", billboard)
+                    bar.Name = "HealthBar"
+                    bar.Size = UDim2.new(1, 0, 0.2, 0)
+                    bar.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+
+                    otherPlayer.Character.Humanoid:GetPropertyChangedSignal("Health"):Connect(function()
+                        local healthPercent = otherPlayer.Character.Humanoid.Health / otherPlayer.Character.Humanoid.MaxHealth
+                        bar.Size = UDim2.new(healthPercent, 0, 0.2, 0)
+                        bar.BackgroundColor3 = Color3.fromRGB(255 * (1 - healthPercent), 255 * healthPercent, 0)
+                    end)
+                end
+            elseif existingBillboard then
+                existingBillboard:Destroy()
+            end
+        end
+    end
+end
+
+-- Distance ESP Toggle
+local function toggleDistanceESP()
+    cheats.distanceESP = not cheats.distanceESP
+    
+    for _, otherPlayer in pairs(game.Players:GetPlayers()) do
+        if otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            local existingBillboard = otherPlayer.Character:FindFirstChild("DistanceBillboard")
+            
+            if cheats.distanceESP then
+                if not existingBillboard then
+                    local billboard = Instance.new("BillboardGui", otherPlayer.Character.HumanoidRootPart)
+                    billboard.Name = "DistanceBillboard"
+                    billboard.Size = UDim2.new(4, 0, 1, 0)
+                    billboard.StudsOffset = Vector3.new(0, 3, 0)
+                    billboard.AlwaysOnTop = true
+
+                    local label = Instance.new("TextLabel", billboard)
+                    label.Size = UDim2.new(1, 0, 0.2, 0)
+                    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+                    label.TextSize = 14
+                    label.BackgroundTransparency = 1
+                    label.TextStrokeTransparency = 0.8
+                    
+                    spawn(function()
+                        while cheats.distanceESP and otherPlayer.Character do
+                            local distance = (otherPlayer.Character.HumanoidRootPart.Position - camera.CFrame.Position).Magnitude
+                            label.Text = string.format("Distance: %.2f", distance)
+                            wait(0.1)
+                        end
+                    end)
+                end
+            elseif existingBillboard then
+                existingBillboard:Destroy()
+            end
+        end
+    end
+end
+
+-- Create Buttons
+createButton("Aim Lock", 0.15, function()
+    cheats.aimLock = not cheats.aimLock
 end)
 
--------------------------------
--- ESP Cheats Section
--------------------------------
+createButton("Aim Assist", 0.22, function()
+    cheats.aimAssist = not cheats.aimAssist
+end)
 
-local espEnabled = false
+createButton("Trigger Bot", 0.29, function()
+    cheats.triggerBot = not cheats.triggerBot
+end)
 
-local function toggleESP()
-    if espEnabled then
-        for _, otherPlayer in pairs(game.Players:GetPlayers()) do
-            if otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                local highlight = otherPlayer.Character:FindFirstChild("Highlight")
-                if highlight then
-                    highlight:Destroy()  -- Disable ESP
-                end
-            end
-        end
-    else
-        for _, otherPlayer in pairs(game.Players:GetPlayers()) do
-            if otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                local highlight = Instance.new("Highlight", otherPlayer.Character)
-                highlight.FillColor = Color3.fromRGB(255, 0, 0)  -- Red outline
-                highlight.OutlineTransparency = 0.5
-            end
-        end
-    end
-    espEnabled = not espEnabled
-end
+createButton("ESP", 0.36, toggleESP)
 
-createButton("Toggle ESP", UDim2.new(0.1, 0, 0.3, 0), toggleESP)
+createButton("Health ESP", 0.43, toggleHealthESP)
 
--------------------------------
--- Health ESP Section
--------------------------------
+createButton("Distance ESP", 0.50, toggleDistanceESP)
 
-local healthESPEnabled = false
-
-local function toggleHealthESP()
-    if healthESPEnabled then
-        for _, otherPlayer in pairs(game.Players:GetPlayers()) do
-            if otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                local billboard = otherPlayer.Character:FindFirstChild("HealthBillboard")
-                if billboard then
-                    billboard:Destroy()  -- Disable Health ESP
-                end
-            end
-        end
-    else
-        for _, otherPlayer in pairs(game.Players:GetPlayers()) do
-            if otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") and otherPlayer.Character:FindFirstChild("Humanoid") then
-                local billboard = Instance.new("BillboardGui", otherPlayer.Character.HumanoidRootPart)
-                billboard.Name = "HealthBillboard"
-                billboard.Size = UDim2.new(4, 0, 1, 0)
-                billboard.StudsOffset = Vector3.new(0, 3, 0)
-                billboard.AlwaysOnTop = true
-
-                local bar = Instance.new("Frame", billboard)
-                bar.Size = UDim2.new(1, 0, 0.2, 0)
-                bar.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
-
-                -- Update health in real-time
-                otherPlayer.Character.Humanoid:GetPropertyChangedSignal("Health"):Connect(function()
-                    local healthPercent = otherPlayer.Character.Humanoid.Health / otherPlayer.Character.Humanoid.MaxHealth
-                    bar.Size = UDim2.new(healthPercent, 0, 0.2, 0)
-                    bar.BackgroundColor3 = Color3.fromRGB(255 * (1 - healthPercent), 255 * healthPercent, 0)
-                end)
-            end
-        end
-    end
-    healthESPEnabled = not healthESPEnabled
-end
-
-createButton("Toggle Health ESP", UDim2.new(0.1, 0, 0.35, 0), toggleHealthESP)
-
--------------------------------
--- Distance ESP Section
--------------------------------
-
-local distanceESPEnabled = false
-local distanceESPConnections = {}
-
-local function toggleDistanceESP()
-    if distanceESPEnabled then
-        for _, conn in pairs(distanceESPConnections) do
-            conn:Disconnect()
-        end
-        distanceESPConnections = {}
-
-        for _, otherPlayer in pairs(game.Players:GetPlayers()) do
-            if otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                local billboard = otherPlayer.Character:FindFirstChild("DistanceBillboard")
-                if billboard then
-                    billboard:Destroy()  -- Disable Distance ESP
-                end
-            end
-        end
-    else
-        for _, otherPlayer in pairs(game.Players:GetPlayers()) do
-            if otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                local billboard = Instance.new("BillboardGui", otherPlayer.Character.HumanoidRootPart)
-                billboard.Name = "DistanceBillboard"
-                billboard.Size = UDim2.new(4, 0, 1, 0)
-                billboard.StudsOffset = Vector3.new(0, 3, 0)
-                billboard.AlwaysOnTop = true
-
-                local label = Instance.new("TextLabel", billboard)
-                label.Size = UDim2.new(1, 0, 0.2, 0)
-                label.TextColor3 = Color3.fromRGB(255, 255, 255)
-                label.TextSize = 14
-                label.BackgroundTransparency = 1
-                label.TextStrokeTransparency = 0.8
-                label.Text = ""
-
-                -- Update distance in real-time
-                distanceESPConnections[otherPlayer] = otherPlayer.Character.HumanoidRootPart:GetPropertyChangedSignal("Position"):Connect(function()
-                    local distance = (otherPlayer.Character.HumanoidRootPart.Position - camera.CFrame.Position).Magnitude
-                    label.Text = string.format("Distance: %.2f", distance)
-                end)
-            end
-        end
-    end
-    distanceESPEnabled = not distanceESPEnabled
-end
-
-createButton("Toggle Distance ESP", UDim2.new(0.1, 0, 0.4, 0), toggleDistanceESP)
-
--------------------------------
 -- Main Loop
--------------------------------
-
 local runService = game:GetService("RunService")
 runService.RenderStepped:Connect(function()
     aimLock()
