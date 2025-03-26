@@ -14,7 +14,7 @@ frame.Position = UDim2.new(0.35, 0, 0.15, 0)
 frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)  -- Dark background
 frame.BackgroundTransparency = 0.8
 frame.BorderSizePixel = 0
-frame.RoundedCornerRadius = UDim.new(0, 10)  -- Rounded corners
+frame.RoundedCorner = UDim.new(0, 10)  -- Corrected property name
 frame.Parent = screenGui
 
 -- Title label
@@ -36,14 +36,14 @@ frame.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
         dragging = true
         dragInput = input
-        mousePos = Vector2.new(input.Position.X, input.Position.Y)
+        mousePos = input.Position
         framePos = frame.Position
     end
 end)
 
 frame.InputChanged:Connect(function(input)
     if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-        local delta = Vector2.new(input.Position.X - mousePos.X, input.Position.Y - mousePos.Y)
+        local delta = input.Position - mousePos
         frame.Position = UDim2.new(framePos.X.Scale, framePos.X.Offset + delta.X, framePos.Y.Scale, framePos.Y.Offset + delta.Y)
     end
 end)
