@@ -210,10 +210,9 @@ RunService.RenderStepped:Connect(function()
             if onScreen then
                 local cursorPos = UserInputService:GetMouseLocation()
                 local smoothness = aimbotSmoothness / 10
-                local targetCFrame = CFrame.new(Camera.CFrame.Position, Vector3.new(targetScreenPos.X, targetScreenPos.Y, Camera.CFrame.Position.Z))
-
-                -- Adjust camera CFrame for smooth aimbot movement
-                Camera.CFrame = Camera.CFrame:Lerp(targetCFrame, smoothness * 0.1)
+                local targetDirection = (Vector2.new(targetScreenPos.X, targetScreenPos.Y) - cursorPos).unit
+                local targetCFrame = CFrame.lookAt(Camera.CFrame.Position, Camera.CFrame.Position + Camera.CFrame.LookVector + targetDirection)
+                Camera.CFrame = Camera.CFrame:Lerp(targetCFrame, smoothness)
             end
         end
     end
