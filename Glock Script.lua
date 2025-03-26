@@ -43,72 +43,7 @@ local function createToggleButton(text, position, callback)
     return button
 end
 
--- // Sliders for Smoothness and Prediction
-local function createSlider(label, position, minVal, maxVal, callback)
-    local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(0, 280, 0, 30)
-    frame.Position = UDim2.new(0, 10, 0, position)
-    frame.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-    frame.Parent = MainFrame
-
-    local textLabel = Instance.new("TextLabel")
-    textLabel.Size = UDim2.new(0, 200, 0, 30)
-    textLabel.BackgroundTransparency = 1
-    textLabel.Text = label
-    textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    textLabel.TextSize = 14
-    textLabel.Parent = frame
-
-    local slider = Instance.new("Frame")
-    slider.Size = UDim2.new(0, 200, 0, 4)
-    slider.Position = UDim2.new(0, 10, 0, 25)
-    slider.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-    slider.Parent = frame
-
-    local knob = Instance.new("Frame")
-    knob.Size = UDim2.new(0, 10, 1, 0)
-    knob.Position = UDim2.new(0, 0, 0, 0)
-    knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    knob.Parent = slider
-
-    local value = minVal
-    local dragging = false
-
-    local function updateSliderPosition(input)
-        local mousePos = input.Position.X - frame.AbsolutePosition.X
-        local newPos = math.clamp(mousePos, 0, 200)
-        knob.Position = UDim2.new(0, newPos, 0, 0)
-        value = minVal + (maxVal - minVal) * (newPos / 200)
-        callback(value)
-    end
-
-    knob.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-        end
-    end)
-
-    knob.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-        end
-    end)
-
-    UserInputService.InputChanged:Connect(function(input)
-        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-            updateSliderPosition(input)
-        end
-    end)
-
-    return frame
-end
-
 local espEnabled, aimbotEnabled, cameraLockEnabled, fovCircleEnabled = false, false, false, false
-local aimbotSmoothness = 0.1
-local cameraLockSmoothness = 0.1
-local aimbotPrediction = 0
-local cameraLockPrediction = 0
-local fovRadius = 200
 
 createToggleButton("Toggle ESP", 60, function()
     espEnabled = not espEnabled
@@ -130,28 +65,69 @@ createToggleButton("Toggle FOV Circle", 180, function()
     print("FOV Circle Enabled:", fovCircleEnabled)
 end)
 
--- // Add Smoothness and Prediction Sliders
-createSlider("Aimbot Smoothness", 220, 0, 1, function(value)
+-- // Smoothness Sliders
+local aimbotSmoothness, cameraLockSmoothness, fovRadius = 5, 5, 100
+
+local function createSlider(text, position, min, max, default, callback)
+    local sliderFrame = Instance.new("Frame")
+    sliderFrame.Size = UDim2.new(0, 280, 0, 40)
+    sliderFrame.Position = UDim2.new(0, 10, 0, position)
+    sliderFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    sliderFrame.Parent = MainFrame
+
+    local sliderLabel = Instance.new("TextLabel")
+    sliderLabel.Size = UDim2.new(1, 0, 0, 20)
+    sliderLabel.Text = text .. ": " .. default
+    sliderLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    sliderLabel.Parent = sliderFrame
+
+    local slider = Instance.new("TextButton")
+    slider.Size = UDim2.new(0, 260, 0, 20)
+    slider.Position = UDim2.new(0, 10, 0, 20)
+    slider.BackgroundColor3 = Color3.fromRGB(75, 75, 75)
+    slider.Text = ""
+    slider.Parent = sliderFrame
+
+    local function updateValue(input)
+        local relativePosition = (input.Position.X - slider.AbsolutePosition.X) / slider.AbsoluteSize.X
+        local value = math.clamp(math.floor(relativePosition * (max - min) + min), min, max)
+        sliderLabel.Text = text .. ": " .. value
+        callback(value)
+    end
+
+    slider.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            updateValue(input)
+            local moveConnection
+            local releaseConnection
+            moveConnection = UserInputService.InputChanged:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseMovement then
+                    updateValue(input)
+                end
+            end)
+            releaseConnection = UserInputService.InputEnded:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    moveConnection:Disconnect()
+                    releaseConnection:Disconnect()
+                end
+            end)
+        end
+    end)
+end
+
+createSlider("Aimbot Smoothness", 250, 1, 10, 5, function(value)
     aimbotSmoothness = value
-    print("Aimbot Smoothness:", aimbotSmoothness)
 end)
 
-createSlider("Camera Lock Smoothness", 260, 0, 1, function(value)
+createSlider("Camera Lock Smoothness", 300, 1, 10, 5, function(value)
     cameraLockSmoothness = value
-    print("Camera Lock Smoothness:", cameraLockSmoothness)
 end)
 
-createSlider("Aimbot Prediction", 300, 0, 1, function(value)
-    aimbotPrediction = value
-    print("Aimbot Prediction:", aimbotPrediction)
+createSlider("FOV Radius", 350, 50, 200, 100, function(value)
+    fovRadius = value
 end)
 
-createSlider("Camera Lock Prediction", 340, 0, 1, function(value)
-    cameraLockPrediction = value
-    print("Camera Lock Prediction:", cameraLockPrediction)
-end)
-
--- // Aimbot Functionality (Tracks with Cursor)
+-- // Aimbot Functionality (Tracking with Cursor)
 local function getClosestTarget()
     local closest, shortestDistance = nil, math.huge
     for _, player in pairs(Players:GetPlayers()) do
@@ -173,84 +149,49 @@ RunService.RenderStepped:Connect(function()
         if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
             local targetPos = target.Character.HumanoidRootPart.Position
             local targetScreenPos, onScreen = Camera:WorldToScreenPoint(targetPos)
-
             if onScreen then
-                -- Get the mouse cursor position
                 local cursorPos = UserInputService:GetMouseLocation()
-
-                -- Prediction (adjusting for velocity)
-                local predictedPos = targetPos + (target.Character.HumanoidRootPart.AssemblyLinearVelocity * aimbotPrediction)
-
-                -- Calculate direction to the target
                 local direction = (Vector2.new(targetScreenPos.X, targetScreenPos.Y) - cursorPos).Unit
-
-                -- Apply smoothness to the camera movement
-                Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, predictedPos), aimbotSmoothness)
+                local smoothFactor = aimbotSmoothness / 10
+                Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, targetPos), smoothFactor)
             end
         end
     end
 end)
 
--- // Camera Lock Functionality (Tracks with Camera)
+-- // Camera Lock Functionality (Tracks Target without Camera Move)
 RunService.RenderStepped:Connect(function()
     if cameraLockEnabled then
         local target = getClosestTarget()
         if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
             local targetPos = target.Character.HumanoidRootPart.Position
-
-            -- Prediction for Camera Lock
-            local predictedPos = targetPos + (target.Character.HumanoidRootPart.AssemblyLinearVelocity * cameraLockPrediction)
-
-            -- Apply smoothness to the camera lock movement
-            Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, predictedPos), cameraLockSmoothness)
+            Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, targetPos), cameraLockSmoothness / 10)
         end
     end
 end)
 
--- // FOV Circle Setup
+-- // FOV Circle Setup (Around the Cursor)
 local fovCircle = Instance.new("Frame")
 fovCircle.Size = UDim2.new(0, fovRadius, 0, fovRadius)
-fovCircle.Position = UDim2.new(0.5, -fovRadius/2, 0.5, -fovRadius/2)
+fovCircle.Position = UDim2.new(0, 0, 0, 0)  -- Default to top left, will update below
 fovCircle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 fovCircle.BackgroundTransparency = 0.5
+
+-- Make the frame a circle
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0.5, 0)  -- This makes it a circle
+corner.Parent = fovCircle
+
 fovCircle.Visible = false
 fovCircle.Parent = ScreenGui
 
+-- Update the position of the FOV circle to follow the cursor
 RunService.RenderStepped:Connect(function()
-    fovCircle.Visible = fovCircleEnabled
-end)
-
--- // ESP Functionality (Draw Boxes Around Enemies)
-local espBoxes = {}
-
-local function createESPBox(player)
-    local box = Instance.new("Frame")
-    box.Size = UDim2.new(0, 50, 0, 50)
-    box.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-    box.BackgroundTransparency = 0.5
-    box.Parent = ScreenGui
-    return box
-end
-
-RunService.RenderStepped:Connect(function()
-    if espEnabled then
-        -- Clean up existing ESP boxes
-        for _, box in pairs(espBoxes) do
-            box:Destroy()
-        end
-        espBoxes = {}
-
-        -- Create new ESP boxes for visible players
-        for _, player in pairs(Players:GetPlayers()) do
-            if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                local targetPos = player.Character.HumanoidRootPart.Position
-                local screenPos, onScreen = Camera:WorldToScreenPoint(targetPos)
-                if onScreen then
-                    local box = createESPBox(player)
-                    box.Position = UDim2.new(0, screenPos.X - 25, 0, screenPos.Y - 25)
-                    table.insert(espBoxes, box)
-                end
-            end
-        end
+    if fovCircleEnabled then
+        local cursorPos = UserInputService:GetMouseLocation()
+        fovCircle.Position = UDim2.new(0, cursorPos.X - fovRadius / 2, 0, cursorPos.Y - fovRadius / 2)
+        fovCircle.Visible = true
+    else
+        fovCircle.Visible = false
     end
 end)
