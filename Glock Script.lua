@@ -43,7 +43,62 @@ local function createToggleButton(text, position, callback)
     return button
 end
 
+-- // Sliders for Smoothness and Prediction
+local function createSlider(label, position, minVal, maxVal, callback)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(0, 280, 0, 30)
+    frame.Position = UDim2.new(0, 10, 0, position)
+    frame.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+    frame.Parent = MainFrame
+
+    local textLabel = Instance.new("TextLabel")
+    textLabel.Size = UDim2.new(0, 200, 0, 30)
+    textLabel.BackgroundTransparency = 1
+    textLabel.Text = label
+    textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    textLabel.TextSize = 14
+    textLabel.Parent = frame
+
+    local slider = Instance.new("Frame")
+    slider.Size = UDim2.new(0, 200, 0, 4)
+    slider.Position = UDim2.new(0, 10, 0, 25)
+    slider.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+    slider.Parent = frame
+
+    local knob = Instance.new("Frame")
+    knob.Size = UDim2.new(0, 10, 1, 0)
+    knob.Position = UDim2.new(0, 0, 0, 0)
+    knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    knob.Parent = slider
+
+    local value = minVal
+
+    knob.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            local function updateKnobPosition()
+                local mousePos = UserInputService:GetMouseLocation().X - frame.AbsolutePosition.X
+                knob.Position = UDim2.new(0, math.clamp(mousePos, 0, 200), 0, 0)
+                value = minVal + (maxVal - minVal) * (knob.Position.X.Offset / 200)
+                callback(value)
+            end
+            updateKnobPosition()
+
+            UserInputService.InputChanged:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseMovement then
+                    updateKnobPosition()
+                end
+            end)
+        end
+    end)
+
+    return frame
+end
+
 local espEnabled, aimbotEnabled, cameraLockEnabled, fovCircleEnabled = false, false, false, false
+local aimbotSmoothness = 0.1
+local cameraLockSmoothness = 0.1
+local aimbotPrediction = 0
+local cameraLockPrediction = 0
 
 createToggleButton("Toggle ESP", 60, function()
     espEnabled = not espEnabled
@@ -65,7 +120,28 @@ createToggleButton("Toggle FOV Circle", 180, function()
     print("FOV Circle Enabled:", fovCircleEnabled)
 end)
 
--- // Aimbot Functionality
+-- // Add Smoothness and Prediction Sliders
+createSlider("Aimbot Smoothness", 220, 0, 1, function(value)
+    aimbotSmoothness = value
+    print("Aimbot Smoothness:", aimbotSmoothness)
+end)
+
+createSlider("Camera Lock Smoothness", 260, 0, 1, function(value)
+    cameraLockSmoothness = value
+    print("Camera Lock Smoothness:", cameraLockSmoothness)
+end)
+
+createSlider("Aimbot Prediction", 300, 0, 1, function(value)
+    aimbotPrediction = value
+    print("Aimbot Prediction:", aimbotPrediction)
+end)
+
+createSlider("Camera Lock Prediction", 340, 0, 1, function(value)
+    cameraLockPrediction = value
+    print("Camera Lock Prediction:", cameraLockPrediction)
+end)
+
+-- // Aimbot Functionality (Tracks with Cursor)
 local function getClosestTarget()
     local closest, shortestDistance = nil, math.huge
     for _, player in pairs(Players:GetPlayers()) do
@@ -87,23 +163,36 @@ RunService.RenderStepped:Connect(function()
         if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
             local targetPos = target.Character.HumanoidRootPart.Position
             local targetScreenPos, onScreen = Camera:WorldToScreenPoint(targetPos)
+
             if onScreen then
+                -- Get the mouse cursor position
                 local cursorPos = UserInputService:GetMouseLocation()
+
+                -- Prediction (adjusting for velocity)
+                local predictedPos = targetPos + (target.Character.HumanoidRootPart.AssemblyLinearVelocity * aimbotPrediction)
+
+                -- Calculate direction to the target
                 local direction = (Vector2.new(targetScreenPos.X, targetScreenPos.Y) - cursorPos).Unit
-                local smoothFactor = 0.1
-                Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, targetPos), smoothFactor)
+
+                -- Adjust the camera's CFrame to move the camera smoothly towards the target (this is still camera-based but for aimbot effect)
+                Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, predictedPos), aimbotSmoothness)
             end
         end
     end
 end)
 
--- // Camera Lock Functionality
+-- // Camera Lock Functionality (Tracks with Camera)
 RunService.RenderStepped:Connect(function()
     if cameraLockEnabled then
         local target = getClosestTarget()
         if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
             local targetPos = target.Character.HumanoidRootPart.Position
-            Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, targetPos), 0.1)
+
+            -- Prediction for Camera Lock
+            local predictedPos = targetPos + (target.Character.HumanoidRootPart.AssemblyLinearVelocity * cameraLockPrediction)
+
+            -- The camera's CFrame will always face the predicted target
+            Camera.CFrame = CFrame.new(Camera.CFrame.Position, predictedPos)
         end
     end
 end)
