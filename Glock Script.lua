@@ -3,7 +3,6 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
-local TweenService = game:GetService("TweenService")
 local Camera = Workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
@@ -79,13 +78,14 @@ local function createSlider(text, position, min, max, default, callback)
     end)
 end
 
--- // Toggles
+-- // Toggles and Variables
 local espEnabled = false
 local aimbotEnabled = false
 local cameraLockEnabled = false
 local fovCircleEnabled = false
 local aimbotSmoothness = 5
 local cameraLockSmoothness = 5
+local fovRadius = 100
 
 createSlider("Aimbot Smoothness", 250, 1, 10, 5, function(value)
     aimbotSmoothness = value
@@ -93,6 +93,43 @@ end)
 createSlider("Camera Lock Smoothness", 300, 1, 10, 5, function(value)
     cameraLockSmoothness = value
 end)
+createSlider("FOV Radius", 350, 50, 200, 100, function(value)
+    fovRadius = value
+end)
+
+-- // ESP Function
+local function createESP(player)
+    if player == LocalPlayer then return end
+    local character = player.Character
+    if not character or not character:FindFirstChild("HumanoidRootPart") then return end
+
+    local highlight = Instance.new("Highlight")
+    highlight.Adornee = character
+    highlight.Parent = character
+    highlight.FillColor = Color3.fromRGB(255, 0, 0)
+    highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+    highlight.FillTransparency = 0.5
+
+    local function update()
+        if espEnabled and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            highlight.Enabled = true
+        else
+            highlight.Enabled = false
+        end
+    end
+
+    RunService.RenderStepped:Connect(update)
+    
+    player.CharacterRemoving:Connect(function()
+        highlight:Destroy()
+    end)
+end
+
+for _, player in pairs(Players:GetPlayers()) do
+    createESP(player)
+end
+
+Players.PlayerAdded:Connect(createESP)
 
 -- // Aimbot (Cursor Tracking & Smoothness)
 local function getClosestTarget()
@@ -132,5 +169,24 @@ RunService.RenderStepped:Connect(function()
             local smoothness = cameraLockSmoothness / 10
             Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, targetPos), smoothness)
         end
+    end
+end)
+
+-- // FOV Circle (Displays Circle at Mouse Position)
+local fovCircle = Drawing.new("Circle")
+fovCircle.Radius = fovRadius
+fovCircle.Thickness = 2
+fovCircle.Color = Color3.fromRGB(0, 255, 0)
+fovCircle.NumSides = 50
+fovCircle.Filled = false
+fovCircle.Transparency = 0.5
+fovCircle.Visible = false
+
+RunService.RenderStepped:Connect(function()
+    if fovCircleEnabled then
+        fovCircle.Position = Vector2.new(Mouse.X, Mouse.Y + 36)
+        fovCircle.Visible = true
+    else
+        fovCircle.Visible = false
     end
 end)
