@@ -86,9 +86,6 @@ espToggle.BackgroundColor3 = Color3.fromRGB(75, 75, 75)
 espToggle.Text = "Toggle ESP"
 espToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
 espToggle.Parent = MainFrame
-espToggle.MouseButton1Click:Connect(function()
-    espEnabled = not espEnabled
-end)
 
 local aimbotToggle = Instance.new("TextButton")
 aimbotToggle.Size = UDim2.new(0, 280, 0, 30)
@@ -97,9 +94,6 @@ aimbotToggle.BackgroundColor3 = Color3.fromRGB(75, 75, 75)
 aimbotToggle.Text = "Toggle Aimbot"
 aimbotToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
 aimbotToggle.Parent = MainFrame
-aimbotToggle.MouseButton1Click:Connect(function()
-    aimbotEnabled = not aimbotEnabled
-end)
 
 local cameraLockToggle = Instance.new("TextButton")
 cameraLockToggle.Size = UDim2.new(0, 280, 0, 30)
@@ -108,9 +102,6 @@ cameraLockToggle.BackgroundColor3 = Color3.fromRGB(75, 75, 75)
 cameraLockToggle.Text = "Toggle Camera Lock"
 cameraLockToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
 cameraLockToggle.Parent = MainFrame
-cameraLockToggle.MouseButton1Click:Connect(function()
-    cameraLockEnabled = not cameraLockEnabled
-end)
 
 local fovCircleToggle = Instance.new("TextButton")
 fovCircleToggle.Size = UDim2.new(0, 280, 0, 30)
@@ -119,8 +110,31 @@ fovCircleToggle.BackgroundColor3 = Color3.fromRGB(75, 75, 75)
 fovCircleToggle.Text = "Toggle FOV Circle"
 fovCircleToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
 fovCircleToggle.Parent = MainFrame
+
+-- // Initialize Toggles State
+local espEnabled = false
+local aimbotEnabled = false
+local cameraLockEnabled = false
+local fovCircleEnabled = false
+
+espToggle.MouseButton1Click:Connect(function()
+    espEnabled = not espEnabled
+    print("ESP Enabled: ", espEnabled)  -- Debug print
+end)
+
+aimbotToggle.MouseButton1Click:Connect(function()
+    aimbotEnabled = not aimbotEnabled
+    print("Aimbot Enabled: ", aimbotEnabled)  -- Debug print
+end)
+
+cameraLockToggle.MouseButton1Click:Connect(function()
+    cameraLockEnabled = not cameraLockEnabled
+    print("Camera Lock Enabled: ", cameraLockEnabled)  -- Debug print
+end)
+
 fovCircleToggle.MouseButton1Click:Connect(function()
     fovCircleEnabled = not fovCircleEnabled
+    print("FOV Circle Enabled: ", fovCircleEnabled)  -- Debug print
 end)
 
 -- // Sliders for Aimbot Smoothness, Camera Lock Smoothness, and FOV Radius
