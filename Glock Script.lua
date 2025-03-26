@@ -87,7 +87,7 @@ end
 
 Players.PlayerAdded:Connect(createESP)
 
--- // Aimbot
+-- // Aimbot (Smooth & More Accurate)
 local function getClosestTarget()
     local closestTarget = nil
     local shortestDistance = math.huge
@@ -113,7 +113,9 @@ RunService.RenderStepped:Connect(function()
         local target = getClosestTarget()
         if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
             local targetPos = target.Character.HumanoidRootPart.Position
-            Camera.CFrame = CFrame.new(Camera.CFrame.Position, targetPos)
+            local currentCFrame = Camera.CFrame.Position
+            local smoothness = 0.1  -- Controls how smooth the aim is (Lower is slower)
+            Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(currentCFrame, targetPos), smoothness)
         end
     end
 end)
@@ -121,7 +123,11 @@ end)
 -- // Camera Lock
 RunService.RenderStepped:Connect(function()
     if cameraLockEnabled then
-        Camera.CFrame = CFrame.new(Camera.CFrame.Position, Camera.CFrame.Position + Camera.CFrame.LookVector)
+        local target = getClosestTarget()
+        if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+            local targetPos = target.Character.HumanoidRootPart.Position
+            Camera.CFrame = CFrame.new(Camera.CFrame.Position, targetPos)
+        end
     end
 end)
 
