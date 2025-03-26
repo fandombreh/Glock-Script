@@ -110,7 +110,17 @@ createToggleButton("Toggle ESP", 60, function() espEnabled = not espEnabled end)
 createToggleButton("Toggle Aimbot", 110, function() aimbotEnabled = not aimbotEnabled end)
 createToggleButton("Toggle Camera Lock", 160, function() cameraLockEnabled = not cameraLockEnabled end)
 createToggleButton("Toggle FOV Circle", 210, function() fovCircleEnabled = not fovCircleEnabled end)
-createToggleButton("Toggle Blatant Mode", 460, function() blatantMode = not blatantMode end)
+
+-- Blatant Mode Toggle Button
+local blatantModeButton = createToggleButton("Toggle Blatant Mode: Non-Blatant", 460, function()
+    blatantMode = not blatantMode
+    -- Update the button text to reflect the current mode
+    if blatantMode then
+        blatantModeButton.Text = "Toggle Blatant Mode: Blatant"
+    else
+        blatantModeButton.Text = "Toggle Blatant Mode: Non-Blatant"
+    end
+end)
 
 -- Create the Smoothness Sliders
 local aimbotSmoothness, cameraLockSmoothness, fovRadius = 5, 5, 100
