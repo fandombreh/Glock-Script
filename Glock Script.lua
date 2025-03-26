@@ -1,187 +1,149 @@
-local player = game.Players.LocalPlayer
-local mouse = player:GetMouse()
-local camera = workspace.CurrentCamera
+-- Services
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
+local Camera = game:GetService("Workspace").CurrentCamera
 
--- Create a Screen GUI for cheats
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "CheatMenu"
-screenGui.Parent = player:FindFirstChildOfClass("PlayerGui")
-screenGui.ResetOnSpawn = false
+-- UI Elements (Add this in Roblox Studio)
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "Glock - made by snoopy"
+ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 
--- Create a Frame for the cheat buttons
-local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0.3, 0, 0.7, 0)
-frame.Position = UDim2.new(0.35, 0, 0.15, 0)
-frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-frame.BackgroundTransparency = 0.5
-frame.BorderSizePixel = 0
-frame.Parent = screenGui
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 200, 0, 300)
+MainFrame.Position = UDim2.new(0, 10, 0, 10)
+MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+MainFrame.Parent = ScreenGui
 
--- Draggable UI setup
-local function makeDraggable(dragArea)
-    local dragging
-    local dragInput
-    local dragStart
-    local startPos
+-- Toggle Buttons (For simplicity, you can add more buttons)
+local espToggle = Instance.new("TextButton")
+espToggle.Size = UDim2.new(0, 180, 0, 30)
+espToggle.Position = UDim2.new(0, 10, 0, 10)
+espToggle.Text = "Toggle ESP"
+espToggle.Parent = MainFrame
 
-    local function update(input)
-        local delta = input.Position - dragStart
-        dragArea.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-    end
+local aimbotToggle = Instance.new("TextButton")
+aimbotToggle.Size = UDim2.new(0, 180, 0, 30)
+aimbotToggle.Position = UDim2.new(0, 10, 0, 50)
+aimbotToggle.Text = "Toggle Aimbot"
+aimbotToggle.Parent = MainFrame
 
-    dragArea.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            dragStart = input.Position
-            startPos = dragArea.Position
+local cameraLockToggle = Instance.new("TextButton")
+cameraLockToggle.Size = UDim2.new(0, 180, 0, 30)
+cameraLockToggle.Position = UDim2.new(0, 10, 0, 90)
+cameraLockToggle.Text = "Toggle Camera Lock"
+cameraLockToggle.Parent = MainFrame
 
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
-                end
-            end)
-        end
-    end)
+local fovCircleToggle = Instance.new("TextButton")
+fovCircleToggle.Size = UDim2.new(0, 180, 0, 30)
+fovCircleToggle.Position = UDim2.new(0, 10, 0, 130)
+fovCircleToggle.Text = "Toggle FOV Circle"
+fovCircleToggle.Parent = MainFrame
 
-    dragArea.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement then
-            dragInput = input
-        end
-    end)
+-- ESP (Simple Implementation)
+local espEnabled = false
 
-    game:GetService("UserInputService").InputChanged:Connect(function(input)
-        if input == dragInput and dragging then
-            update(input)
-        end
-    end)
-end
+espToggle.MouseButton1Click:Connect(function()
+    espEnabled = not espEnabled
+end)
 
-makeDraggable(frame)
+local function drawESP()
+    for _, player in pairs(Players:GetPlayers()) do
+        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local part = player.Character.HumanoidRootPart
+            local screenPosition = Camera:WorldToScreenPoint(part.Position)
 
--- Function to create buttons in the cheat menu
-local function createButton(name, yPosition, callback)
-    local button = Instance.new("TextButton")
-    button.Size = UDim2.new(0.8, 0, 0.05, 0)
-    button.Position = UDim2.new(0.1, 0, yPosition, 0)
-    button.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-    button.Text = name
-    button.TextColor3 = Color3.fromRGB(255, 255, 255)
-    button.Font = Enum.Font.Gotham
-    button.TextSize = 14
-    button.Parent = frame
-
-    button.MouseEnter:Connect(function()
-        button.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-    end)
-
-    button.MouseLeave:Connect(function()
-        button.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-    end)
-
-    button.MouseButton1Click:Connect(callback)
-    return button
-end
-
--- Cheat states
-local cheats = {
-    aimLock = false,
-    aimAssist = false,
-    triggerBot = false,
-    esp = false
-}
-
--- Find closest player
-local function findClosestPlayer()
-    if not player.Character then return nil end
-    
-    local closestPlayer = nil
-    local shortestDistance = math.huge
-
-    for _, otherPlayer in pairs(game.Players:GetPlayers()) do
-        if otherPlayer ~= player and otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") then
-            local distance = (otherPlayer.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
-            if distance < shortestDistance then
-                shortestDistance = distance
-                closestPlayer = otherPlayer
-            end
-        end
-    end
-
-    return closestPlayer
-end
-
--- Aim Lock
-local function aimLock()
-    if not cheats.aimLock then return end
-    
-    local closestPlayer = findClosestPlayer()
-    if closestPlayer and closestPlayer.Character then
-        camera.CFrame = CFrame.new(camera.CFrame.Position, closestPlayer.Character.HumanoidRootPart.Position)
-    end
-end
-
--- Aim Assist
-local function aimAssist()
-    if not cheats.aimAssist then return end
-    
-    local closestPlayer = findClosestPlayer()
-    if closestPlayer and closestPlayer.Character then
-        local aimPosition = closestPlayer.Character.HumanoidRootPart.Position
-        local newCFrame = CFrame.new(camera.CFrame.Position, aimPosition)
-        camera.CFrame = camera.CFrame:Lerp(newCFrame, 0.1)
-    end
-end
-
--- Trigger Bot
-local function triggerBot()
-    if not cheats.triggerBot then return end
-    
-    local target = mouse.Target
-    if target and target.Parent and target.Parent:FindFirstChild("Humanoid") and target.Parent.Humanoid.Health > 0 then
-        game:GetService("VirtualUser"):Button1Click(Vector2.new(0, 0))
-    end
-end
-
--- ESP Toggle
-local function toggleESP()
-    cheats.esp = not cheats.esp
-    
-    for _, otherPlayer in pairs(game.Players:GetPlayers()) do
-        if otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") then
-            local existingHighlight = otherPlayer.Character:FindFirstChild("Highlight")
-            
-            if cheats.esp then
-                if not existingHighlight then
-                    local highlight = Instance.new("Highlight", otherPlayer.Character)
-                    highlight.FillColor = Color3.fromRGB(255, 0, 0)
-                    highlight.OutlineTransparency = 0.5
-                end
-            elseif existingHighlight then
-                existingHighlight:Destroy()
+            if espEnabled then
+                local espBox = Instance.new("Frame")
+                espBox.Size = UDim2.new(0, 5, 0, 5)
+                espBox.Position = UDim2.new(0, screenPosition.X - 2.5, 0, screenPosition.Y - 2.5)
+                espBox.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+                espBox.Parent = ScreenGui
+                game:GetService("Debris"):AddItem(espBox, 1)
             end
         end
     end
 end
 
--- Create Buttons
-createButton("Aim Lock", 0.15, function()
-    cheats.aimLock = not cheats.aimLock
+RunService.RenderStepped:Connect(drawESP)
+
+-- Aimbot
+local aimbotEnabled = false
+
+aimbotToggle.MouseButton1Click:Connect(function()
+    aimbotEnabled = not aimbotEnabled
 end)
 
-createButton("Aim Assist", 0.22, function()
-    cheats.aimAssist = not cheats.aimAssist
+local function aimbotFunction()
+    if aimbotEnabled then
+        local closestTarget = nil
+        local shortestDistance = math.huge
+        for _, player in pairs(Players:GetPlayers()) do
+            if player ~= Players.LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                local targetPosition = player.Character.HumanoidRootPart.Position
+                local screenPosition = Camera:WorldToScreenPoint(targetPosition)
+                local distance = (Vector2.new(screenPosition.X, screenPosition.Y) - UserInputService:GetMouseLocation()).Magnitude
+                if distance < shortestDistance then
+                    closestTarget = player
+                    shortestDistance = distance
+                end
+            end
+        end
+
+        if closestTarget then
+            local targetPosition = closestTarget.Character.HumanoidRootPart.Position
+            local mouseDirection = (targetPosition - Camera.CFrame.Position).Unit
+            Camera.CFrame = CFrame.new(Camera.CFrame.Position, Camera.CFrame.Position + mouseDirection)
+        end
+    end
+end
+
+RunService.RenderStepped:Connect(aimbotFunction)
+
+-- Camera Lock
+local cameraLockEnabled = false
+
+cameraLockToggle.MouseButton1Click:Connect(function()
+    cameraLockEnabled = not cameraLockEnabled
 end)
 
-createButton("Trigger Bot", 0.29, function()
-    cheats.triggerBot = not cheats.triggerBot
+local function lockCamera()
+    if cameraLockEnabled then
+        Camera.CFrame = CFrame.new(Camera.CFrame.Position, Camera.CFrame.Position + Camera.CFrame.LookVector)
+    end
+end
+
+RunService.RenderStepped:Connect(lockCamera)
+
+-- FOV Circle
+local fovCircleEnabled = false
+
+fovCircleToggle.MouseButton1Click:Connect(function()
+    fovCircleEnabled = not fovCircleEnabled
 end)
 
-createButton("ESP", 0.36, toggleESP)
+local fovCircle
 
--- Main Loop
-local runService = game:GetService("RunService")
-runService.RenderStepped:Connect(function()
-    aimLock()
-    aimAssist()
+local function drawFOVCircle()
+    if fovCircleEnabled then
+        if not fovCircle then
+            fovCircle = Instance.new("Frame")
+            fovCircle.Size = UDim2.new(0, 100, 0, 100)
+            fovCircle.Position = UDim2.new(0.5, -50, 0.5, -50)
+            fovCircle.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+            fovCircle.BackgroundTransparency = 0.5
+            fovCircle.BorderSizePixel = 0
+            fovCircle.Parent = ScreenGui
+        end
+    else
+        if fovCircle then
+            fovCircle:Destroy()
+        end
+    end
+end
+
+RunService.RenderStepped:Connect(drawFOVCircle)
+
     triggerBot()
 end)
