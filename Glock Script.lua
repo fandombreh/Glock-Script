@@ -13,8 +13,8 @@ ScreenGui.Name = "Glock - made by snoopy"
 ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 300, 0, 400)
-MainFrame.Position = UDim2.new(0.5, -150, 0.5, -200)
+MainFrame.Size = UDim2.new(0, 300, 0, 500) -- Increased height for more space
+MainFrame.Position = UDim2.new(0.5, -150, 0.5, -250) -- Adjusted position
 MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 MainFrame.BorderSizePixel = 2
 MainFrame.Active = true
@@ -78,15 +78,52 @@ local function createSlider(text, position, min, max, default, callback)
     end)
 end
 
--- // Toggles and Variables
-local espEnabled = false
-local aimbotEnabled = false
-local cameraLockEnabled = false
-local fovCircleEnabled = false
-local aimbotSmoothness = 5
-local cameraLockSmoothness = 5
-local fovRadius = 100
+-- // Toggle Buttons (For ESP, Aimbot, Camera Lock, FOV Circle)
+local espToggle = Instance.new("TextButton")
+espToggle.Size = UDim2.new(0, 280, 0, 30)
+espToggle.Position = UDim2.new(0, 10, 0, 60)
+espToggle.BackgroundColor3 = Color3.fromRGB(75, 75, 75)
+espToggle.Text = "Toggle ESP"
+espToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+espToggle.Parent = MainFrame
+espToggle.MouseButton1Click:Connect(function()
+    espEnabled = not espEnabled
+end)
 
+local aimbotToggle = Instance.new("TextButton")
+aimbotToggle.Size = UDim2.new(0, 280, 0, 30)
+aimbotToggle.Position = UDim2.new(0, 10, 0, 100)
+aimbotToggle.BackgroundColor3 = Color3.fromRGB(75, 75, 75)
+aimbotToggle.Text = "Toggle Aimbot"
+aimbotToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+aimbotToggle.Parent = MainFrame
+aimbotToggle.MouseButton1Click:Connect(function()
+    aimbotEnabled = not aimbotEnabled
+end)
+
+local cameraLockToggle = Instance.new("TextButton")
+cameraLockToggle.Size = UDim2.new(0, 280, 0, 30)
+cameraLockToggle.Position = UDim2.new(0, 10, 0, 140)
+cameraLockToggle.BackgroundColor3 = Color3.fromRGB(75, 75, 75)
+cameraLockToggle.Text = "Toggle Camera Lock"
+cameraLockToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+cameraLockToggle.Parent = MainFrame
+cameraLockToggle.MouseButton1Click:Connect(function()
+    cameraLockEnabled = not cameraLockEnabled
+end)
+
+local fovCircleToggle = Instance.new("TextButton")
+fovCircleToggle.Size = UDim2.new(0, 280, 0, 30)
+fovCircleToggle.Position = UDim2.new(0, 10, 0, 180)
+fovCircleToggle.BackgroundColor3 = Color3.fromRGB(75, 75, 75)
+fovCircleToggle.Text = "Toggle FOV Circle"
+fovCircleToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+fovCircleToggle.Parent = MainFrame
+fovCircleToggle.MouseButton1Click:Connect(function()
+    fovCircleEnabled = not fovCircleEnabled
+end)
+
+-- // Sliders for Aimbot Smoothness, Camera Lock Smoothness, and FOV Radius
 createSlider("Aimbot Smoothness", 250, 1, 10, 5, function(value)
     aimbotSmoothness = value
 end)
