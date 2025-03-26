@@ -76,8 +76,9 @@ local function createSlider(label, position, minVal, maxVal, callback)
 
     local function updateSliderPosition(input)
         local mousePos = input.Position.X - frame.AbsolutePosition.X
-        knob.Position = UDim2.new(0, math.clamp(mousePos, 0, 200), 0, 0)
-        value = minVal + (maxVal - minVal) * (knob.Position.X.Offset / 200)
+        local newPos = math.clamp(mousePos, 0, 200)
+        knob.Position = UDim2.new(0, newPos, 0, 0)
+        value = minVal + (maxVal - minVal) * (newPos / 200)
         callback(value)
     end
 
