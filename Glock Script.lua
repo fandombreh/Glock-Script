@@ -7,7 +7,7 @@ local Camera = Workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
 
--- // UI Setup (Tokyo Lib Style)
+-- // UI Setup (Informant.wtf Lib Style)
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "Glock - made by snoopy"
 ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
@@ -34,12 +34,7 @@ Title.TextStrokeTransparency = 0.8
 Title.TextXAlignment = Enum.TextXAlignment.Center
 Title.Parent = MainFrame
 
--- UI Elements Padding
-local Padding = Instance.new("UIPadding")
-Padding.PaddingTop = UDim.new(0, 40)
-Padding.Parent = MainFrame
-
--- Function to create buttons in the Tokyo Lib style
+-- // Create Toggle Buttons
 local function createToggleButton(text, position, callback)
     local button = Instance.new("TextButton")
     button.Size = UDim2.new(0, 300, 0, 40)
