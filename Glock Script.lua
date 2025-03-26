@@ -14,8 +14,8 @@ ScreenGui.Name = "Glock - made by snoopy"
 ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 300, 0, 350)
-MainFrame.Position = UDim2.new(0.5, -150, 0.5, -175)
+MainFrame.Size = UDim2.new(0, 300, 0, 400)
+MainFrame.Position = UDim2.new(0.5, -150, 0.5, -200)
 MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 MainFrame.BorderSizePixel = 2
 MainFrame.Active = true
@@ -31,19 +31,52 @@ Title.Font = Enum.Font.SourceSansBold
 Title.TextSize = 20
 Title.Parent = MainFrame
 
--- // UI Buttons
-local function createButton(text, position, callback)
-    local button = Instance.new("TextButton")
-    button.Size = UDim2.new(0, 280, 0, 40)
-    button.Position = UDim2.new(0, 10, 0, position)
-    button.Text = text
-    button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-    button.TextColor3 = Color3.fromRGB(255, 255, 255)
-    button.Font = Enum.Font.SourceSansBold
-    button.TextSize = 18
-    button.Parent = MainFrame
-    button.MouseButton1Click:Connect(callback)
-    return button
+-- // UI Sliders
+local function createSlider(text, position, min, max, default, callback)
+    local sliderFrame = Instance.new("Frame")
+    sliderFrame.Size = UDim2.new(0, 280, 0, 40)
+    sliderFrame.Position = UDim2.new(0, 10, 0, position)
+    sliderFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    sliderFrame.Parent = MainFrame
+    
+    local sliderLabel = Instance.new("TextLabel")
+    sliderLabel.Size = UDim2.new(1, 0, 0, 20)
+    sliderLabel.Text = text .. ": " .. default
+    sliderLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    sliderLabel.Parent = sliderFrame
+    
+    local slider = Instance.new("TextButton")
+    slider.Size = UDim2.new(0, 260, 0, 20)
+    slider.Position = UDim2.new(0, 10, 0, 20)
+    slider.BackgroundColor3 = Color3.fromRGB(75, 75, 75)
+    slider.Text = ""
+    slider.Parent = sliderFrame
+    
+    local function updateValue(input)
+        local relativePosition = (input.Position.X - slider.AbsolutePosition.X) / slider.AbsoluteSize.X
+        local value = math.clamp(math.floor(relativePosition * (max - min) + min), min, max)
+        sliderLabel.Text = text .. ": " .. value
+        callback(value)
+    end
+    
+    slider.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            updateValue(input)
+            local moveConnection
+            local releaseConnection
+            moveConnection = UserInputService.InputChanged:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseMovement then
+                    updateValue(input)
+                end
+            end)
+            releaseConnection = UserInputService.InputEnded:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    moveConnection:Disconnect()
+                    releaseConnection:Disconnect()
+                end
+            end)
+        end
+    end)
 end
 
 -- // Toggles
@@ -51,57 +84,17 @@ local espEnabled = false
 local aimbotEnabled = false
 local cameraLockEnabled = false
 local fovCircleEnabled = false
+local aimbotSmoothness = 5
+local cameraLockSmoothness = 5
 
-createButton("Toggle ESP", 40, function()
-    espEnabled = not espEnabled
+createSlider("Aimbot Smoothness", 250, 1, 10, 5, function(value)
+    aimbotSmoothness = value
+end)
+createSlider("Camera Lock Smoothness", 300, 1, 10, 5, function(value)
+    cameraLockSmoothness = value
 end)
 
-createButton("Toggle Aimbot", 90, function()
-    aimbotEnabled = not aimbotEnabled
-end)
-
-createButton("Toggle Camera Lock", 140, function()
-    cameraLockEnabled = not cameraLockEnabled
-end)
-
-createButton("Toggle FOV Circle", 190, function()
-    fovCircleEnabled = not fovCircleEnabled
-end)
-
--- // ESP Function
-local function createESP(player)
-    if player == LocalPlayer then return end
-    local character = player.Character
-    if not character or not character:FindFirstChild("HumanoidRootPart") then return end
-
-    local highlight = Instance.new("Highlight")
-    highlight.Adornee = character
-    highlight.Parent = character
-    highlight.FillColor = Color3.fromRGB(255, 0, 0)
-    highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
-    highlight.FillTransparency = 0.5
-
-    local function update()
-        if espEnabled and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            highlight.Enabled = true
-        else
-            highlight.Enabled = false
-        end
-    end
-
-    RunService.RenderStepped:Connect(update)
-    player.CharacterRemoving:Connect(function()
-        highlight:Destroy()
-    end)
-end
-
-for _, player in pairs(Players:GetPlayers()) do
-    createESP(player)
-end
-
-Players.PlayerAdded:Connect(createESP)
-
--- // Aimbot (Smooth & Accurate)
+-- // Aimbot (Cursor Tracking & Smoothness)
 local function getClosestTarget()
     local closestTarget = nil
     local shortestDistance = math.huge
@@ -124,38 +117,20 @@ RunService.RenderStepped:Connect(function()
         local target = getClosestTarget()
         if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
             local targetPos = target.Character.HumanoidRootPart.Position
-            local smoothness = 0.2
+            local smoothness = aimbotSmoothness / 10
             Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, targetPos), smoothness)
         end
     end
 end)
 
--- // Camera Lock
+-- // Camera Lock (Tracks with Camera)
 RunService.RenderStepped:Connect(function()
     if cameraLockEnabled then
         local target = getClosestTarget()
         if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
             local targetPos = target.Character.HumanoidRootPart.Position
-            Camera.CFrame = CFrame.new(Camera.CFrame.Position, targetPos)
+            local smoothness = cameraLockSmoothness / 10
+            Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, targetPos), smoothness)
         end
-    end
-end)
-
--- // FOV Circle (Fixed)
-local fovCircle = Drawing.new("Circle")
-fovCircle.Radius = 100
-fovCircle.Thickness = 2
-fovCircle.Color = Color3.fromRGB(0, 255, 0)
-fovCircle.NumSides = 50
-fovCircle.Filled = false
-fovCircle.Transparency = 0.5
-fovCircle.Visible = false
-
-RunService.RenderStepped:Connect(function()
-    if fovCircleEnabled then
-        fovCircle.Position = Vector2.new(Mouse.X, Mouse.Y + 36)
-        fovCircle.Visible = true
-    else
-        fovCircle.Visible = false
     end
 end)
