@@ -152,7 +152,7 @@ local triggerBotEnabled = false
 local function triggerBot()
     if triggerBotEnabled then
         local target = mouse.Target
-        if target and target.Parent and target.Parent:FindFirstChild("Humanoid") and target.Parent:FindFirstChild("Humanoid").Health > 0 then
+        if target and target.Parent and target.Parent:FindFirstChild("Humanoid") and target.Parent.Humanoid.Health > 0 then
             -- Simulate mouse click using VirtualUser
             game:GetService("VirtualUser"):Button1Down(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
         end
