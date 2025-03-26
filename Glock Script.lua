@@ -72,22 +72,30 @@ local function createSlider(label, position, minVal, maxVal, callback)
     knob.Parent = slider
 
     local value = minVal
+    local dragging = false
+
+    local function updateSliderPosition(input)
+        local mousePos = input.Position.X - frame.AbsolutePosition.X
+        knob.Position = UDim2.new(0, math.clamp(mousePos, 0, 200), 0, 0)
+        value = minVal + (maxVal - minVal) * (knob.Position.X.Offset / 200)
+        callback(value)
+    end
 
     knob.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            local function updateKnobPosition()
-                local mousePos = UserInputService:GetMouseLocation().X - frame.AbsolutePosition.X
-                knob.Position = UDim2.new(0, math.clamp(mousePos, 0, 200), 0, 0)
-                value = minVal + (maxVal - minVal) * (knob.Position.X.Offset / 200)
-                callback(value)
-            end
-            updateKnobPosition()
+            dragging = true
+        end
+    end)
 
-            UserInputService.InputChanged:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseMovement then
-                    updateKnobPosition()
-                end
-            end)
+    knob.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            updateSliderPosition(input)
         end
     end)
 
