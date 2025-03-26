@@ -1,5 +1,3 @@
-Untitled artifact
-
 local player = game.Players.LocalPlayer
 local mouse = player:GetMouse()
 local camera = workspace.CurrentCamera
@@ -32,7 +30,7 @@ local function makeDraggable(dragArea)
     end
 
     dragArea.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
             dragStart = input.Position
             startPos = dragArea.Position
@@ -46,7 +44,7 @@ local function makeDraggable(dragArea)
     end)
 
     dragArea.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement then
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
             dragInput = input
         end
     end)
@@ -142,7 +140,7 @@ local function triggerBot()
     
     local target = mouse.Target
     if target and target.Parent and target.Parent:FindFirstChild("Humanoid") and target.Parent.Humanoid.Health > 0 then
-        game:GetService("VirtualUser"):Button1Down(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
+        game:GetService("VirtualUser"):Button1Click(Vector2.new(0, 0))
     end
 end
 
@@ -188,10 +186,16 @@ local function toggleHealthESP()
                     bar.Size = UDim2.new(1, 0, 0.2, 0)
                     bar.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
 
-                    otherPlayer.Character.Humanoid:GetPropertyChangedSignal("Health"):Connect(function()
+                    local connection
+                    connection = otherPlayer.Character.Humanoid:GetPropertyChangedSignal("Health"):Connect(function()
                         local healthPercent = otherPlayer.Character.Humanoid.Health / otherPlayer.Character.Humanoid.MaxHealth
                         bar.Size = UDim2.new(healthPercent, 0, 0.2, 0)
                         bar.BackgroundColor3 = Color3.fromRGB(255 * (1 - healthPercent), 255 * healthPercent, 0)
+                        
+                        -- Cleanup if character is destroyed
+                        if not otherPlayer.Character then
+                            connection:Disconnect()
+                        end
                     end)
                 end
             elseif existingBillboard then
@@ -224,11 +228,16 @@ local function toggleDistanceESP()
                     label.BackgroundTransparency = 1
                     label.TextStrokeTransparency = 0.8
                     
-                    spawn(function()
+                    task.spawn(function()
                         while cheats.distanceESP and otherPlayer.Character do
                             local distance = (otherPlayer.Character.HumanoidRootPart.Position - camera.CFrame.Position).Magnitude
                             label.Text = string.format("Distance: %.2f", distance)
-                            wait(0.1)
+                            task.wait(0.1)
+                        end
+                        
+                        -- Cleanup billboard if ESP is turned off
+                        if billboard and billboard.Parent then
+                            billboard:Destroy()
                         end
                     end)
                 end
