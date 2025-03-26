@@ -7,26 +7,29 @@ local Camera = Workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
 
--- UI Setup (Informant.wtf Lib Style)
+-- UI Setup (Matcha External Style)
 local function setupUI()
     local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = "Glock - made by snoopy"
     ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
-    -- Main Frame
+    -- Main Frame (Dark background, Green accent)
     local MainFrame = Instance.new("Frame")
     MainFrame.Size = UDim2.new(0, 400, 0, 500)
     MainFrame.Position = UDim2.new(0.5, -200, 0.5, -250)
-    MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)  -- Dark background
     MainFrame.BorderSizePixel = 0
     MainFrame.Active = true
     MainFrame.Draggable = true
+    local corner = Instance.new("UICorner") -- Rounded corners
+    corner.CornerRadius = UDim.new(0.05, 0) -- 5% rounding for a smooth look
+    corner.Parent = MainFrame
     MainFrame.Parent = ScreenGui
 
-    -- Title
+    -- Title (Green background with white text)
     local Title = Instance.new("TextLabel")
     Title.Size = UDim2.new(1, 0, 0, 40)
-    Title.BackgroundColor3 = Color3.fromRGB(0, 255, 255)
+    Title.BackgroundColor3 = Color3.fromRGB(45, 255, 75)  -- Matcha green
     Title.Text = "Glock - made by snoopy"
     Title.TextColor3 = Color3.fromRGB(255, 255, 255)
     Title.Font = Enum.Font.GothamBold
@@ -35,12 +38,12 @@ local function setupUI()
     Title.TextXAlignment = Enum.TextXAlignment.Center
     Title.Parent = MainFrame
 
-    -- Function to Create Buttons
+    -- Function to Create Buttons (with minimalist style)
     local function createToggleButton(text, position, callback)
         local button = Instance.new("TextButton")
         button.Size = UDim2.new(0, 350, 0, 40)
         button.Position = UDim2.new(0, 25, 0, position)
-        button.BackgroundColor3 = Color3.fromRGB(0, 255, 255)
+        button.BackgroundColor3 = Color3.fromRGB(45, 255, 75)  -- Matcha green
         button.Text = text
         button.TextColor3 = Color3.fromRGB(255, 255, 255)
         button.Font = Enum.Font.Gotham
@@ -48,16 +51,22 @@ local function setupUI()
         button.TextStrokeTransparency = 0.8
         button.TextXAlignment = Enum.TextXAlignment.Center
         button.Parent = MainFrame
+        local corner = Instance.new("UICorner") -- Rounded corners for buttons
+        corner.CornerRadius = UDim.new(0.05, 0) -- Rounded corners for buttons
+        corner.Parent = button
         button.MouseButton1Click:Connect(callback)
         return button
     end
 
-    -- Function to Create Sliders
+    -- Function to Create Sliders (with smooth design)
     local function createSlider(text, position, min, max, default, callback)
         local sliderFrame = Instance.new("Frame")
         sliderFrame.Size = UDim2.new(0, 350, 0, 40)
         sliderFrame.Position = UDim2.new(0, 25, 0, position)
-        sliderFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+        sliderFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)  -- Dark background
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(0.05, 0)
+        corner.Parent = sliderFrame
         sliderFrame.Parent = MainFrame
 
         local sliderLabel = Instance.new("TextLabel")
@@ -72,8 +81,11 @@ local function setupUI()
         local slider = Instance.new("TextButton")
         slider.Size = UDim2.new(0, 300, 0, 20)
         slider.Position = UDim2.new(0, 25, 0, 20)
-        slider.BackgroundColor3 = Color3.fromRGB(0, 255, 255)
+        slider.BackgroundColor3 = Color3.fromRGB(45, 255, 75)  -- Matcha green
         slider.Text = ""
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(0.05, 0)
+        corner.Parent = slider
         slider.Parent = sliderFrame
 
         local function updateValue(input)
@@ -199,7 +211,7 @@ local function setupUI()
 
         local frame = Instance.new("Frame")
         frame.Size = UDim2.new(1, 0, 1, 0)
-        frame.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+        frame.BackgroundColor3 = Color3.fromRGB(45, 255, 75)  -- Matcha green
         frame.BackgroundTransparency = 0.5
         frame.Parent = box
     end
@@ -218,7 +230,7 @@ local function setupUI()
     local fovCircle = Instance.new("Frame")
     fovCircle.Size = UDim2.new(0, fovRadius, 0, fovRadius)
     fovCircle.Position = UDim2.new(0, 0, 0, 0)  -- Default to top left, will update below
-    fovCircle.BackgroundColor3 = Color3.fromRGB(0, 255, 255)
+    fovCircle.BackgroundColor3 = Color3.fromRGB(45, 255, 75)  -- Matcha green
     fovCircle.BackgroundTransparency = 0.5
     fovCircle.Visible = false
 
