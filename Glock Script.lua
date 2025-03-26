@@ -18,7 +18,7 @@ MainFrame.Position = UDim2.new(0, 10, 0, 10)
 MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 MainFrame.Parent = ScreenGui
 
--- // Buttons
+-- // UI Buttons
 local function createButton(text, position, callback)
     local button = Instance.new("TextButton")
     button.Size = UDim2.new(0, 180, 0, 30)
@@ -31,22 +31,24 @@ local function createButton(text, position, callback)
     return button
 end
 
+-- // Toggles
 local espEnabled = false
+local aimbotEnabled = false
+local cameraLockEnabled = false
+local fovCircleEnabled = false
+
 createButton("Toggle ESP", 10, function()
     espEnabled = not espEnabled
 end)
 
-local aimbotEnabled = false
 createButton("Toggle Aimbot", 50, function()
     aimbotEnabled = not aimbotEnabled
 end)
 
-local cameraLockEnabled = false
 createButton("Toggle Camera Lock", 90, function()
     cameraLockEnabled = not cameraLockEnabled
 end)
 
-local fovCircleEnabled = false
 createButton("Toggle FOV Circle", 130, function()
     fovCircleEnabled = not fovCircleEnabled
 end)
