@@ -14,9 +14,9 @@ ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
 -- Main Frame
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 350, 0, 500)
-MainFrame.Position = UDim2.new(0.5, -175, 0.5, -250)
-MainFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+MainFrame.Size = UDim2.new(0, 400, 0, 500)
+MainFrame.Position = UDim2.new(0.5, -200, 0.5, -250)
+MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
 MainFrame.Draggable = true
@@ -24,22 +24,20 @@ MainFrame.Parent = ScreenGui
 
 -- Title
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, 0, 0, 35)
+Title.Size = UDim2.new(1, 0, 0, 40)
 Title.BackgroundColor3 = Color3.fromRGB(0, 255, 255)
 Title.Text = "Glock - made by snoopy"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.Font = Enum.Font.GothamBold
-Title.TextSize = 24
+Title.TextSize = 22
 Title.TextStrokeTransparency = 0.8
 Title.TextXAlignment = Enum.TextXAlignment.Center
 Title.Parent = MainFrame
 
--- Create Toggle Buttons for ESP, Aimbot, Camera Lock, FOV Circle
-local espEnabled, aimbotEnabled, cameraLockEnabled, fovCircleEnabled = false, false, false, false
-
+-- Function to Create Buttons
 local function createToggleButton(text, position, callback)
     local button = Instance.new("TextButton")
-    button.Size = UDim2.new(0, 300, 0, 40)
+    button.Size = UDim2.new(0, 350, 0, 40)
     button.Position = UDim2.new(0, 25, 0, position)
     button.BackgroundColor3 = Color3.fromRGB(0, 255, 255)
     button.Text = text
@@ -53,34 +51,12 @@ local function createToggleButton(text, position, callback)
     return button
 end
 
-createToggleButton("Toggle ESP", 60, function()
-    espEnabled = not espEnabled
-    print("ESP Enabled:", espEnabled)
-end)
-
-createToggleButton("Toggle Aimbot", 110, function()
-    aimbotEnabled = not aimbotEnabled
-    print("Aimbot Enabled:", aimbotEnabled)
-end)
-
-createToggleButton("Toggle Camera Lock", 160, function()
-    cameraLockEnabled = not cameraLockEnabled
-    print("Camera Lock Enabled:", cameraLockEnabled)
-end)
-
-createToggleButton("Toggle FOV Circle", 210, function()
-    fovCircleEnabled = not fovCircleEnabled
-    print("FOV Circle Enabled:", fovCircleEnabled)
-end)
-
--- Smoothness Sliders for Aimbot, Camera Lock, and FOV
-local aimbotSmoothness, cameraLockSmoothness, fovRadius = 5, 5, 100
-
+-- Function to Create Sliders
 local function createSlider(text, position, min, max, default, callback)
     local sliderFrame = Instance.new("Frame")
-    sliderFrame.Size = UDim2.new(0, 300, 0, 40)
+    sliderFrame.Size = UDim2.new(0, 350, 0, 40)
     sliderFrame.Position = UDim2.new(0, 25, 0, position)
-    sliderFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    sliderFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
     sliderFrame.Parent = MainFrame
 
     local sliderLabel = Instance.new("TextLabel")
@@ -93,8 +69,8 @@ local function createSlider(text, position, min, max, default, callback)
     sliderLabel.Parent = sliderFrame
 
     local slider = Instance.new("TextButton")
-    slider.Size = UDim2.new(0, 260, 0, 20)
-    slider.Position = UDim2.new(0, 20, 0, 20)
+    slider.Size = UDim2.new(0, 300, 0, 20)
+    slider.Position = UDim2.new(0, 25, 0, 20)
     slider.BackgroundColor3 = Color3.fromRGB(0, 255, 255)
     slider.Text = ""
     slider.Parent = sliderFrame
@@ -126,17 +102,18 @@ local function createSlider(text, position, min, max, default, callback)
     end)
 end
 
-createSlider("Aimbot Smoothness", 260, 1, 10, 5, function(value)
-    aimbotSmoothness = value
-end)
+-- Create the Toggle Buttons
+local espEnabled, aimbotEnabled, cameraLockEnabled, fovCircleEnabled = false, false, false, false
+createToggleButton("Toggle ESP", 60, function() espEnabled = not espEnabled end)
+createToggleButton("Toggle Aimbot", 110, function() aimbotEnabled = not aimbotEnabled end)
+createToggleButton("Toggle Camera Lock", 160, function() cameraLockEnabled = not cameraLockEnabled end)
+createToggleButton("Toggle FOV Circle", 210, function() fovCircleEnabled = not fovCircleEnabled end)
 
-createSlider("Camera Lock Smoothness", 310, 1, 10, 5, function(value)
-    cameraLockSmoothness = value
-end)
-
-createSlider("FOV Radius", 360, 50, 200, 100, function(value)
-    fovRadius = value
-end)
+-- Create the Smoothness Sliders
+local aimbotSmoothness, cameraLockSmoothness, fovRadius = 5, 5, 100
+createSlider("Aimbot Smoothness", 260, 1, 10, 5, function(value) aimbotSmoothness = value end)
+createSlider("Camera Lock Smoothness", 310, 1, 10, 5, function(value) cameraLockSmoothness = value end)
+createSlider("FOV Radius", 360, 50, 200, 100, function(value) fovRadius = value end)
 
 -- Aimbot Functionality (Tracking with Cursor)
 local function getClosestTarget()
@@ -183,9 +160,7 @@ end)
 
 -- ESP Functionality (Shows Boxes around Players)
 local function createESPBox(player)
-    if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then
-        return
-    end
+    if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then return end
     local box = Instance.new("BillboardGui")
     box.Size = UDim2.new(0, 100, 0, 100)
     box.StudsOffset = Vector3.new(0, 2, 0)
