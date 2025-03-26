@@ -11,19 +11,62 @@ screenGui.Parent = player:FindFirstChildOfClass("PlayerGui")
 local frame = Instance.new("Frame")
 frame.Size = UDim2.new(0.3, 0, 0.7, 0)
 frame.Position = UDim2.new(0.35, 0, 0.15, 0)
-frame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-frame.BorderSizePixel = 2
+frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+frame.BackgroundTransparency = 0.8
+frame.BorderSizePixel = 1
+frame.BorderColor3 = Color3.fromRGB(60, 60, 60)
+frame.Rounding = UDim.new(0, 10)  -- Rounded corners
 frame.Parent = screenGui
+
+-- Make the frame draggable
+local dragging = false
+local dragInput, mousePos, framePos
+
+frame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        -- Record the initial position of the mouse and frame
+        dragInput = input
+        mousePos = Vector2.new(input.Position.X, input.Position.Y)
+        framePos = frame.Position
+    end
+end)
+
+frame.InputChanged:Connect(function(input)
+    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        -- Calculate the distance moved and update the frame position
+        local delta = Vector2.new(input.Position.X - mousePos.X, input.Position.Y - mousePos.Y)
+        frame.Position = UDim2.new(framePos.X.Scale, framePos.X.Offset + delta.X, framePos.Y.Scale, framePos.Y.Offset + delta.Y)
+    end
+end)
+
+frame.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = false
+    end
+end)
 
 -- Function to create buttons in the cheat menu
 local function createButton(name, position, callback)
     local button = Instance.new("TextButton")
     button.Size = UDim2.new(0.8, 0, 0.05, 0)
     button.Position = position
-    button.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+    button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
     button.Text = name
     button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    button.Font = Enum.Font.SourceSans
+    button.TextSize = 14
     button.Parent = frame
+
+    -- Hover effect for the button
+    button.MouseEnter:Connect(function()
+        button.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+    end)
+
+    button.MouseLeave:Connect(function()
+        button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    end)
+
     button.MouseButton1Click:Connect(callback)
     return button
 end
@@ -32,7 +75,6 @@ end
 -- Aim Cheats Section
 -------------------------------
 
--- Aim Lock: Locks onto the nearest player
 local aimLockEnabled = false
 
 local function aimLock()
@@ -60,7 +102,10 @@ createButton("Toggle Aim Lock", UDim2.new(0.1, 0, 0.05, 0), function()
     aimLockEnabled = not aimLockEnabled
 end)
 
--- Aim Assist: Gradually moves aim towards nearest player
+-------------------------------
+-- Aim Assist Section
+-------------------------------
+
 local aimAssistEnabled = false
 
 local function aimAssist()
@@ -90,7 +135,10 @@ createButton("Toggle Aim Assist", UDim2.new(0.1, 0, 0.1, 0), function()
     aimAssistEnabled = not aimAssistEnabled
 end)
 
--- Trigger Bot: Automatically shoots when aiming at an enemy
+-------------------------------
+-- Trigger Bot Section
+-------------------------------
+
 local triggerBotEnabled = false
 
 local function triggerBot()
@@ -111,7 +159,6 @@ end)
 -- ESP Cheats Section
 -------------------------------
 
--- ESP: Show player outlines
 local espEnabled = false
 
 local function toggleESP()
@@ -138,7 +185,10 @@ end
 
 createButton("Toggle ESP", UDim2.new(0.1, 0, 0.2, 0), toggleESP)
 
--- ESP: Show health bars
+-------------------------------
+-- Health ESP Section
+-------------------------------
+
 local healthESPEnabled = false
 
 local function toggleHealthESP()
@@ -235,7 +285,6 @@ createButton("Toggle Distance ESP", UDim2.new(0.1, 0, 0.3, 0), toggleDistanceESP
 -- Main Loop
 -------------------------------
 
--- Connect functions to RenderStepped for continuous execution
 local runService = game:GetService("RunService")
 runService.RenderStepped:Connect(function()
     aimLock()
