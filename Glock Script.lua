@@ -3,29 +3,44 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
+local TweenService = game:GetService("TweenService")
 local Camera = Workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
 
--- // UI Setup
+-- // UI Setup (Synapse X Style)
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "Glock - made by snoopy"
 ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 200, 0, 250)
-MainFrame.Position = UDim2.new(0, 10, 0, 10)
-MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+MainFrame.Size = UDim2.new(0, 300, 0, 350)
+MainFrame.Position = UDim2.new(0.5, -150, 0.5, -175)
+MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+MainFrame.BorderSizePixel = 2
+MainFrame.Active = true
+MainFrame.Draggable = true
 MainFrame.Parent = ScreenGui
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, 0, 0, 30)
+Title.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+Title.Text = "Glock - made by snoopy"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.Font = Enum.Font.SourceSansBold
+Title.TextSize = 20
+Title.Parent = MainFrame
 
 -- // UI Buttons
 local function createButton(text, position, callback)
     local button = Instance.new("TextButton")
-    button.Size = UDim2.new(0, 180, 0, 30)
+    button.Size = UDim2.new(0, 280, 0, 40)
     button.Position = UDim2.new(0, 10, 0, position)
     button.Text = text
     button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
     button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    button.Font = Enum.Font.SourceSansBold
+    button.TextSize = 18
     button.Parent = MainFrame
     button.MouseButton1Click:Connect(callback)
     return button
@@ -37,19 +52,19 @@ local aimbotEnabled = false
 local cameraLockEnabled = false
 local fovCircleEnabled = false
 
-createButton("Toggle ESP", 10, function()
+createButton("Toggle ESP", 40, function()
     espEnabled = not espEnabled
 end)
 
-createButton("Toggle Aimbot", 50, function()
+createButton("Toggle Aimbot", 90, function()
     aimbotEnabled = not aimbotEnabled
 end)
 
-createButton("Toggle Camera Lock", 90, function()
+createButton("Toggle Camera Lock", 140, function()
     cameraLockEnabled = not cameraLockEnabled
 end)
 
-createButton("Toggle FOV Circle", 130, function()
+createButton("Toggle FOV Circle", 190, function()
     fovCircleEnabled = not fovCircleEnabled
 end)
 
@@ -75,7 +90,6 @@ local function createESP(player)
     end
 
     RunService.RenderStepped:Connect(update)
-    
     player.CharacterRemoving:Connect(function()
         highlight:Destroy()
     end)
@@ -87,24 +101,21 @@ end
 
 Players.PlayerAdded:Connect(createESP)
 
--- // Aimbot (Smooth & More Accurate)
+-- // Aimbot (Smooth & Accurate)
 local function getClosestTarget()
     local closestTarget = nil
     local shortestDistance = math.huge
-
     for _, player in pairs(Players:GetPlayers()) do
         if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
             local targetPos = player.Character.HumanoidRootPart.Position
             local screenPos, onScreen = Camera:WorldToScreenPoint(targetPos)
             local distance = (Vector2.new(screenPos.X, screenPos.Y) - UserInputService:GetMouseLocation()).Magnitude
-
             if onScreen and distance < shortestDistance then
                 closestTarget = player
                 shortestDistance = distance
             end
         end
     end
-
     return closestTarget
 end
 
@@ -113,9 +124,8 @@ RunService.RenderStepped:Connect(function()
         local target = getClosestTarget()
         if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
             local targetPos = target.Character.HumanoidRootPart.Position
-            local currentCFrame = Camera.CFrame.Position
-            local smoothness = 0.1  -- Controls how smooth the aim is (Lower is slower)
-            Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(currentCFrame, targetPos), smoothness)
+            local smoothness = 0.2
+            Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, targetPos), smoothness)
         end
     end
 end)
