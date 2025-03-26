@@ -108,6 +108,7 @@ local aimbotSmoothness = 0.1
 local cameraLockSmoothness = 0.1
 local aimbotPrediction = 0
 local cameraLockPrediction = 0
+local fovRadius = 200
 
 createToggleButton("Toggle ESP", 60, function()
     espEnabled = not espEnabled
@@ -208,8 +209,8 @@ end)
 
 -- // FOV Circle Setup
 local fovCircle = Instance.new("Frame")
-fovCircle.Size = UDim2.new(0, 200, 0, 200)
-fovCircle.Position = UDim2.new(0.5, -100, 0.5, -100)
+fovCircle.Size = UDim2.new(0, fovRadius, 0, fovRadius)
+fovCircle.Position = UDim2.new(0.5, -fovRadius/2, 0.5, -fovRadius/2)
 fovCircle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 fovCircle.BackgroundTransparency = 0.5
 fovCircle.Visible = false
@@ -217,4 +218,39 @@ fovCircle.Parent = ScreenGui
 
 RunService.RenderStepped:Connect(function()
     fovCircle.Visible = fovCircleEnabled
+end)
+
+-- // ESP Functionality (Draw Boxes Around Enemies)
+local espBoxes = {}
+
+local function createESPBox(player)
+    local box = Instance.new("Frame")
+    box.Size = UDim2.new(0, 50, 0, 50)
+    box.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+    box.BackgroundTransparency = 0.5
+    box.Parent = ScreenGui
+    return box
+end
+
+RunService.RenderStepped:Connect(function()
+    if espEnabled then
+        -- Clean up existing ESP boxes
+        for _, box in pairs(espBoxes) do
+            box:Destroy()
+        end
+        espBoxes = {}
+
+        -- Create new ESP boxes for visible players
+        for _, player in pairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                local targetPos = player.Character.HumanoidRootPart.Position
+                local screenPos, onScreen = Camera:WorldToScreenPoint(targetPos)
+                if onScreen then
+                    local box = createESPBox(player)
+                    box.Position = UDim2.new(0, screenPos.X - 25, 0, screenPos.Y - 25)
+                    table.insert(espBoxes, box)
+                end
+            end
+        end
+    end
 end)
