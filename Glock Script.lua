@@ -1,5 +1,4 @@
--- Existing UI Setup and UI Elements (as in your code)
--- Note that this is the same as your existing setup
+-- Services
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -8,11 +7,12 @@ local Camera = Workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
 
+-- UI Setup (Informant.wtf Lib Style)
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "Glock - made by snoopy"
 ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
--- Main Frame (Draggable Frame)
+-- Main Frame
 local MainFrame = Instance.new("Frame")
 MainFrame.Size = UDim2.new(0, 350, 0, 500)
 MainFrame.Position = UDim2.new(0.5, -175, 0.5, -250)
@@ -34,8 +34,24 @@ Title.TextStrokeTransparency = 0.8
 Title.TextXAlignment = Enum.TextXAlignment.Center
 Title.Parent = MainFrame
 
--- // Create Toggle Buttons for ESP, Aimbot, Camera Lock, FOV Circle
+-- Create Toggle Buttons for ESP, Aimbot, Camera Lock, FOV Circle
 local espEnabled, aimbotEnabled, cameraLockEnabled, fovCircleEnabled = false, false, false, false
+
+local function createToggleButton(text, position, callback)
+    local button = Instance.new("TextButton")
+    button.Size = UDim2.new(0, 300, 0, 40)
+    button.Position = UDim2.new(0, 25, 0, position)
+    button.BackgroundColor3 = Color3.fromRGB(0, 255, 255)
+    button.Text = text
+    button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    button.Font = Enum.Font.Gotham
+    button.TextSize = 18
+    button.TextStrokeTransparency = 0.8
+    button.TextXAlignment = Enum.TextXAlignment.Center
+    button.Parent = MainFrame
+    button.MouseButton1Click:Connect(callback)
+    return button
+end
 
 createToggleButton("Toggle ESP", 60, function()
     espEnabled = not espEnabled
@@ -58,6 +74,58 @@ createToggleButton("Toggle FOV Circle", 210, function()
 end)
 
 -- Smoothness Sliders for Aimbot, Camera Lock, and FOV
+local aimbotSmoothness, cameraLockSmoothness, fovRadius = 5, 5, 100
+
+local function createSlider(text, position, min, max, default, callback)
+    local sliderFrame = Instance.new("Frame")
+    sliderFrame.Size = UDim2.new(0, 300, 0, 40)
+    sliderFrame.Position = UDim2.new(0, 25, 0, position)
+    sliderFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    sliderFrame.Parent = MainFrame
+
+    local sliderLabel = Instance.new("TextLabel")
+    sliderLabel.Size = UDim2.new(1, 0, 0, 20)
+    sliderLabel.Text = text .. ": " .. default
+    sliderLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    sliderLabel.Font = Enum.Font.Gotham
+    sliderLabel.TextSize = 18
+    sliderLabel.TextStrokeTransparency = 0.8
+    sliderLabel.Parent = sliderFrame
+
+    local slider = Instance.new("TextButton")
+    slider.Size = UDim2.new(0, 260, 0, 20)
+    slider.Position = UDim2.new(0, 20, 0, 20)
+    slider.BackgroundColor3 = Color3.fromRGB(0, 255, 255)
+    slider.Text = ""
+    slider.Parent = sliderFrame
+
+    local function updateValue(input)
+        local relativePosition = (input.Position.X - slider.AbsolutePosition.X) / slider.AbsoluteSize.X
+        local value = math.clamp(math.floor(relativePosition * (max - min) + min), min, max)
+        sliderLabel.Text = text .. ": " .. value
+        callback(value)
+    end
+
+    slider.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            updateValue(input)
+            local moveConnection
+            local releaseConnection
+            moveConnection = UserInputService.InputChanged:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseMovement then
+                    updateValue(input)
+                end
+            end)
+            releaseConnection = UserInputService.InputEnded:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    moveConnection:Disconnect()
+                    releaseConnection:Disconnect()
+                end
+            end)
+        end
+    end)
+end
+
 createSlider("Aimbot Smoothness", 260, 1, 10, 5, function(value)
     aimbotSmoothness = value
 end)
@@ -70,7 +138,7 @@ createSlider("FOV Radius", 360, 50, 200, 100, function(value)
     fovRadius = value
 end)
 
--- Aimbot Functionality
+-- Aimbot Functionality (Tracking with Cursor)
 local function getClosestTarget()
     local closest, shortestDistance = nil, math.huge
     for _, player in pairs(Players:GetPlayers()) do
@@ -102,7 +170,7 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- Camera Lock Functionality
+-- Camera Lock Functionality (Tracks Target without Camera Move)
 RunService.RenderStepped:Connect(function()
     if cameraLockEnabled then
         local target = getClosestTarget()
@@ -113,7 +181,7 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- ESP Functionality
+-- ESP Functionality (Shows Boxes around Players)
 local function createESPBox(player)
     if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then
         return
@@ -142,16 +210,17 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- FOV Circle Functionality
+-- FOV Circle Setup (Around the Cursor)
 local fovCircle = Instance.new("Frame")
 fovCircle.Size = UDim2.new(0, fovRadius, 0, fovRadius)
-fovCircle.Position = UDim2.new(0, 0, 0, 0)  
+fovCircle.Position = UDim2.new(0, 0, 0, 0)  -- Default to top left, will update below
 fovCircle.BackgroundColor3 = Color3.fromRGB(0, 255, 255)
 fovCircle.BackgroundTransparency = 0.5
 fovCircle.Visible = false
 
+-- Make the frame a circle
 local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0.5, 0)  
+corner.CornerRadius = UDim.new(0.5, 0)  -- This makes it a circle
 corner.Parent = fovCircle
 
 fovCircle.Parent = ScreenGui
