@@ -181,6 +181,35 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
+-- // ESP Functionality (Shows Boxes around Players)
+local function createESPBox(player)
+    if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then
+        return
+    end
+    local box = Instance.new("BillboardGui")
+    box.Size = UDim2.new(0, 100, 0, 100)
+    box.StudsOffset = Vector3.new(0, 2, 0)
+    box.Adornee = player.Character.HumanoidRootPart
+    box.AlwaysOnTop = true
+    box.Parent = player.Character
+
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, 0, 1, 0)
+    frame.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+    frame.BackgroundTransparency = 0.5
+    frame.Parent = box
+end
+
+RunService.RenderStepped:Connect(function()
+    if espEnabled then
+        for _, player in pairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer then
+                createESPBox(player)
+            end
+        end
+    end
+end)
+
 -- // FOV Circle Setup (Around the Cursor)
 local fovCircle = Instance.new("Frame")
 fovCircle.Size = UDim2.new(0, fovRadius, 0, fovRadius)
