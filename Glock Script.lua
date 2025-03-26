@@ -9,7 +9,7 @@ local Mouse = LocalPlayer:GetMouse()
 
 -- // UI Setup (Synapse X Style)
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "Glock - made by snoopy"
+ScreenGui.Name = "Glock - made by snoopy solo dev"
 ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
 local MainFrame = Instance.new("Frame")
