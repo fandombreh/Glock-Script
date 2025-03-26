@@ -9,7 +9,7 @@ local Mouse = LocalPlayer:GetMouse()
 
 -- // UI Setup (Synapse X Style)
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "Glock - made by snoopy solo dev"
+ScreenGui.Name = "Glock - made by snoopy"
 ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
 local MainFrame = Instance.new("Frame")
@@ -183,7 +183,7 @@ RunService.RenderStepped:Connect(function()
                 -- Calculate direction to the target
                 local direction = (Vector2.new(targetScreenPos.X, targetScreenPos.Y) - cursorPos).Unit
 
-                -- Adjust the camera's CFrame to move the camera smoothly towards the target (this is still camera-based but for aimbot effect)
+                -- Apply smoothness to the camera movement
                 Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, predictedPos), aimbotSmoothness)
             end
         end
@@ -200,8 +200,8 @@ RunService.RenderStepped:Connect(function()
             -- Prediction for Camera Lock
             local predictedPos = targetPos + (target.Character.HumanoidRootPart.AssemblyLinearVelocity * cameraLockPrediction)
 
-            -- The camera's CFrame will always face the predicted target
-            Camera.CFrame = CFrame.new(Camera.CFrame.Position, predictedPos)
+            -- Apply smoothness to the camera lock movement
+            Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, predictedPos), cameraLockSmoothness)
         end
     end
 end)
