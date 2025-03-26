@@ -65,7 +65,7 @@ createToggleButton("Toggle FOV Circle", 180, function()
     print("FOV Circle Enabled:", fovCircleEnabled)
 end)
 
--- // Aimbot Functionality
+-- // Aimbot Functionality (Tracking with Cursor)
 local function getClosestTarget()
     local closest, shortestDistance = nil, math.huge
     for _, player in pairs(Players:GetPlayers()) do
@@ -87,11 +87,20 @@ RunService.RenderStepped:Connect(function()
         if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
             local targetPos = target.Character.HumanoidRootPart.Position
             local targetScreenPos, onScreen = Camera:WorldToScreenPoint(targetPos)
+
             if onScreen then
+                -- Get mouse position
                 local cursorPos = UserInputService:GetMouseLocation()
+
+                -- Calculate direction to the cursor
                 local direction = (Vector2.new(targetScreenPos.X, targetScreenPos.Y) - cursorPos).Unit
-                local smoothFactor = 0.1
-                Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, targetPos), smoothFactor)
+
+                -- Lerp between the current camera position and the target position
+                local targetCFrame = Camera.CFrame * CFrame.new(direction.X, direction.Y, 0) -- Move towards the cursor
+
+                -- Apply the aim smoothness
+                local smoothFactor = 0.1  -- Adjust smoothness factor as needed
+                Camera.CFrame = Camera.CFrame:Lerp(targetCFrame, smoothFactor)
             end
         end
     end
