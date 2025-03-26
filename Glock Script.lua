@@ -1,224 +1,133 @@
--- // Services
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
-local Workspace = game:GetService("Workspace")
-local Camera = Workspace.CurrentCamera
-local LocalPlayer = Players.LocalPlayer
-local Mouse = LocalPlayer:GetMouse()
+local player = game.Players.LocalPlayer
+local mouse = player:GetMouse()
+local camera = game.Workspace.CurrentCamera
+local character = player.Character or player.CharacterAdded:Wait()
 
--- // UI Setup (Synapse X Style)
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "Glock - made by snoopy"
-ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+-- Create a Screen GUI for cheats
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "CheatMenu"
+screenGui.Parent = player:FindFirstChildOfClass("PlayerGui")
 
-local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 300, 0, 500)
-MainFrame.Position = UDim2.new(0.5, -150, 0.5, -250)
-MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-MainFrame.BorderSizePixel = 2
-MainFrame.Active = true
-MainFrame.Draggable = true
-MainFrame.Parent = ScreenGui
+-- Create a Frame for the cheat buttons (Synapse X-like)
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0.3, 0, 0.7, 0)
+frame.Position = UDim2.new(0.35, 0, 0.15, 0)
+frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)  -- Dark background
+frame.BackgroundTransparency = 0.8
+frame.BorderSizePixel = 0
+frame.RoundedCornerRadius = UDim.new(0, 10)  -- Rounded corners
+frame.Parent = screenGui
 
-local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, 0, 0, 30)
-Title.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-Title.Text = "Glock - made by snoopy"
-Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.Font = Enum.Font.SourceSansBold
-Title.TextSize = 20
-Title.Parent = MainFrame
+-- Title label
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size = UDim2.new(1, 0, 0.1, 0)
+titleLabel.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+titleLabel.Text = "Synapse X Menu"
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleLabel.TextSize = 18
+titleLabel.TextStrokeTransparency = 0.8
+titleLabel.Font = Enum.Font.GothamBold
+titleLabel.Parent = frame
 
--- // UI Sliders
-local function createSlider(text, position, min, max, default, callback)
-    local sliderFrame = Instance.new("Frame")
-    sliderFrame.Size = UDim2.new(0, 280, 0, 40)
-    sliderFrame.Position = UDim2.new(0, 10, 0, position)
-    sliderFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-    sliderFrame.Parent = MainFrame
-    
-    local sliderLabel = Instance.new("TextLabel")
-    sliderLabel.Size = UDim2.new(1, 0, 0, 20)
-    sliderLabel.Text = text .. ": " .. default
-    sliderLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    sliderLabel.Parent = sliderFrame
-    
-    local slider = Instance.new("TextButton")
-    slider.Size = UDim2.new(0, 260, 0, 20)
-    slider.Position = UDim2.new(0, 10, 0, 20)
-    slider.BackgroundColor3 = Color3.fromRGB(75, 75, 75)
-    slider.Text = ""
-    slider.Parent = sliderFrame
-    
-    local function updateValue(input)
-        local relativePosition = (input.Position.X - slider.AbsolutePosition.X) / slider.AbsoluteSize.X
-        local value = math.clamp(math.floor(relativePosition * (max - min) + min), min, max)
-        sliderLabel.Text = text .. ": " .. value
-        callback(value)
-    end
-    
-    slider.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            updateValue(input)
-            local moveConnection
-            local releaseConnection
-            moveConnection = UserInputService.InputChanged:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseMovement then
-                    updateValue(input)
+-------------------------------
+-- Aim Cheats Section
+-------------------------------
+
+local aimLockEnabled = false
+local aimAssistEnabled = false
+local triggerBotEnabled = false
+
+-- Aimbot that tracks with the cursor
+local function aimbot()
+    if aimLockEnabled and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        local closestPlayer = nil
+        local shortestDistance = math.huge
+
+        for _, otherPlayer in pairs(game.Players:GetPlayers()) do
+            if otherPlayer ~= player and otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                local distance = (otherPlayer.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
+                if distance < shortestDistance then
+                    shortestDistance = distance
+                    closestPlayer = otherPlayer
                 end
-            end)
-            releaseConnection = UserInputService.InputEnded:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                    moveConnection:Disconnect()
-                    releaseConnection:Disconnect()
-                end
-            end)
+            end
         end
-    end)
-end
 
--- // Toggle Buttons (For ESP, Aimbot, Camera Lock, FOV Circle)
-local espToggle = Instance.new("TextButton")
-espToggle.Size = UDim2.new(0, 280, 0, 30)
-espToggle.Position = UDim2.new(0, 10, 0, 60)
-espToggle.BackgroundColor3 = Color3.fromRGB(75, 75, 75)
-espToggle.Text = "Toggle ESP"
-espToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
-espToggle.Parent = MainFrame
+        if closestPlayer and closestPlayer.Character then
+            local targetPosition = closestPlayer.Character.HumanoidRootPart.Position
+            local cursorPosition = Vector3.new(mouse.Hit.X, targetPosition.Y, mouse.Hit.Z) -- Align cursor with Y position of target
 
-local aimbotToggle = Instance.new("TextButton")
-aimbotToggle.Size = UDim2.new(0, 280, 0, 30)
-aimbotToggle.Position = UDim2.new(0, 10, 0, 100)
-aimbotToggle.BackgroundColor3 = Color3.fromRGB(75, 75, 75)
-aimbotToggle.Text = "Toggle Aimbot"
-aimbotToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
-aimbotToggle.Parent = MainFrame
-
-local cameraLockToggle = Instance.new("TextButton")
-cameraLockToggle.Size = UDim2.new(0, 280, 0, 30)
-cameraLockToggle.Position = UDim2.new(0, 10, 0, 140)
-cameraLockToggle.BackgroundColor3 = Color3.fromRGB(75, 75, 75)
-cameraLockToggle.Text = "Toggle Camera Lock"
-cameraLockToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
-cameraLockToggle.Parent = MainFrame
-
-local fovCircleToggle = Instance.new("TextButton")
-fovCircleToggle.Size = UDim2.new(0, 280, 0, 30)
-fovCircleToggle.Position = UDim2.new(0, 10, 0, 180)
-fovCircleToggle.BackgroundColor3 = Color3.fromRGB(75, 75, 75)
-fovCircleToggle.Text = "Toggle FOV Circle"
-fovCircleToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
-fovCircleToggle.Parent = MainFrame
-
--- // Initialize Toggles State
-local espEnabled = false
-local aimbotEnabled = false
-local cameraLockEnabled = false
-local fovCircleEnabled = false
-
-espToggle.MouseButton1Click:Connect(function()
-    espEnabled = not espEnabled
-    print("ESP Enabled: ", espEnabled)
-end)
-
-aimbotToggle.MouseButton1Click:Connect(function()
-    aimbotEnabled = not aimbotEnabled
-    print("Aimbot Enabled: ", aimbotEnabled)
-end)
-
-cameraLockToggle.MouseButton1Click:Connect(function()
-    cameraLockEnabled = not cameraLockEnabled
-    print("Camera Lock Enabled: ", cameraLockEnabled)
-end)
-
-fovCircleToggle.MouseButton1Click:Connect(function()
-    fovCircleEnabled = not fovCircleEnabled
-    print("FOV Circle Enabled: ", fovCircleEnabled)
-end)
-
--- // Sliders for Aimbot Smoothness, Camera Lock Smoothness, and FOV Radius
-createSlider("Aimbot Smoothness", 250, 1, 10, 5, function(value)
-    aimbotSmoothness = value
-end)
-createSlider("Camera Lock Smoothness", 300, 1, 10, 5, function(value)
-    cameraLockSmoothness = value
-end)
-createSlider("FOV Radius", 350, 50, 200, 100, function(value)
-    fovRadius = value
-end)
-
--- // ESP Function
-local function createESP(player)
-    if player == LocalPlayer then return end
-    local character = player.Character
-    if not character or not character:FindFirstChild("HumanoidRootPart") then return end
-
-    local highlight = Instance.new("Highlight")
-    highlight.Adornee = character
-    highlight.Parent = character
-    highlight.FillColor = Color3.fromRGB(255, 0, 0)
-    highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
-    highlight.FillTransparency = 0.5
-
-    local function update()
-        if espEnabled and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            highlight.Enabled = true
-        else
-            highlight.Enabled = false
-        end
-    end
-
-    RunService.RenderStepped:Connect(update)
-    
-    player.CharacterRemoving:Connect(function()
-        highlight:Destroy()
-    end)
-end
-
-for _, player in pairs(Players:GetPlayers()) do
-    createESP(player)
-end
-
-Players.PlayerAdded:Connect(createESP)
-
--- // Aimbot (Tracking with Cursor)
-local function getClosestTarget()
-    local closestTarget = nil
-    local shortestDistance = math.huge
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            local targetPos = player.Character.HumanoidRootPart.Position
-            local screenPos, onScreen = Camera:WorldToScreenPoint(targetPos)
-            local distance = (Vector2.new(screenPos.X, screenPos.Y) - UserInputService:GetMouseLocation()).Magnitude
-            if onScreen and distance < shortestDistance then
-                closestTarget = player
-                shortestDistance = distance
+            -- Rotate the character's upper torso to aim at the cursor
+            local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+            if humanoid and humanoid.RootPart then
+                humanoid.RootPart.CFrame = CFrame.new(humanoid.RootPart.Position, cursorPosition)
             end
         end
     end
-    return closestTarget
 end
 
-RunService.RenderStepped:Connect(function()
-    if aimbotEnabled then
-        local target = getClosestTarget()
-        if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-            local targetPos = target.Character.HumanoidRootPart.Position
-            local targetScreenPos, onScreen = Camera:WorldToScreenPoint(targetPos)
+-- Camera lock that tracks the camera
+local function cameraLock()
+    if aimLockEnabled and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        local closestPlayer = nil
+        local shortestDistance = math.huge
 
-            if onScreen then
-                -- Get mouse position
-                local cursorPos = UserInputService:GetMouseLocation()
-
-                -- Calculate direction to the cursor
-                local direction = (Vector2.new(targetScreenPos.X, targetScreenPos.Y) - cursorPos).Unit
-                local targetCFrame = Camera.CFrame * CFrame.new(direction.X, direction.Y, 0) -- Move towards the cursor
-
-                -- Apply the aim smoothness
-                local smoothFactor = 0.1 -- This is adjustable based on the slider
-                Camera.CFrame = Camera.CFrame:Lerp(targetCFrame, smoothFactor)
+        for _, otherPlayer in pairs(game.Players:GetPlayers()) do
+            if otherPlayer ~= player and otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                local distance = (otherPlayer.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
+                if distance < shortestDistance then
+                    shortestDistance = distance
+                    closestPlayer = otherPlayer
+                end
             end
         end
+
+        if closestPlayer and closestPlayer.Character then
+            -- Camera follows the closest player
+            camera.CFrame = CFrame.new(camera.CFrame.Position, closestPlayer.Character.HumanoidRootPart.Position)
+        end
     end
+end
+
+-- Button to toggle Aim Lock
+local function createButton(name, position, callback)
+    local button = Instance.new("TextButton")
+    button.Size = UDim2.new(0.8, 0, 0.05, 0)
+    button.Position = position
+    button.BackgroundColor3 = Color3.fromRGB(40, 40, 40)  -- Darker button
+    button.Text = name
+    button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    button.Font = Enum.Font.Gotham
+    button.TextSize = 14
+    button.Parent = frame
+
+    -- Hover effect for the button
+    button.MouseEnter:Connect(function()
+        button.BackgroundColor3 = Color3.fromRGB(60, 60, 60)  -- Lighter on hover
+    end)
+
+    button.MouseLeave:Connect(function()
+        button.BackgroundColor3 = Color3.fromRGB(40, 40, 40)  -- Back to dark on leave
+    end)
+
+    button.MouseButton1Click:Connect(callback)
+    return button
+end
+
+createButton("Toggle Aim Lock", UDim2.new(0.1, 0, 0.15, 0), function()
+    aimLockEnabled = not aimLockEnabled
+end)
+
+createButton("Toggle Camera Lock", UDim2.new(0.1, 0, 0.2, 0), function()
+    aimLockEnabled = not aimLockEnabled
+end)
+
+-------------------------------
+-- Main Loop
+-------------------------------
+
+local runService = game:GetService("RunService")
+runService.RenderStepped:Connect(function()
+    aimbot()    -- Update aimbot
+    cameraLock() -- Update camera lock
 end)
