@@ -182,7 +182,7 @@ end
 
 Players.PlayerAdded:Connect(createESP)
 
--- // Aimbot (Cursor Tracking & Smoothness)
+-- // Aimbot (Tracking with Cursor)
 local function getClosestTarget()
     local closestTarget = nil
     local shortestDistance = math.huge
@@ -208,11 +208,16 @@ RunService.RenderStepped:Connect(function()
             local targetScreenPos, onScreen = Camera:WorldToScreenPoint(targetPos)
 
             if onScreen then
+                -- Get mouse position
                 local cursorPos = UserInputService:GetMouseLocation()
-                local smoothness = aimbotSmoothness / 10
-                local targetDirection = (Vector2.new(targetScreenPos.X, targetScreenPos.Y) - cursorPos).unit
-                local targetCFrame = CFrame.lookAt(Camera.CFrame.Position, Camera.CFrame.Position + Camera.CFrame.LookVector + targetDirection)
-                Camera.CFrame = Camera.CFrame:Lerp(targetCFrame, smoothness)
+
+                -- Calculate direction to the cursor
+                local direction = (Vector2.new(targetScreenPos.X, targetScreenPos.Y) - cursorPos).Unit
+                local targetCFrame = Camera.CFrame * CFrame.new(direction.X, direction.Y, 0) -- Move towards the cursor
+
+                -- Apply the aim smoothness
+                local smoothFactor = 0.1 -- This is adjustable based on the slider
+                Camera.CFrame = Camera.CFrame:Lerp(targetCFrame, smoothFactor)
             end
         end
     end
