@@ -104,10 +104,13 @@ end
 
 -- Create the Toggle Buttons
 local espEnabled, aimbotEnabled, cameraLockEnabled, fovCircleEnabled = false, false, false, false
+local blatantMode = false  -- Default to non-blatant mode
+
 createToggleButton("Toggle ESP", 60, function() espEnabled = not espEnabled end)
 createToggleButton("Toggle Aimbot", 110, function() aimbotEnabled = not aimbotEnabled end)
 createToggleButton("Toggle Camera Lock", 160, function() cameraLockEnabled = not cameraLockEnabled end)
 createToggleButton("Toggle FOV Circle", 210, function() fovCircleEnabled = not fovCircleEnabled end)
+createToggleButton("Toggle Blatant Mode", 460, function() blatantMode = not blatantMode end)
 
 -- Create the Smoothness Sliders
 local aimbotSmoothness, cameraLockSmoothness, fovRadius = 5, 5, 100
@@ -140,7 +143,14 @@ RunService.RenderStepped:Connect(function()
             if onScreen then
                 local cursorPos = UserInputService:GetMouseLocation()
                 local direction = (Vector2.new(targetScreenPos.X, targetScreenPos.Y) - cursorPos).Unit
-                local smoothFactor = aimbotSmoothness / 10
+
+                local smoothFactor
+                if blatantMode then
+                    smoothFactor = 1  -- Snap to target quickly in blatant mode
+                else
+                    smoothFactor = aimbotSmoothness / 10  -- Smooth aimbot in non-blatant mode
+                end
+                
                 Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, targetPos), smoothFactor)
             end
         end
@@ -153,7 +163,15 @@ RunService.RenderStepped:Connect(function()
         local target = getClosestTarget()
         if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
             local targetPos = target.Character.HumanoidRootPart.Position
-            Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, targetPos), cameraLockSmoothness / 10)
+
+            local smoothFactor
+            if blatantMode then
+                smoothFactor = 1  -- Instant camera lock in blatant mode
+            else
+                smoothFactor = cameraLockSmoothness / 10  -- Smooth camera lock in non-blatant mode
+            end
+
+            Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, targetPos), smoothFactor)
         end
     end
 end)
