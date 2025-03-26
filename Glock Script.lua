@@ -7,17 +7,17 @@ local Camera = Workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
 
--- UI Setup (Matcha External Style)
+-- UI Setup (Sleek Black Matcha External Style)
 local function setupUI()
     local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = "Glock - made by snoopy"
     ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
-    -- Main Frame (Dark background, Green accent)
+    -- Main Frame (Black Background, Sleek look)
     local MainFrame = Instance.new("Frame")
     MainFrame.Size = UDim2.new(0, 400, 0, 500)
     MainFrame.Position = UDim2.new(0.5, -200, 0.5, -250)
-    MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)  -- Dark background
+    MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)  -- Deep black background
     MainFrame.BorderSizePixel = 0
     MainFrame.Active = true
     MainFrame.Draggable = true
@@ -26,44 +26,44 @@ local function setupUI()
     corner.Parent = MainFrame
     MainFrame.Parent = ScreenGui
 
-    -- Title (Green background with white text)
+    -- Title (Black background with light text)
     local Title = Instance.new("TextLabel")
     Title.Size = UDim2.new(1, 0, 0, 40)
-    Title.BackgroundColor3 = Color3.fromRGB(45, 255, 75)  -- Matcha green
+    Title.BackgroundColor3 = Color3.fromRGB(30, 30, 30)  -- Dark background for the title
     Title.Text = "Glock - made by snoopy"
-    Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Title.TextColor3 = Color3.fromRGB(255, 255, 255)  -- Light text
     Title.Font = Enum.Font.GothamBold
     Title.TextSize = 22
     Title.TextStrokeTransparency = 0.8
     Title.TextXAlignment = Enum.TextXAlignment.Center
     Title.Parent = MainFrame
 
-    -- Function to Create Buttons (with minimalist style)
+    -- Function to Create Buttons (Sleek minimalist buttons)
     local function createToggleButton(text, position, callback)
         local button = Instance.new("TextButton")
         button.Size = UDim2.new(0, 350, 0, 40)
         button.Position = UDim2.new(0, 25, 0, position)
-        button.BackgroundColor3 = Color3.fromRGB(45, 255, 75)  -- Matcha green
+        button.BackgroundColor3 = Color3.fromRGB(35, 35, 35)  -- Darker button
         button.Text = text
-        button.TextColor3 = Color3.fromRGB(255, 255, 255)
+        button.TextColor3 = Color3.fromRGB(255, 255, 255)  -- Light text
         button.Font = Enum.Font.Gotham
         button.TextSize = 18
         button.TextStrokeTransparency = 0.8
         button.TextXAlignment = Enum.TextXAlignment.Center
         button.Parent = MainFrame
         local corner = Instance.new("UICorner") -- Rounded corners for buttons
-        corner.CornerRadius = UDim.new(0.05, 0) -- Rounded corners for buttons
+        corner.CornerRadius = UDim.new(0.05, 0) -- Rounded corners
         corner.Parent = button
         button.MouseButton1Click:Connect(callback)
         return button
     end
 
-    -- Function to Create Sliders (with smooth design)
+    -- Function to Create Sliders (Sleek dark slider design)
     local function createSlider(text, position, min, max, default, callback)
         local sliderFrame = Instance.new("Frame")
         sliderFrame.Size = UDim2.new(0, 350, 0, 40)
         sliderFrame.Position = UDim2.new(0, 25, 0, position)
-        sliderFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)  -- Dark background
+        sliderFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)  -- Dark slider background
         local corner = Instance.new("UICorner")
         corner.CornerRadius = UDim.new(0.05, 0)
         corner.Parent = sliderFrame
@@ -72,7 +72,7 @@ local function setupUI()
         local sliderLabel = Instance.new("TextLabel")
         sliderLabel.Size = UDim2.new(1, 0, 0, 20)
         sliderLabel.Text = text .. ": " .. default
-        sliderLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+        sliderLabel.TextColor3 = Color3.fromRGB(255, 255, 255)  -- Light text
         sliderLabel.Font = Enum.Font.Gotham
         sliderLabel.TextSize = 18
         sliderLabel.TextStrokeTransparency = 0.8
@@ -81,7 +81,7 @@ local function setupUI()
         local slider = Instance.new("TextButton")
         slider.Size = UDim2.new(0, 300, 0, 20)
         slider.Position = UDim2.new(0, 25, 0, 20)
-        slider.BackgroundColor3 = Color3.fromRGB(45, 255, 75)  -- Matcha green
+        slider.BackgroundColor3 = Color3.fromRGB(35, 35, 35)  -- Dark slider background
         slider.Text = ""
         local corner = Instance.new("UICorner")
         corner.CornerRadius = UDim.new(0.05, 0)
