@@ -13,8 +13,8 @@ ScreenGui.Name = "Glock - made by snoopy"
 ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 300, 0, 500) -- Increased height for more space
-MainFrame.Position = UDim2.new(0.5, -150, 0.5, -250) -- Adjusted position
+MainFrame.Size = UDim2.new(0, 300, 0, 500)
+MainFrame.Position = UDim2.new(0.5, -150, 0.5, -250)
 MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 MainFrame.BorderSizePixel = 2
 MainFrame.Active = true
@@ -119,22 +119,22 @@ local fovCircleEnabled = false
 
 espToggle.MouseButton1Click:Connect(function()
     espEnabled = not espEnabled
-    print("ESP Enabled: ", espEnabled)  -- Debug print
+    print("ESP Enabled: ", espEnabled)
 end)
 
 aimbotToggle.MouseButton1Click:Connect(function()
     aimbotEnabled = not aimbotEnabled
-    print("Aimbot Enabled: ", aimbotEnabled)  -- Debug print
+    print("Aimbot Enabled: ", aimbotEnabled)
 end)
 
 cameraLockToggle.MouseButton1Click:Connect(function()
     cameraLockEnabled = not cameraLockEnabled
-    print("Camera Lock Enabled: ", cameraLockEnabled)  -- Debug print
+    print("Camera Lock Enabled: ", cameraLockEnabled)
 end)
 
 fovCircleToggle.MouseButton1Click:Connect(function()
     fovCircleEnabled = not fovCircleEnabled
-    print("FOV Circle Enabled: ", fovCircleEnabled)  -- Debug print
+    print("FOV Circle Enabled: ", fovCircleEnabled)
 end)
 
 -- // Sliders for Aimbot Smoothness, Camera Lock Smoothness, and FOV Radius
@@ -205,39 +205,16 @@ RunService.RenderStepped:Connect(function()
         local target = getClosestTarget()
         if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
             local targetPos = target.Character.HumanoidRootPart.Position
-            local smoothness = aimbotSmoothness / 10
-            Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, targetPos), smoothness)
+            local targetScreenPos, onScreen = Camera:WorldToScreenPoint(targetPos)
+
+            if onScreen then
+                local cursorPos = UserInputService:GetMouseLocation()
+                local smoothness = aimbotSmoothness / 10
+                local targetCFrame = CFrame.new(Camera.CFrame.Position, Vector3.new(targetScreenPos.X, targetScreenPos.Y, Camera.CFrame.Position.Z))
+
+                -- Adjust camera CFrame for smooth aimbot movement
+                Camera.CFrame = Camera.CFrame:Lerp(targetCFrame, smoothness * 0.1)
+            end
         end
-    end
-end)
-
--- // Camera Lock (Tracks with Camera)
-RunService.RenderStepped:Connect(function()
-    if cameraLockEnabled then
-        local target = getClosestTarget()
-        if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-            local targetPos = target.Character.HumanoidRootPart.Position
-            local smoothness = cameraLockSmoothness / 10
-            Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, targetPos), smoothness)
-        end
-    end
-end)
-
--- // FOV Circle (Displays Circle at Mouse Position)
-local fovCircle = Drawing.new("Circle")
-fovCircle.Radius = fovRadius
-fovCircle.Thickness = 2
-fovCircle.Color = Color3.fromRGB(0, 255, 0)
-fovCircle.NumSides = 50
-fovCircle.Filled = false
-fovCircle.Transparency = 0.5
-fovCircle.Visible = false
-
-RunService.RenderStepped:Connect(function()
-    if fovCircleEnabled then
-        fovCircle.Position = Vector2.new(Mouse.X, Mouse.Y + 36)
-        fovCircle.Visible = true
-    else
-        fovCircle.Visible = false
     end
 end)
