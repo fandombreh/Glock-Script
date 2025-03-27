@@ -17,7 +17,7 @@ local function setupUI()
     local MainFrame = Instance.new("Frame")
     MainFrame.Size = UDim2.new(0, 400, 0, 500)
     MainFrame.Position = UDim2.new(0.5, -200, 0.5, -250)
-    MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)  -- Deep black background
+    MainFrame.BackgroundColor3 = Color3.fromRGB(16, 63, 216)  -- Deep black background
     MainFrame.BorderSizePixel = 0
     MainFrame.Active = true
     MainFrame.Draggable = true
@@ -29,9 +29,9 @@ local function setupUI()
     -- Title (Black background with light text)
     local Title = Instance.new("TextLabel")
     Title.Size = UDim2.new(1, 0, 0, 40)
-    Title.BackgroundColor3 = Color3.fromRGB(30, 30, 30)  -- Dark background for the title
+    Title.BackgroundColor3 = Color3.fromRGB(18, 84, 192))  -- Dark background for the title
     Title.Text = "Glock - made by snoopy"
-    Title.TextColor3 = Color3.fromRGB(255, 255, 255)  -- Light text
+    Title.TextColor3 = Color3.fromRGB(23, 49, 182)  -- Light text
     Title.Font = Enum.Font.GothamBold
     Title.TextSize = 22
     Title.TextStrokeTransparency = 0.8
@@ -43,9 +43,9 @@ local function setupUI()
         local button = Instance.new("TextButton")
         button.Size = UDim2.new(0, 350, 0, 40)
         button.Position = UDim2.new(0, 25, 0, position)
-        button.BackgroundColor3 = Color3.fromRGB(35, 35, 35)  -- Darker button
+        button.BackgroundColor3 = Color3.fromRGB(182, 35, 35)  -- Darker button
         button.Text = text
-        button.TextColor3 = Color3.fromRGB(255, 255, 255)  -- Light text
+        button.TextColor3 = Color3.fromRGB(49, 9, 172))  -- Light text
         button.Font = Enum.Font.Gotham
         button.TextSize = 18
         button.TextStrokeTransparency = 0.8
