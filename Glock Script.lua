@@ -7,6 +7,14 @@ local Camera = Workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
 
+-- Variables
+local espBoxes = {}
+local espEnabled, aimbotEnabled, cameraLockEnabled, fovCircleEnabled = false, false, false, false
+local blatantMode = false  -- Default to non-blatant mode
+local aimbotSmoothness, cameraLockSmoothness, fovRadius = 5, 5, 100
+local targetBone = "Head"  -- Default aim target
+local keybinds = {aimbot = Enum.KeyCode.E, esp = Enum.KeyCode.R}  -- Hotkeys for toggling
+
 -- UI Setup (Sleek Black Matcha External Style)
 local function setupUI()
     local ScreenGui = Instance.new("ScreenGui")
@@ -29,7 +37,7 @@ local function setupUI()
     -- Title (Black background with light text)
     local Title = Instance.new("TextLabel")
     Title.Size = UDim2.new(1, 0, 0, 40)
-    Title.BackgroundColor3 = Color3.fromRGB(18, 84, 192))  -- Dark background for the title
+    Title.BackgroundColor3 = Color3.fromRGB(18, 84, 192)  -- Dark background for the title
     Title.Text = "Glock - made by snoopy"
     Title.TextColor3 = Color3.fromRGB(23, 49, 182)  -- Light text
     Title.Font = Enum.Font.GothamBold
@@ -45,7 +53,7 @@ local function setupUI()
         button.Position = UDim2.new(0, 25, 0, position)
         button.BackgroundColor3 = Color3.fromRGB(182, 35, 35)  -- Darker button
         button.Text = text
-        button.TextColor3 = Color3.fromRGB(49, 9, 172))  -- Light text
+        button.TextColor3 = Color3.fromRGB(49, 9, 172)  -- Light text
         button.Font = Enum.Font.Gotham
         button.TextSize = 18
         button.TextStrokeTransparency = 0.8
@@ -116,9 +124,6 @@ local function setupUI()
     end
 
     -- Create the Toggle Buttons
-    local espEnabled, aimbotEnabled, cameraLockEnabled, fovCircleEnabled = false, false, false, false
-    local blatantMode = false  -- Default to non-blatant mode
-
     createToggleButton("Toggle ESP", 60, function() espEnabled = not espEnabled end)
     createToggleButton("Toggle Aimbot", 110, function() aimbotEnabled = not aimbotEnabled end)
     createToggleButton("Toggle Camera Lock", 160, function() cameraLockEnabled = not cameraLockEnabled end)
@@ -127,7 +132,6 @@ local function setupUI()
     -- Blatant Mode Toggle Button
     local blatantModeButton = createToggleButton("Toggle Blatant Mode: Non-Blatant", 460, function()
         blatantMode = not blatantMode
-        -- Update the button text to reflect the current mode
         if blatantMode then
             blatantModeButton.Text = "Toggle Blatant Mode: Blatant"
         else
@@ -135,101 +139,15 @@ local function setupUI()
         end
     end)
 
-    -- Create the Smoothness Sliders with Fixed Logic
-    local aimbotSmoothness, cameraLockSmoothness, fovRadius = 5, 5, 100
-    createSlider("Aimbot Smoothness", 260, 1, 10, 5, function(value) 
-        aimbotSmoothness = value 
+    -- Create the Smoothness Sliders
+    createSlider("Aimbot Smoothness", 260, 1, 10, 5, function(value)
+        aimbotSmoothness = value
     end)
-    createSlider("Camera Lock Smoothness", 310, 1, 10, 5, function(value) 
-        cameraLockSmoothness = value 
+    createSlider("Camera Lock Smoothness", 310, 1, 10, 5, function(value)
+        cameraLockSmoothness = value
     end)
-    createSlider("FOV Radius", 360, 50, 200, 100, function(value) 
-        fovRadius = value 
-    end)
-
-    -- Aimbot Functionality (Tracking with Cursor)
-    local function getClosestTarget()
-        local closest, shortestDistance = nil, math.huge
-        for _, player in pairs(Players:GetPlayers()) do
-            if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                local targetPos = player.Character.HumanoidRootPart.Position
-                local screenPos, onScreen = Camera:WorldToScreenPoint(targetPos)
-                local distance = (Vector2.new(screenPos.X, screenPos.Y) - UserInputService:GetMouseLocation()).Magnitude
-                if onScreen and distance < shortestDistance then
-                    closest, shortestDistance = player, distance
-                end
-            end
-        end
-        return closest
-    end
-
-    RunService.RenderStepped:Connect(function()
-        if aimbotEnabled then
-            local target = getClosestTarget()
-            if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-                local targetPos = target.Character.HumanoidRootPart.Position
-                local targetScreenPos, onScreen = Camera:WorldToScreenPoint(targetPos)
-                if onScreen then
-                    local cursorPos = UserInputService:GetMouseLocation()
-                    local direction = (Vector2.new(targetScreenPos.X, targetScreenPos.Y) - cursorPos).Unit
-
-                    local smoothFactor
-                    if blatantMode then
-                        smoothFactor = 1  -- Snap to target quickly in blatant mode
-                    else
-                        smoothFactor = aimbotSmoothness / 10  -- Smooth aimbot in non-blatant mode
-                    end
-                    
-                    Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, targetPos), smoothFactor)
-                end
-            end
-        end
-    end)
-
-    -- Camera Lock Functionality (Tracks Target without Camera Move)
-    RunService.RenderStepped:Connect(function()
-        if cameraLockEnabled then
-            local target = getClosestTarget()
-            if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-                local targetPos = target.Character.HumanoidRootPart.Position
-
-                local smoothFactor
-                if blatantMode then
-                    smoothFactor = 1  -- Instant camera lock in blatant mode
-                else
-                    smoothFactor = cameraLockSmoothness / 10  -- Smooth camera lock in non-blatant mode
-                end
-
-                Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, targetPos), smoothFactor)
-            end
-        end
-    end)
-
-    -- ESP Functionality (Shows Boxes around Players)
-    local function createESPBox(player)
-        if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then return end
-        local box = Instance.new("BillboardGui")
-        box.Size = UDim2.new(0, 100, 0, 100)
-        box.StudsOffset = Vector3.new(0, 2, 0)
-        box.Adornee = player.Character.HumanoidRootPart
-        box.AlwaysOnTop = true
-        box.Parent = player.Character
-
-        local frame = Instance.new("Frame")
-        frame.Size = UDim2.new(1, 0, 1, 0)
-        frame.BackgroundColor3 = Color3.fromRGB(45, 255, 75)  -- Matcha green
-        frame.BackgroundTransparency = 0.5
-        frame.Parent = box
-    end
-
-    RunService.RenderStepped:Connect(function()
-        if espEnabled then
-            for _, player in pairs(Players:GetPlayers()) do
-                if player ~= LocalPlayer then
-                    createESPBox(player)
-                end
-            end
-        end
+    createSlider("FOV Radius", 360, 50, 200, 100, function(value)
+        fovRadius = value
     end)
 
     -- FOV Circle Setup (Around the Cursor)
@@ -258,5 +176,85 @@ local function setupUI()
     end)
 end
 
--- Run the setup UI function to initiate the script
+-- Aimbot Functionality (Tracking with Cursor)
+local function getClosestTarget()
+    local closestPlayer = nil
+    local shortestDistance = fovRadius
+
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local partPos = player.Character[targetBone].Position
+            local screenPoint = Camera:WorldToScreenPoint(partPos)
+            local distance = (Vector2.new(Mouse.X, Mouse.Y) - Vector2.new(screenPoint.X, screenPoint.Y)).magnitude
+
+            if distance < shortestDistance then
+                closestPlayer = player
+                shortestDistance = distance
+            end
+        end
+    end
+
+    return closestPlayer
+end
+
+-- Aim at the Target
+local function aimAtTarget(target)
+    if target and target.Character and target.Character:FindFirstChild(targetBone) then
+        local aimPos = target.Character[targetBone].Position
+        local smoothnessFactor = blatantMode and 0 or aimbotSmoothness
+        local newAim = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, aimPos), smoothnessFactor / 10)
+        Camera.CFrame = newAim
+    end
+end
+
+-- Keybind Functionality
+UserInputService.InputBegan:Connect(function(input)
+    -- Toggle Aimbot with keybind
+    if input.KeyCode == keybinds.aimbot then
+        aimbotEnabled = not aimbotEnabled
+    elseif input.KeyCode == keybinds.esp then
+        espEnabled = not espEnabled
+    end
+end)
+
+-- ESP and Aimbot Activation (Smooth and Optimized)
+RunService.RenderStepped:Connect(function()
+    -- Update ESP
+    if espEnabled then
+        for _, player in pairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                if not espBoxes[player] then
+                    -- Create ESP for the player if not already created
+                    local espBox = Instance.new("BoxHandleAdornment")
+                    espBox.Adornee = player.Character.HumanoidRootPart
+                    espBox.AlwaysOnTop = true
+                    espBox.Size = Vector3.new(4, 6, 0)
+                    espBox.ZIndex = 10
+                    espBox.Color3 = Color3.fromRGB(255, 0, 0)
+                    espBox.Transparency = 0.3
+                    espBox.Parent = player.Character
+                    espBoxes[player] = espBox
+                end
+            end
+        end
+    else
+        -- Remove ESP when disabled
+        for _, esp in pairs(espBoxes) do
+            if esp then
+                esp:Destroy()
+            end
+        end
+        espBoxes = {}
+    end
+
+    -- Aimbot Logic
+    if aimbotEnabled then
+        local target = getClosestTarget()
+        if target then
+            aimAtTarget(target)
+        end
+    end
+end)
+
+-- Initialize the UI
 setupUI()
