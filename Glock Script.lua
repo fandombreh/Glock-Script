@@ -108,7 +108,7 @@ local function setupUI()
     local MainFrame = Instance.new("Frame")
     MainFrame.Size = UDim2.new(0, 400, 0, 500)
     MainFrame.Position = UDim2.new(0.5, -200, 0.5, -250)
-    MainFrame.BackgroundColor3 = Color3.fromRGB(16, 63, 216)
+    MainFrame.BackgroundColor3 = Color3.fromRGB(12, 69, 240)
     MainFrame.BorderSizePixel = 0
     MainFrame.Active = true
     MainFrame.Draggable = true
@@ -120,9 +120,9 @@ local function setupUI()
     -- Title
     local Title = Instance.new("TextLabel")
     Title.Size = UDim2.new(1, 0, 0, 40)
-    Title.BackgroundColor3 = Color3.fromRGB(18, 84, 192)
+    Title.BackgroundColor3 = Color3.fromRGB(98, 12, 219)
     Title.Text = "Glock - made by snoopy"
-    Title.TextColor3 = Color3.fromRGB(23, 49, 182)
+    Title.TextColor3 = Color3.fromRGB(21, 211, 197))
     Title.Font = Enum.Font.GothamBold
     Title.TextSize = 22
     Title.TextStrokeTransparency = 0.8
