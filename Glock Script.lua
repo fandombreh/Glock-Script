@@ -135,11 +135,17 @@ local function setupUI()
         end
     end)
 
-    -- Create the Smoothness Sliders
+    -- Create the Smoothness Sliders with Fixed Logic
     local aimbotSmoothness, cameraLockSmoothness, fovRadius = 5, 5, 100
-    createSlider("Aimbot Smoothness", 260, 1, 10, 5, function(value) aimbotSmoothness = value end)
-    createSlider("Camera Lock Smoothness", 310, 1, 10, 5, function(value) cameraLockSmoothness = value end)
-    createSlider("FOV Radius", 360, 50, 200, 100, function(value) fovRadius = value end)
+    createSlider("Aimbot Smoothness", 260, 1, 10, 5, function(value) 
+        aimbotSmoothness = value 
+    end)
+    createSlider("Camera Lock Smoothness", 310, 1, 10, 5, function(value) 
+        cameraLockSmoothness = value 
+    end)
+    createSlider("FOV Radius", 360, 50, 200, 100, function(value) 
+        fovRadius = value 
+    end)
 
     -- Aimbot Functionality (Tracking with Cursor)
     local function getClosestTarget()
@@ -241,21 +247,16 @@ local function setupUI()
 
     fovCircle.Parent = ScreenGui
 
+    -- Update FOV Circle Position and Visibility
     RunService.RenderStepped:Connect(function()
         if fovCircleEnabled then
-            local cursorPos = UserInputService:GetMouseLocation()
-            fovCircle.Position = UDim2.new(0, cursorPos.X - fovRadius / 2, 0, cursorPos.Y - fovRadius / 2)
             fovCircle.Visible = true
+            fovCircle.Position = UDim2.new(0, Mouse.X - fovCircle.Size.X.Offset / 2, 0, Mouse.Y - fovCircle.Size.Y.Offset / 2)
         else
             fovCircle.Visible = false
         end
     end)
 end
 
--- Ensure GUI stays even after respawn
-LocalPlayer.CharacterAdded:Connect(function()
-    setupUI()  -- Set up the UI again when the character is added (respawned)
-end)
-
--- Initial UI Setup when the script runs
+-- Run the setup UI function to initiate the script
 setupUI()
