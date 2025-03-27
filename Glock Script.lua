@@ -11,8 +11,8 @@ local currentColor = 1
 
 -- Create the UI frame
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 400, 0, 350)  -- Increased size for all elements
-frame.Position = UDim2.new(0.5, -200, 0.5, -175)
+frame.Size = UDim2.new(0, 400, 0, 500)  -- Increased size for all elements
+frame.Position = UDim2.new(0.5, -200, 0.5, -250)
 frame.BackgroundTransparency = 0.5
 frame.BackgroundColor3 = Color3.fromRGB(0, 255, 255)
 frame.Parent = gui
