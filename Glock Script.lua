@@ -11,6 +11,7 @@ local Mouse = LocalPlayer:GetMouse()
 local espBoxes = {}
 local espEnabled, aimbotEnabled, cameraLockEnabled, fovCircleEnabled = false, false, false, false
 local blatantMode = false  -- Default to non-blatant mode
+local predictionEnabled = false  -- Default to no prediction
 local aimbotSmoothness, cameraLockSmoothness, fovRadius = 5, 5, 100
 local keybinds = {aimbot = Enum.KeyCode.E, esp = Enum.KeyCode.R}  -- Hotkeys for toggling
 
@@ -18,6 +19,32 @@ local keybinds = {aimbot = Enum.KeyCode.E, esp = Enum.KeyCode.R}  -- Hotkeys for
 local function getScreenDistance(worldPos)
     local screenPoint = Camera:WorldToScreenPoint(worldPos)
     return (Vector2.new(Mouse.X, Mouse.Y) - Vector2.new(screenPoint.X, screenPoint.Y)).Magnitude
+end
+
+-- Helper function to calculate the predicted position
+local function predictPosition(target)
+    local character = target.Character
+    if not character then return nil end
+
+    local rootPart = character:FindFirstChild("HumanoidRootPart")
+    if not rootPart then return nil end
+
+    -- Get the target's current velocity
+    local humanoid = character:FindFirstChild("Humanoid")
+    if not humanoid then return nil end
+
+    local velocity = humanoid.RootPart.Velocity
+    local speed = velocity.Magnitude
+    if speed == 0 then return rootPart.Position end
+
+    -- Estimate time to target (for simplicity, using a constant bullet speed)
+    local bulletSpeed = 150  -- Customize based on your game's mechanics
+    local distance = (rootPart.Position - Camera.CFrame.Position).Magnitude
+    local timeToTarget = distance / bulletSpeed
+
+    -- Predict where the target will be based on velocity
+    local predictedPosition = rootPart.Position + velocity * timeToTarget
+    return predictedPosition
 end
 
 -- Determine which part to aim at based on mode and position
@@ -29,7 +56,7 @@ local function getAimPosition(target)
     local character = target.Character
     local head = character:FindFirstChild("Head")
     local torso = character:FindFirstChild("Torso") or character:FindFirstChild("UpperTorso")
-    
+
     if blatantMode then
         if head then
             return head.Position
@@ -212,30 +239,25 @@ local function setupUI()
     createToggleButton("Toggle Camera Lock", 160, function() cameraLockEnabled = not cameraLockEnabled end)
     createToggleButton("Toggle FOV Circle", 210, function() fovCircleEnabled = not fovCircleEnabled end)
 
-    -- Blatant Mode Toggle Button
-    local blatantModeButton = createToggleButton("Toggle Blatant Mode: Non-Blatant", 460, function()
-        blatantMode = not blatantMode
-        if blatantMode then
-            blatantModeButton.Text = "Toggle Blatant Mode: Blatant"
-            modeStatusLabel.Text = "Current Mode: Blatant"  -- Update mode label
+    -- Prediction Mode Toggle Button
+    local predictionModeButton = createToggleButton("Toggle Prediction: Off", 460, function()
+        predictionEnabled = not predictionEnabled
+        if predictionEnabled then
+            predictionModeButton.Text = "Toggle Prediction: On"
         else
-            blatantModeButton.Text = "Toggle Blatant Mode: Non-Blatant"
-            modeStatusLabel.Text = "Current Mode: Non-Blatant"  -- Update mode label
+            predictionModeButton.Text = "Toggle Prediction: Off"
         end
     end)
 
-    -- Mode Status Label to display current mode
-    local modeStatusLabel = Instance.new("TextLabel")
-    modeStatusLabel.Size = UDim2.new(1, 0, 0, 40)
-    modeStatusLabel.Position = UDim2.new(0, 0, 0, 510)
-    modeStatusLabel.BackgroundColor3 = Color3.fromRGB(98, 12, 219)
-    modeStatusLabel.Text = "Current Mode: Non-Blatant"
-    modeStatusLabel.TextColor3 = Color3.fromRGB(21, 211, 197)
-    modeStatusLabel.Font = Enum.Font.GothamBold
-    modeStatusLabel.TextSize = 18
-    modeStatusLabel.TextStrokeTransparency = 0.8
-    modeStatusLabel.TextXAlignment = Enum.TextXAlignment.Center
-    modeStatusLabel.Parent = ScreenGui
+    -- Blatant Mode Toggle Button
+    local blatantModeButton = createToggleButton("Toggle Blatant Mode: Non-Blatant", 510, function()
+        blatantMode = not blatantMode
+        if blatantMode then
+            blatantModeButton.Text = "Toggle Blatant Mode: Blatant"
+        else
+            blatantModeButton.Text = "Toggle Blatant Mode: Non-Blatant"
+        end
+    end)
 
     -- Create Smoothness and FOV Sliders
     createSlider("Aimbot Smoothness", 260, 1, 10, 5, function(value)
@@ -278,6 +300,11 @@ local function aimAtTarget(target)
     if target and target.Character then
         local aimPos = getAimPosition(target)
         if aimPos then
+            -- Predict position if prediction is enabled
+            if predictionEnabled then
+                aimPos = predictPosition(target)
+            end
+
             local smoothFactor = blatantMode and 1 or aimbotSmoothness / 10
             local direction = (aimPos - Camera.CFrame.Position).unit
             Camera.CFrame = Camera.CFrame:Lerp(Camera.CFrame * CFrame.new(direction * smoothFactor), 0.2)
