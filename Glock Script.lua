@@ -1,154 +1,168 @@
-local glock = {}
-glock.name = "Glock - Made by Snoopy"
+-- Advanced ESP, Cam Lock, and Triggerbot Script for Da Hood with UI
 
--- Services
-local players = game:GetService("Players")
-local runService = game:GetService("RunService")
-local userInput = game:GetService("UserInputService")
-local guiService = game:GetService("StarterGui")
-local player = players.LocalPlayer
+-- Get services
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Camera = game:GetService("Workspace").CurrentCamera
+local RunService = game:GetService("RunService")
+local UIS = game:GetService("UserInputService")
+local CoreGui = game:GetService("CoreGui")
 
--- Settings
-local fov = 100
-local aimLockEnabled = true
-local triggerbotEnabled = true
-local espEnabled = true
-local colors = {Color3.fromRGB(128, 0, 128), Color3.fromRGB(0, 255, 0), Color3.fromRGB(0, 0, 255), Color3.fromRGB(173, 216, 230)} -- Purple, Green, Blue, Light Blue
-local currentColor = 1
-local colorChangeInterval = 0.5 -- seconds between color changes
-local nextColorChange = tick()
+-- UI setup
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Parent = CoreGui
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
--- Create the UI
-local screenGui = Instance.new("ScreenGui")
-screenGui.Parent = player:WaitForChild("PlayerGui")
+-- ESP, Cam Lock, and Triggerbot Toggle Buttons
+local espButton = Instance.new("TextButton")
+espButton.Size = UDim2.new(0, 150, 0, 50)
+espButton.Position = UDim2.new(0, 10, 0, 10)
+espButton.Text = "Toggle ESP"
+espButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+espButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+espButton.Parent = ScreenGui
 
-local toggleAimbotBtn = Instance.new("TextButton")
-toggleAimbotBtn.Size = UDim2.new(0, 200, 0, 50)
-toggleAimbotBtn.Position = UDim2.new(0, 50, 0, 50)
-toggleAimbotBtn.Text = "Toggle Aimbot Lock"
-toggleAimbotBtn.Parent = screenGui
+local camLockButton = Instance.new("TextButton")
+camLockButton.Size = UDim2.new(0, 150, 0, 50)
+camLockButton.Position = UDim2.new(0, 10, 0, 70)
+camLockButton.Text = "Toggle Cam Lock"
+camLockButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+camLockButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+camLockButton.Parent = ScreenGui
 
-local toggleTriggerbotBtn = Instance.new("TextButton")
-toggleTriggerbotBtn.Size = UDim2.new(0, 200, 0, 50)
-toggleTriggerbotBtn.Position = UDim2.new(0, 50, 0, 110)
-toggleTriggerbotBtn.Text = "Toggle Triggerbot"
-toggleTriggerbotBtn.Parent = screenGui
+local triggerbotButton = Instance.new("TextButton")
+triggerbotButton.Size = UDim2.new(0, 150, 0, 50)
+triggerbotButton.Position = UDim2.new(0, 10, 0, 130)
+triggerbotButton.Text = "Toggle Triggerbot"
+triggerbotButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+triggerbotButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+triggerbotButton.Parent = ScreenGui
 
-local toggleESPBtn = Instance.new("TextButton")
-toggleESPBtn.Size = UDim2.new(0, 200, 0, 50)
-toggleESPBtn.Position = UDim2.new(0, 50, 0, 170)
-toggleESPBtn.Text = "Toggle ESP"
-toggleESPBtn.Parent = screenGui
+-- Settings for ESP, Cam Lock, and Triggerbot
+local ESPEnabled = false
+local CamLockEnabled = false
+local TriggerbotEnabled = false
+local TriggerbotFOV = 50  -- Field of view for triggerbot activation
+local Smoothness = 0.1 -- Smoothness factor for Cam Lock
 
-local toggleFOVBtn = Instance.new("TextButton")
-toggleFOVBtn.Size = UDim2.new(0, 200, 0, 50)
-toggleFOVBtn.Position = UDim2.new(0, 50, 0, 230)
-toggleFOVBtn.Text = "Toggle FOV Circle"
-toggleFOVBtn.Parent = screenGui
-
--- ESP Functionality
-function glock:drawESP(target)
-    if not target then return end
-    local espBox = Drawing.new("Text")
-    espBox.Text = target.Name
-    espBox.Size = 18
-    espBox.Center = true
-    espBox.Color = colors[currentColor]
-    espBox.Position = Vector2.new(target.Character.Head.Position.X, target.Character.Head.Position.Y)
-    espBox.Visible = true
-    return espBox
-end
-
--- Aimbot Lock Functionality
-function glock:aimAt(target)
-    if not target then return end
-    local camera = workspace.CurrentCamera
-    local targetPosition = target.Character.Head.Position
-    camera.CFrame = CFrame.new(camera.CFrame.Position, targetPosition)
-end
-
--- Triggerbot Functionality
-function glock:triggerbot(target)
-    if triggerbotEnabled and target then
-        local mouse = players.LocalPlayer:GetMouse()
-        if mouse.Target == target.Character.Head then
-            mouse1click()
-        end
+-- Toggle ESP
+espButton.MouseButton1Click:Connect(function()
+    ESPEnabled = not ESPEnabled
+    if ESPEnabled then
+        espButton.Text = "ESP: ON"
+    else
+        espButton.Text = "ESP: OFF"
     end
-end
-
--- FOV Circle
-local fovCircle = Drawing.new("Circle")
-fovCircle.Radius = fov
-fovCircle.Color = colors[currentColor]
-fovCircle.Filled = false
-fovCircle.Thickness = 2
-fovCircle.Transparency = 1
-fovCircle.Visible = true
-
--- Update FOV Circle Position
-function glock:updateFOV()
-    local mouse = players.LocalPlayer:GetMouse()
-    fovCircle.Position = Vector2.new(mouse.X, mouse.Y)
-end
-
--- Handle button clicks
-toggleAimbotBtn.MouseButton1Click:Connect(function()
-    aimLockEnabled = not aimLockEnabled
-    toggleAimbotBtn.Text = aimLockEnabled and "Disable Aimbot Lock" or "Enable Aimbot Lock"
 end)
 
-toggleTriggerbotBtn.MouseButton1Click:Connect(function()
-    triggerbotEnabled = not triggerbotEnabled
-    toggleTriggerbotBtn.Text = triggerbotEnabled and "Disable Triggerbot" or "Enable Triggerbot"
+-- Toggle Cam Lock
+camLockButton.MouseButton1Click:Connect(function()
+    CamLockEnabled = not CamLockEnabled
+    if CamLockEnabled then
+        camLockButton.Text = "Cam Lock: ON"
+    else
+        camLockButton.Text = "Cam Lock: OFF"
+    end
 end)
 
-toggleESPBtn.MouseButton1Click:Connect(function()
-    espEnabled = not espEnabled
-    toggleESPBtn.Text = espEnabled and "Disable ESP" or "Enable ESP"
+-- Toggle Triggerbot
+triggerbotButton.MouseButton1Click:Connect(function()
+    TriggerbotEnabled = not TriggerbotEnabled
+    if TriggerbotEnabled then
+        triggerbotButton.Text = "Triggerbot: ON"
+    else
+        triggerbotButton.Text = "Triggerbot: OFF"
+    end
 end)
 
-toggleFOVBtn.MouseButton1Click:Connect(function()
-    fovCircle.Visible = not fovCircle.Visible
-    toggleFOVBtn.Text = fovCircle.Visible and "Hide FOV Circle" or "Show FOV Circle"
-end)
-
--- Main Loop
-runService.RenderStepped:Connect(function()
-    local localPlayer = players.LocalPlayer
-    local mouse = localPlayer:GetMouse()
-    local target
-
-    -- ESP and Aimbot
-    for _, player in pairs(players:GetPlayers()) do
-        if player ~= localPlayer and player.Character and player.Character:FindFirstChild("Head") then
-            local distance = (localPlayer.Character.Head.Position - player.Character.Head.Position).Magnitude
-            if distance < fov then
-                target = player
-                if aimLockEnabled then
-                    glock:aimAt(target)
-                end
-                if espEnabled then
-                    glock:drawESP(target)
-                end
+-- ESP part
+local function createESP(target)
+    local box = Instance.new("Frame")
+    box.Size = UDim2.new(0, 50, 0, 50)
+    box.BackgroundColor3 = Color3.fromRGB(255, 0, 0)  -- Red Box for ESP
+    box.BorderSizePixel = 0
+    box.ZIndex = 10
+    box.Parent = game:GetService("CoreGui")
+    
+    local function updateESP()
+        if target and target.Character and target.Character:FindFirstChild("Head") then
+            local head = target.Character.Head
+            local screenPos, onScreen = Camera:WorldToScreenPoint(head.Position)
+            if onScreen then
+                box.Position = UDim2.new(0, screenPos.X - 25, 0, screenPos.Y - 25)
+                box.Visible = true
+            else
+                box.Visible = false
             end
         end
     end
 
-    -- Triggerbot
-    if target then
-        glock:triggerbot(target)
+    -- Update ESP every frame
+    RunService.RenderStepped:Connect(updateESP)
+end
+
+-- Cam Lock function
+local function camLock(target)
+    local cameraPos = Camera.CFrame.Position
+    local targetPos = target.Character.HumanoidRootPart.Position
+    local direction = (targetPos - cameraPos).unit
+    local lookAtCFrame = CFrame.lookAt(cameraPos, targetPos)
+    Camera.CFrame = Camera.CFrame:Lerp(lookAtCFrame, Smoothness)
+end
+
+-- Triggerbot function
+local function triggerbot()
+    if TriggerbotEnabled then
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
+                local head = player.Character.Head
+                local screenPos, onScreen = Camera:WorldToScreenPoint(head.Position)
+                local distance = (Vector2.new(screenPos.X, screenPos.Y) - Vector2.new(UIS:GetMouseLocation().X, UIS:GetMouseLocation().Y)).Magnitude
+                if onScreen and distance <= TriggerbotFOV then
+                    -- Triggerbot logic here: Auto-shoot when target is in crosshair
+                    game:GetService("ReplicatedStorage").RemoteEvent:FireServer("Shoot")
+                end
+            end
+        end
+    end
+end
+
+-- Update ESP, Cam Lock, and Triggerbot every frame
+RunService.RenderStepped:Connect(function()
+    if ESPEnabled then
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
+                createESP(player)
+            end
+        end
     end
 
-    -- Update FOV Circle
-    glock:updateFOV()
-
-    -- Handle color cycling
-    if tick() >= nextColorChange then
-        currentColor = currentColor % #colors + 1
-        fovCircle.Color = colors[currentColor]
-        nextColorChange = tick() + colorChangeInterval
+    if CamLockEnabled then
+        local target = getClosestTarget()  -- Function to get the closest target
+        if target then
+            camLock(target)
+        end
     end
+
+    triggerbot()
 end)
 
-return glock
+-- Helper function to get the closest target (for Cam Lock)
+function getClosestTarget()
+    local closestPlayer = nil
+    local shortestDistance = math.huge
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
+            local head = player.Character.Head
+            local screenPos, onScreen = Camera:WorldToScreenPoint(head.Position)
+            if onScreen then
+                local distance = (Vector2.new(screenPos.X, screenPos.Y) - Vector2.new(UIS:GetMouseLocation().X, UIS:GetMouseLocation().Y)).Magnitude
+                if distance < shortestDistance then
+                    closestPlayer = player
+                    shortestDistance = distance
+                end
+            end
+        end
+    end
+    return closestPlayer
+end
