@@ -122,7 +122,7 @@ local function setupUI()
     Title.Size = UDim2.new(1, 0, 0, 40)
     Title.BackgroundColor3 = Color3.fromRGB(98, 12, 219)
     Title.Text = "Glock - made by snoopy"
-    Title.TextColor3 = Color3.fromRGB(21, 211, 197))
+    Title.TextColor3 = Color3.fromRGB(21, 211, 197)
     Title.Font = Enum.Font.GothamBold
     Title.TextSize = 22
     Title.TextStrokeTransparency = 0.8
