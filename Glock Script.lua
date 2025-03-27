@@ -10,8 +10,8 @@ local Mouse = LocalPlayer:GetMouse()
 -- Global Variables
 local espBoxes = {}
 local espEnabled, aimbotEnabled, cameraLockEnabled, fovCircleEnabled = false, false, false, false
-local blatantMode = false  -- Default to non-blatant mode
-local predictionEnabled = false  -- Default to no prediction
+local predictionEnabled = false
+local blatantMode = false  -- Non-blatant mode by default
 local aimbotSmoothness, cameraLockSmoothness, fovRadius = 5, 5, 100
 local keybinds = {aimbot = Enum.KeyCode.E, esp = Enum.KeyCode.R}  -- Hotkeys for toggling
 
@@ -68,34 +68,7 @@ local function getAimPosition(target)
         local defaultPart = torso or head
         if not defaultPart then return nil end
 
-        local defaultDistance = getScreenDistance(defaultPart.Position)
-        local bestPart = defaultPart
-        local bestDistance = defaultDistance
-
-        -- Check other candidate parts (head, left leg, right leg)
-        local candidates = {}
-        if head then
-            candidates["Head"] = head
-        end
-        local leftLeg = character:FindFirstChild("Left Leg") or character:FindFirstChild("LeftLowerLeg")
-        if leftLeg then
-            candidates["LeftLeg"] = leftLeg
-        end
-        local rightLeg = character:FindFirstChild("Right Leg") or character:FindFirstChild("RightLowerLeg")
-        if rightLeg then
-            candidates["RightLeg"] = rightLeg
-        end
-
-        -- Only change if a candidate is at least 20% closer than the default torso
-        for name, part in pairs(candidates) do
-            local dist = getScreenDistance(part.Position)
-            if dist < bestDistance * 0.8 then
-                bestDistance = dist
-                bestPart = part
-            end
-        end
-
-        return bestPart.Position
+        return defaultPart.Position
     end
 
     return nil
@@ -125,7 +98,24 @@ local function getClosestTarget()
     return closest
 end
 
--- UI Setup (Sleek Black Matcha External Style)
+-- Aimbot: Aim at the target using the chosen body part
+local function aimAtTarget(target)
+    if target and target.Character then
+        local aimPos = getAimPosition(target)
+        if aimPos then
+            -- Predict position if prediction is enabled
+            if predictionEnabled then
+                aimPos = predictPosition(target)
+            end
+
+            local smoothFactor = blatantMode and 1 or aimbotSmoothness / 10
+            local direction = (aimPos - Camera.CFrame.Position).unit
+            Camera.CFrame = Camera.CFrame:Lerp(Camera.CFrame * CFrame.new(direction * smoothFactor), 0.2)
+        end
+    end
+end
+
+-- UI Setup
 local function setupUI()
     local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = "Glock - made by snoopy"
@@ -176,69 +166,6 @@ local function setupUI()
         return button
     end
 
-    -- Function to Create Sliders
-    local function createSlider(text, position, min, max, default, callback)
-        local sliderFrame = Instance.new("Frame")
-        sliderFrame.Size = UDim2.new(0, 350, 0, 40)
-        sliderFrame.Position = UDim2.new(0, 25, 0, position)
-        sliderFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-        local corner = Instance.new("UICorner")
-        corner.CornerRadius = UDim.new(0.05, 0)
-        corner.Parent = sliderFrame
-        sliderFrame.Parent = MainFrame
-
-        local sliderLabel = Instance.new("TextLabel")
-        sliderLabel.Size = UDim2.new(1, 0, 0, 20)
-        sliderLabel.Text = text .. ": " .. default
-        sliderLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-        sliderLabel.Font = Enum.Font.Gotham
-        sliderLabel.TextSize = 18
-        sliderLabel.TextStrokeTransparency = 0.8
-        sliderLabel.Parent = sliderFrame
-
-        local slider = Instance.new("TextButton")
-        slider.Size = UDim2.new(0, 300, 0, 20)
-        slider.Position = UDim2.new(0, 25, 0, 20)
-        slider.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-        slider.Text = ""
-        local corner = Instance.new("UICorner")
-        corner.CornerRadius = UDim.new(0.05, 0)
-        corner.Parent = slider
-        slider.Parent = sliderFrame
-
-        local function updateValue(input)
-            local relativePosition = (input.Position.X - slider.AbsolutePosition.X) / slider.AbsoluteSize.X
-            local value = math.clamp(math.floor(relativePosition * (max - min) + min), min, max)
-            sliderLabel.Text = text .. ": " .. value
-            callback(value)
-        end
-
-        slider.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                updateValue(input)
-                local moveConnection
-                local releaseConnection
-                moveConnection = UserInputService.InputChanged:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseMovement then
-                        updateValue(input)
-                    end
-                end)
-                releaseConnection = UserInputService.InputEnded:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                        moveConnection:Disconnect()
-                        releaseConnection:Disconnect()
-                    end
-                end)
-            end
-        end)
-    end
-
-    -- Create Toggle Buttons
-    createToggleButton("Toggle ESP", 60, function() espEnabled = not espEnabled end)
-    createToggleButton("Toggle Aimbot", 110, function() aimbotEnabled = not aimbotEnabled end)
-    createToggleButton("Toggle Camera Lock", 160, function() cameraLockEnabled = not cameraLockEnabled end)
-    createToggleButton("Toggle FOV Circle", 210, function() fovCircleEnabled = not fovCircleEnabled end)
-
     -- Prediction Mode Toggle Button
     local predictionModeButton = createToggleButton("Toggle Prediction: Off", 460, function()
         predictionEnabled = not predictionEnabled
@@ -259,17 +186,6 @@ local function setupUI()
         end
     end)
 
-    -- Create Smoothness and FOV Sliders
-    createSlider("Aimbot Smoothness", 260, 1, 10, 5, function(value)
-        aimbotSmoothness = value
-    end)
-    createSlider("Camera Lock Smoothness", 310, 1, 10, 5, function(value)
-        cameraLockSmoothness = value
-    end)
-    createSlider("FOV Radius", 360, 50, 200, 100, function(value)
-        fovRadius = value
-    end)
-
     -- FOV Circle Setup (Around the Cursor)
     local fovCircle = Instance.new("Frame")
     fovCircle.Size = UDim2.new(0, fovRadius, 0, fovRadius)
@@ -277,11 +193,9 @@ local function setupUI()
     fovCircle.BackgroundColor3 = Color3.fromRGB(181, 25, 189)
     fovCircle.BackgroundTransparency = 0.5
     fovCircle.Visible = false
-
     local circleCorner = Instance.new("UICorner")
     circleCorner.CornerRadius = UDim.new(0.5, 0)
     circleCorner.Parent = fovCircle
-
     fovCircle.Parent = ScreenGui
 
     -- Update FOV Circle Position and Visibility
@@ -293,23 +207,6 @@ local function setupUI()
             fovCircle.Visible = false
         end
     end)
-end
-
--- Aimbot: Aim at the target using the chosen body part
-local function aimAtTarget(target)
-    if target and target.Character then
-        local aimPos = getAimPosition(target)
-        if aimPos then
-            -- Predict position if prediction is enabled
-            if predictionEnabled then
-                aimPos = predictPosition(target)
-            end
-
-            local smoothFactor = blatantMode and 1 or aimbotSmoothness / 10
-            local direction = (aimPos - Camera.CFrame.Position).unit
-            Camera.CFrame = Camera.CFrame:Lerp(Camera.CFrame * CFrame.new(direction * smoothFactor), 0.2)
-        end
-    end
 end
 
 -- Main Loop to check ESP, Aimbot, and Camera Lock
