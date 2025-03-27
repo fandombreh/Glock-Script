@@ -15,6 +15,76 @@ local blatantMode = false  -- Non-blatant mode by default
 local aimbotSmoothness, cameraLockSmoothness, fovRadius = 5, 5, 100
 local keybinds = {aimbot = Enum.KeyCode.E, esp = Enum.KeyCode.R}  -- Hotkeys for toggling
 
+-- UI Setup
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+ScreenGui.Name = "Glock - made by snoopy"
+
+local mainFrame = Instance.new("Frame")
+mainFrame.Parent = ScreenGui
+mainFrame.Size = UDim2.new(0, 200, 0, 300)
+mainFrame.Position = UDim2.new(0, 10, 0, 10)
+mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+mainFrame.BorderSizePixel = 0
+mainFrame.Visible = true
+
+local title = Instance.new("TextLabel")
+title.Parent = mainFrame
+title.Size = UDim2.new(1, 0, 0, 30)
+title.Text = "Glock - Aimbot"
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.TextSize = 20
+title.BackgroundTransparency = 1
+title.TextAlign = Enum.TextXAlignment.Center
+
+local toggleAimbotButton = Instance.new("TextButton")
+toggleAimbotButton.Parent = mainFrame
+toggleAimbotButton.Size = UDim2.new(1, 0, 0, 50)
+toggleAimbotButton.Position = UDim2.new(0, 0, 0, 40)
+toggleAimbotButton.Text = "Aimbot: OFF"
+toggleAimbotButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleAimbotButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+toggleAimbotButton.MouseButton1Click:Connect(function()
+    aimbotEnabled = not aimbotEnabled
+    toggleAimbotButton.Text = "Aimbot: " .. (aimbotEnabled and "ON" or "OFF")
+end)
+
+local toggleESPButton = Instance.new("TextButton")
+toggleESPButton.Parent = mainFrame
+toggleESPButton.Size = UDim2.new(1, 0, 0, 50)
+toggleESPButton.Position = UDim2.new(0, 0, 0, 90)
+toggleESPButton.Text = "ESP: OFF"
+toggleESPButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleESPButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+toggleESPButton.MouseButton1Click:Connect(function()
+    espEnabled = not espEnabled
+    toggleESPButton.Text = "ESP: " .. (espEnabled and "ON" or "OFF")
+end)
+
+local toggleCameraLockButton = Instance.new("TextButton")
+toggleCameraLockButton.Parent = mainFrame
+toggleCameraLockButton.Size = UDim2.new(1, 0, 0, 50)
+toggleCameraLockButton.Position = UDim2.new(0, 0, 0, 140)
+toggleCameraLockButton.Text = "Camera Lock: OFF"
+toggleCameraLockButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleCameraLockButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+toggleCameraLockButton.MouseButton1Click:Connect(function()
+    cameraLockEnabled = not cameraLockEnabled
+    toggleCameraLockButton.Text = "Camera Lock: " .. (cameraLockEnabled and "ON" or "OFF")
+end)
+
+local toggleFovCircleButton = Instance.new("TextButton")
+toggleFovCircleButton.Parent = mainFrame
+toggleFovCircleButton.Size = UDim2.new(1, 0, 0, 50)
+toggleFovCircleButton.Position = UDim2.new(0, 0, 0, 190)
+toggleFovCircleButton.Text = "FOV Circle: OFF"
+toggleFovCircleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleFovCircleButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+toggleFovCircleButton.MouseButton1Click:Connect(function()
+    fovCircleEnabled = not fovCircleEnabled
+    toggleFovCircleButton.Text = "FOV Circle: " .. (fovCircleEnabled and "ON" or "OFF")
+end)
+
 -- Helper function to calculate screen distance
 local function getScreenDistance(worldPos)
     local screenPoint = Camera:WorldToScreenPoint(worldPos)
@@ -100,141 +170,39 @@ end
 
 -- Aimbot: Aim at the target using the chosen body part
 local function aimAtTarget(target)
-    if target and target.Character then
-        local aimPos = getAimPosition(target)
-        if aimPos then
-            -- Predict position if prediction is enabled
-            if predictionEnabled then
-                aimPos = predictPosition(target)
-            end
+    if not target then return end
+    local aimPos = getAimPosition(target)
+    if not aimPos then return end
 
-            local smoothFactor = blatantMode and 1 or aimbotSmoothness / 10
-            local direction = (aimPos - Camera.CFrame.Position).unit
-            Camera.CFrame = Camera.CFrame:Lerp(Camera.CFrame * CFrame.new(direction * smoothFactor), 0.2)
-        end
-    end
+    local direction = (aimPos - Camera.CFrame.Position).unit
+    local newCFrame = Camera.CFrame + direction * 0.1
+    Camera.CFrame = Camera.CFrame:Lerp(newCFrame, aimbotSmoothness / 100)
 end
 
--- UI Setup
-local function setupUI()
-    local ScreenGui = Instance.new("ScreenGui")
-    ScreenGui.Name = "Glock - made by snoopy"
-    ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+-- Camera Lock: Keep the camera locked on the target
+local function lockCameraOnTarget(target)
+    if not target then return end
+    local aimPos = getAimPosition(target)
+    if not aimPos then return end
 
-    -- Main Frame (Black Background, Sleek look)
-    local MainFrame = Instance.new("Frame")
-    MainFrame.Size = UDim2.new(0, 400, 0, 500)
-    MainFrame.Position = UDim2.new(0.5, -200, 0.5, -250)
-    MainFrame.BackgroundColor3 = Color3.fromRGB(12, 69, 240)
-    MainFrame.BorderSizePixel = 0
-    MainFrame.Active = true
-    MainFrame.Draggable = true
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0.05, 0)
-    corner.Parent = MainFrame
-    MainFrame.Parent = ScreenGui
-
-    -- Title
-    local Title = Instance.new("TextLabel")
-    Title.Size = UDim2.new(1, 0, 0, 40)
-    Title.BackgroundColor3 = Color3.fromRGB(98, 12, 219)
-    Title.Text = "Glock - made by snoopy"
-    Title.TextColor3 = Color3.fromRGB(21, 211, 197)
-    Title.Font = Enum.Font.GothamBold
-    Title.TextSize = 22
-    Title.TextStrokeTransparency = 0.8
-    Title.TextXAlignment = Enum.TextXAlignment.Center
-    Title.Parent = MainFrame
-
-    -- Function to Create Toggle Buttons
-    local function createToggleButton(text, position, callback)
-        local button = Instance.new("TextButton")
-        button.Size = UDim2.new(0, 350, 0, 40)
-        button.Position = UDim2.new(0, 25, 0, position)
-        button.BackgroundColor3 = Color3.fromRGB(182, 35, 35)
-        button.Text = text
-        button.TextColor3 = Color3.fromRGB(49, 9, 172)
-        button.Font = Enum.Font.Gotham
-        button.TextSize = 18
-        button.TextStrokeTransparency = 0.8
-        button.TextXAlignment = Enum.TextXAlignment.Center
-        button.Parent = MainFrame
-        local corner = Instance.new("UICorner")
-        corner.CornerRadius = UDim.new(0.05, 0)
-        corner.Parent = button
-        button.MouseButton1Click:Connect(callback)
-        return button
-    end
-
-    -- Prediction Mode Toggle Button
-    local predictionModeButton = createToggleButton("Toggle Prediction: Off", 460, function()
-        predictionEnabled = not predictionEnabled
-        if predictionEnabled then
-            predictionModeButton.Text = "Toggle Prediction: On"
-        else
-            predictionModeButton.Text = "Toggle Prediction: Off"
-        end
-    end)
-
-    -- Blatant Mode Toggle Button
-    local blatantModeButton = createToggleButton("Toggle Blatant Mode: Non-Blatant", 510, function()
-        blatantMode = not blatantMode
-        if blatantMode then
-            blatantModeButton.Text = "Toggle Blatant Mode: Blatant"
-        else
-            blatantModeButton.Text = "Toggle Blatant Mode: Non-Blatant"
-        end
-    end)
-
-    -- FOV Circle Setup (Around the Cursor)
-    local fovCircle = Instance.new("Frame")
-    fovCircle.Size = UDim2.new(0, fovRadius, 0, fovRadius)
-    fovCircle.Position = UDim2.new(0, 0, 0, 0)
-    fovCircle.BackgroundColor3 = Color3.fromRGB(181, 25, 189)
-    fovCircle.BackgroundTransparency = 0.5
-    fovCircle.Visible = false
-    local circleCorner = Instance.new("UICorner")
-    circleCorner.CornerRadius = UDim.new(0.5, 0)
-    circleCorner.Parent = fovCircle
-    fovCircle.Parent = ScreenGui
-
-    -- Update FOV Circle Position and Visibility
-    RunService.RenderStepped:Connect(function()
-        if fovCircleEnabled then
-            fovCircle.Visible = true
-            fovCircle.Position = UDim2.new(0, Mouse.X - fovCircle.Size.X.Offset / 2, 0, Mouse.Y - fovCircle.Size.Y.Offset / 2)
-        else
-            fovCircle.Visible = false
-        end
-    end)
+    local direction = (aimPos - Camera.CFrame.Position).unit
+    local newCFrame = Camera.CFrame + direction * 0.1
+    Camera.CFrame = Camera.CFrame:Lerp(newCFrame, cameraLockSmoothness / 100)
 end
 
--- Main Loop to check ESP, Aimbot, and Camera Lock
+-- Main Loop
 RunService.RenderStepped:Connect(function()
-    -- Aimbot
     if aimbotEnabled then
-        local closestTarget = getClosestTarget()
-        if closestTarget then
-            aimAtTarget(closestTarget)
+        local target = getClosestTarget()
+        if target then
+            aimAtTarget(target)
+        end
+    end
+
+    if cameraLockEnabled then
+        local target = getClosestTarget()
+        if target then
+            lockCameraOnTarget(target)
         end
     end
 end)
-
--- Setup UI
-setupUI()
-
--- Keybind for toggling aimbot
-UserInputService.InputBegan:Connect(function(input)
-    if input.KeyCode == keybinds.aimbot then
-        aimbotEnabled = not aimbotEnabled
-    end
-end)
-
--- Keybind for toggling ESP
-UserInputService.InputBegan:Connect(function(input)
-    if input.KeyCode == keybinds.esp then
-        espEnabled = not espEnabled
-    end
-end)
--- Setup UI
-setupUI()
