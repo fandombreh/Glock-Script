@@ -20,7 +20,7 @@ ScreenGui.Name = "Glock - made by snoopy"
 -- Main Frame
 local mainFrame = Instance.new("Frame")
 mainFrame.Parent = ScreenGui
-mainFrame.Size = UDim2.new(0, 250, 0, 400)  -- Increased size to fit everything
+mainFrame.Size = UDim2.new(0, 200, 0, 300)
 mainFrame.Position = UDim2.new(0, 10, 0, 10)
 mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 mainFrame.BorderSizePixel = 0
@@ -29,7 +29,7 @@ mainFrame.Visible = true
 -- Title Label
 local title = Instance.new("TextLabel")
 title.Parent = mainFrame
-title.Size = UDim2.new(1, 0, 0, 40)  -- Adjusted height for better spacing
+title.Size = UDim2.new(1, 0, 0, 30)
 title.Text = "Glock - Aimbot"
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.TextSize = 20
