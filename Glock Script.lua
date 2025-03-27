@@ -236,7 +236,7 @@ local function setupUI()
     local fovCircle = Instance.new("Frame")
     fovCircle.Size = UDim2.new(0, fovRadius, 0, fovRadius)
     fovCircle.Position = UDim2.new(0, 0, 0, 0)  -- Default to top left, will update below
-    fovCircle.BackgroundColor3 = Color3.fromRGB(45, 255, 75)  -- Matcha green
+    fovCircle.BackgroundColor3 = Color3.fromRGB(181, 25, 189)  -- Matcha green
     fovCircle.BackgroundTransparency = 0.5
     fovCircle.Visible = false
 
