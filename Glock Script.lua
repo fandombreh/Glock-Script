@@ -8,10 +8,7 @@ local LocalPlayer = Players.LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
 
 -- Global Variables
-local espBoxes = {}
 local espEnabled, aimbotEnabled, cameraLockEnabled, fovCircleEnabled = false, false, false, false
-local predictionEnabled = false
-local blatantMode = false  -- Non-blatant mode by default
 local aimbotSmoothness, cameraLockSmoothness, fovRadius = 5, 5, 100
 local keybinds = {aimbot = Enum.KeyCode.E, esp = Enum.KeyCode.R}  -- Hotkeys for toggling
 
@@ -20,6 +17,7 @@ local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 ScreenGui.Name = "Glock - made by snoopy"
 
+-- Main Frame
 local mainFrame = Instance.new("Frame")
 mainFrame.Parent = ScreenGui
 mainFrame.Size = UDim2.new(0, 200, 0, 300)
@@ -28,6 +26,7 @@ mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 mainFrame.BorderSizePixel = 0
 mainFrame.Visible = true
 
+-- Title Label
 local title = Instance.new("TextLabel")
 title.Parent = mainFrame
 title.Size = UDim2.new(1, 0, 0, 30)
@@ -37,6 +36,7 @@ title.TextSize = 20
 title.BackgroundTransparency = 1
 title.TextAlign = Enum.TextXAlignment.Center
 
+-- Aimbot Toggle Button
 local toggleAimbotButton = Instance.new("TextButton")
 toggleAimbotButton.Parent = mainFrame
 toggleAimbotButton.Size = UDim2.new(1, 0, 0, 50)
@@ -49,6 +49,7 @@ toggleAimbotButton.MouseButton1Click:Connect(function()
     toggleAimbotButton.Text = "Aimbot: " .. (aimbotEnabled and "ON" or "OFF")
 end)
 
+-- ESP Toggle Button
 local toggleESPButton = Instance.new("TextButton")
 toggleESPButton.Parent = mainFrame
 toggleESPButton.Size = UDim2.new(1, 0, 0, 50)
@@ -61,6 +62,7 @@ toggleESPButton.MouseButton1Click:Connect(function()
     toggleESPButton.Text = "ESP: " .. (espEnabled and "ON" or "OFF")
 end)
 
+-- Camera Lock Toggle Button
 local toggleCameraLockButton = Instance.new("TextButton")
 toggleCameraLockButton.Parent = mainFrame
 toggleCameraLockButton.Size = UDim2.new(1, 0, 0, 50)
@@ -73,6 +75,7 @@ toggleCameraLockButton.MouseButton1Click:Connect(function()
     toggleCameraLockButton.Text = "Camera Lock: " .. (cameraLockEnabled and "ON" or "OFF")
 end)
 
+-- FOV Circle Toggle Button
 local toggleFovCircleButton = Instance.new("TextButton")
 toggleFovCircleButton.Parent = mainFrame
 toggleFovCircleButton.Size = UDim2.new(1, 0, 0, 50)
@@ -83,6 +86,18 @@ toggleFovCircleButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 toggleFovCircleButton.MouseButton1Click:Connect(function()
     fovCircleEnabled = not fovCircleEnabled
     toggleFovCircleButton.Text = "FOV Circle: " .. (fovCircleEnabled and "ON" or "OFF")
+end)
+
+-- Function to toggle UI visibility
+local function toggleUI()
+    mainFrame.Visible = not mainFrame.Visible
+end
+
+-- Adding a keybind to toggle UI visibility (for example, pressing the "P" key)
+UserInputService.InputBegan:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.P then
+        toggleUI()
+    end
 end)
 
 -- Helper function to calculate screen distance
@@ -127,34 +142,15 @@ local function getAimPosition(target)
     local head = character:FindFirstChild("Head")
     local torso = character:FindFirstChild("Torso") or character:FindFirstChild("UpperTorso")
 
-    if blatantMode then
-        if head then
-            return head.Position
-        elseif torso then
-            return torso.Position
-        end
-    else
-        -- Non-blatant mode: default is torso
-        local defaultPart = torso or head
-        if not defaultPart then return nil end
-
-        return defaultPart.Position
-    end
-
-    return nil
+    return head or torso
 end
 
 -- Finds the closest target based on the default part for detection in each mode.
 local function getClosestTarget()
-    local closest, shortestDistance = nil, fovRadius
+    local closest, shortestDistance = nil, 100
     for _, player in pairs(Players:GetPlayers()) do
         if player ~= LocalPlayer and player.Character then
-            local part = nil
-            if blatantMode then
-                part = player.Character:FindFirstChild("Head")
-            else
-                part = player.Character:FindFirstChild("Torso") or player.Character:FindFirstChild("UpperTorso")
-            end
+            local part = player.Character:FindFirstChild("HumanoidRootPart")
             if part then
                 local screenPoint = Camera:WorldToScreenPoint(part.Position)
                 local distance = (Vector2.new(Mouse.X, Mouse.Y) - Vector2.new(screenPoint.X, screenPoint.Y)).Magnitude
@@ -174,7 +170,7 @@ local function aimAtTarget(target)
     local aimPos = getAimPosition(target)
     if not aimPos then return end
 
-    local direction = (aimPos - Camera.CFrame.Position).unit
+    local direction = (aimPos.Position - Camera.CFrame.Position).unit
     local newCFrame = Camera.CFrame + direction * 0.1
     Camera.CFrame = Camera.CFrame:Lerp(newCFrame, aimbotSmoothness / 100)
 end
@@ -185,7 +181,7 @@ local function lockCameraOnTarget(target)
     local aimPos = getAimPosition(target)
     if not aimPos then return end
 
-    local direction = (aimPos - Camera.CFrame.Position).unit
+    local direction = (aimPos.Position - Camera.CFrame.Position).unit
     local newCFrame = Camera.CFrame + direction * 0.1
     Camera.CFrame = Camera.CFrame:Lerp(newCFrame, cameraLockSmoothness / 100)
 end
