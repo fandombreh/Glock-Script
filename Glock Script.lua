@@ -24,7 +24,7 @@ mainFrame.Size = UDim2.new(0, 200, 0, 300)
 mainFrame.Position = UDim2.new(0, 10, 0, 10)
 mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 mainFrame.BorderSizePixel = 0
-mainFrame.Visible = true
+mainFrame.Visible = true -- Ensuring the frame is visible initially
 
 -- Title Label
 local title = Instance.new("TextLabel")
@@ -104,86 +104,6 @@ end)
 local function getScreenDistance(worldPos)
     local screenPoint = Camera:WorldToScreenPoint(worldPos)
     return (Vector2.new(Mouse.X, Mouse.Y) - Vector2.new(screenPoint.X, screenPoint.Y)).Magnitude
-end
-
--- Helper function to calculate the predicted position
-local function predictPosition(target)
-    local character = target.Character
-    if not character then return nil end
-
-    local rootPart = character:FindFirstChild("HumanoidRootPart")
-    if not rootPart then return nil end
-
-    -- Get the target's current velocity
-    local humanoid = character:FindFirstChild("Humanoid")
-    if not humanoid then return nil end
-
-    local velocity = humanoid.RootPart.Velocity
-    local speed = velocity.Magnitude
-    if speed == 0 then return rootPart.Position end
-
-    -- Estimate time to target (for simplicity, using a constant bullet speed)
-    local bulletSpeed = 150  -- Customize based on your game's mechanics
-    local distance = (rootPart.Position - Camera.CFrame.Position).Magnitude
-    local timeToTarget = distance / bulletSpeed
-
-    -- Predict where the target will be based on velocity
-    local predictedPosition = rootPart.Position + velocity * timeToTarget
-    return predictedPosition
-end
-
--- Determine which part to aim at based on mode and position
-local function getAimPosition(target)
-    if not (target and target.Character) then
-        return nil
-    end
-
-    local character = target.Character
-    local head = character:FindFirstChild("Head")
-    local torso = character:FindFirstChild("Torso") or character:FindFirstChild("UpperTorso")
-
-    return head or torso
-end
-
--- Finds the closest target based on the default part for detection in each mode.
-local function getClosestTarget()
-    local closest, shortestDistance = nil, 100
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character then
-            local part = player.Character:FindFirstChild("HumanoidRootPart")
-            if part then
-                local screenPoint = Camera:WorldToScreenPoint(part.Position)
-                local distance = (Vector2.new(Mouse.X, Mouse.Y) - Vector2.new(screenPoint.X, screenPoint.Y)).Magnitude
-                if distance < shortestDistance then
-                    closest = player
-                    shortestDistance = distance
-                end
-            end
-        end
-    end
-    return closest
-end
-
--- Aimbot: Aim at the target using the chosen body part
-local function aimAtTarget(target)
-    if not target then return end
-    local aimPos = getAimPosition(target)
-    if not aimPos then return end
-
-    local direction = (aimPos.Position - Camera.CFrame.Position).unit
-    local newCFrame = Camera.CFrame + direction * 0.1
-    Camera.CFrame = Camera.CFrame:Lerp(newCFrame, aimbotSmoothness / 100)
-end
-
--- Camera Lock: Keep the camera locked on the target
-local function lockCameraOnTarget(target)
-    if not target then return end
-    local aimPos = getAimPosition(target)
-    if not aimPos then return end
-
-    local direction = (aimPos.Position - Camera.CFrame.Position).unit
-    local newCFrame = Camera.CFrame + direction * 0.1
-    Camera.CFrame = Camera.CFrame:Lerp(newCFrame, cameraLockSmoothness / 100)
 end
 
 -- Main Loop
