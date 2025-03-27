@@ -217,10 +217,25 @@ local function setupUI()
         blatantMode = not blatantMode
         if blatantMode then
             blatantModeButton.Text = "Toggle Blatant Mode: Blatant"
+            modeStatusLabel.Text = "Current Mode: Blatant"  -- Update mode label
         else
             blatantModeButton.Text = "Toggle Blatant Mode: Non-Blatant"
+            modeStatusLabel.Text = "Current Mode: Non-Blatant"  -- Update mode label
         end
     end)
+
+    -- Mode Status Label to display current mode
+    local modeStatusLabel = Instance.new("TextLabel")
+    modeStatusLabel.Size = UDim2.new(1, 0, 0, 40)
+    modeStatusLabel.Position = UDim2.new(0, 0, 0, 510)
+    modeStatusLabel.BackgroundColor3 = Color3.fromRGB(98, 12, 219)
+    modeStatusLabel.Text = "Current Mode: Non-Blatant"
+    modeStatusLabel.TextColor3 = Color3.fromRGB(21, 211, 197)
+    modeStatusLabel.Font = Enum.Font.GothamBold
+    modeStatusLabel.TextSize = 18
+    modeStatusLabel.TextStrokeTransparency = 0.8
+    modeStatusLabel.TextXAlignment = Enum.TextXAlignment.Center
+    modeStatusLabel.Parent = ScreenGui
 
     -- Create Smoothness and FOV Sliders
     createSlider("Aimbot Smoothness", 260, 1, 10, 5, function(value)
@@ -264,77 +279,22 @@ local function aimAtTarget(target)
         local aimPos = getAimPosition(target)
         if aimPos then
             local smoothFactor = blatantMode and 1 or aimbotSmoothness / 10
-            local newAim = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, aimPos), smoothFactor)
-            Camera.CFrame = newAim
+            local direction = (aimPos - Camera.CFrame.Position).unit
+            Camera.CFrame = Camera.CFrame:Lerp(Camera.CFrame * CFrame.new(direction * smoothFactor), 0.2)
         end
     end
 end
 
--- Camera Lock: Adjust camera to track the target using the chosen body part
-local function lockCameraToTarget(target)
-    if target and target.Character then
-        local aimPos = getAimPosition(target)
-        if aimPos then
-            local smoothFactor = blatantMode and 1 or cameraLockSmoothness / 10
-            local newCFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, aimPos), smoothFactor)
-            Camera.CFrame = newCFrame
-        end
-    end
-end
-
--- Keybinds for toggling features
-UserInputService.InputBegan:Connect(function(input)
-    if input.KeyCode == keybinds.aimbot then
-        aimbotEnabled = not aimbotEnabled
-    elseif input.KeyCode == keybinds.esp then
-        espEnabled = not espEnabled
-    end
-end)
-
--- Main Loop: Update ESP, Aimbot, and Camera Lock
+-- Main Loop to check ESP, Aimbot, and Camera Lock
 RunService.RenderStepped:Connect(function()
-    -- ESP Management
-    if espEnabled then
-        for _, player in pairs(Players:GetPlayers()) do
-            if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                if not espBoxes[player] then
-                    local espBox = Instance.new("BoxHandleAdornment")
-                    espBox.Adornee = player.Character.HumanoidRootPart
-                    espBox.AlwaysOnTop = true
-                    espBox.Size = Vector3.new(4, 6, 0)
-                    espBox.ZIndex = 10
-                    espBox.Color3 = Color3.fromRGB(255, 0, 0)
-                    espBox.Transparency = 0.3
-                    espBox.Parent = player.Character
-                    espBoxes[player] = espBox
-                end
-            end
-        end
-    else
-        for _, esp in pairs(espBoxes) do
-            if esp then
-                esp:Destroy()
-            end
-        end
-        espBoxes = {}
-    end
-
-    -- Aimbot Logic
+    -- Aimbot
     if aimbotEnabled then
-        local target = getClosestTarget()
-        if target then
-            aimAtTarget(target)
-        end
-    end
-
-    -- Camera Lock Logic
-    if cameraLockEnabled then
-        local target = getClosestTarget()
-        if target then
-            lockCameraToTarget(target)
+        local closestTarget = getClosestTarget()
+        if closestTarget then
+            aimAtTarget(closestTarget)
         end
     end
 end)
 
--- Initialize the UI
+-- Setup UI
 setupUI()
