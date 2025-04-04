@@ -1,6 +1,3 @@
--- Advanced ESP, Cam Lock, and Triggerbot Script for Da Hood with UI
-
--- Get services
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local Camera = game:GetService("Workspace").CurrentCamera
@@ -8,14 +5,12 @@ local RunService = game:GetService("RunService")
 local UIS = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
 
--- UI setup
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Parent = CoreGui
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
--- ESP, Cam Lock, and Triggerbot Toggle Buttons
 local espButton = Instance.new("TextButton")
-espButton.Size = UDim2.new(0, 150, 0, 50)
+espButton.Size = UDim2.new(0, 200, 0, 60)
 espButton.Position = UDim2.new(0, 10, 0, 10)
 espButton.Text = "Toggle ESP"
 espButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
@@ -23,63 +18,46 @@ espButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 espButton.Parent = ScreenGui
 
 local camLockButton = Instance.new("TextButton")
-camLockButton.Size = UDim2.new(0, 150, 0, 50)
-camLockButton.Position = UDim2.new(0, 10, 0, 70)
+camLockButton.Size = UDim2.new(0, 200, 0, 60)
+camLockButton.Position = UDim2.new(0, 10, 0, 80)
 camLockButton.Text = "Toggle Cam Lock"
 camLockButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 camLockButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 camLockButton.Parent = ScreenGui
 
 local triggerbotButton = Instance.new("TextButton")
-triggerbotButton.Size = UDim2.new(0, 150, 0, 50)
-triggerbotButton.Position = UDim2.new(0, 10, 0, 130)
+triggerbotButton.Size = UDim2.new(0, 200, 0, 60)
+triggerbotButton.Position = UDim2.new(0, 10, 0, 150)
 triggerbotButton.Text = "Toggle Triggerbot"
 triggerbotButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 triggerbotButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 triggerbotButton.Parent = ScreenGui
 
--- Settings for ESP, Cam Lock, and Triggerbot
 local ESPEnabled = false
 local CamLockEnabled = false
 local TriggerbotEnabled = false
-local TriggerbotFOV = 50  -- Field of view for triggerbot activation
-local Smoothness = 0.1 -- Smoothness factor for Cam Lock
+local TriggerbotFOV = 50
+local Smoothness = 0.1
 
--- Toggle ESP
 espButton.MouseButton1Click:Connect(function()
     ESPEnabled = not ESPEnabled
-    if ESPEnabled then
-        espButton.Text = "ESP: ON"
-    else
-        espButton.Text = "ESP: OFF"
-    end
+    espButton.Text = ESPEnabled and "ESP: ON" or "ESP: OFF"
 end)
 
--- Toggle Cam Lock
 camLockButton.MouseButton1Click:Connect(function()
     CamLockEnabled = not CamLockEnabled
-    if CamLockEnabled then
-        camLockButton.Text = "Cam Lock: ON"
-    else
-        camLockButton.Text = "Cam Lock: OFF"
-    end
+    camLockButton.Text = CamLockEnabled and "Cam Lock: ON" or "Cam Lock: OFF"
 end)
 
--- Toggle Triggerbot
 triggerbotButton.MouseButton1Click:Connect(function()
     TriggerbotEnabled = not TriggerbotEnabled
-    if TriggerbotEnabled then
-        triggerbotButton.Text = "Triggerbot: ON"
-    else
-        triggerbotButton.Text = "Triggerbot: OFF"
-    end
+    triggerbotButton.Text = TriggerbotEnabled and "Triggerbot: ON" or "Triggerbot: OFF"
 end)
 
--- ESP part
 local function createESP(target)
     local box = Instance.new("Frame")
     box.Size = UDim2.new(0, 50, 0, 50)
-    box.BackgroundColor3 = Color3.fromRGB(255, 0, 0)  -- Red Box for ESP
+    box.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
     box.BorderSizePixel = 0
     box.ZIndex = 10
     box.Parent = game:GetService("CoreGui")
@@ -97,11 +75,9 @@ local function createESP(target)
         end
     end
 
-    -- Update ESP every frame
     RunService.RenderStepped:Connect(updateESP)
 end
 
--- Cam Lock function
 local function camLock(target)
     local cameraPos = Camera.CFrame.Position
     local targetPos = target.Character.HumanoidRootPart.Position
@@ -110,7 +86,6 @@ local function camLock(target)
     Camera.CFrame = Camera.CFrame:Lerp(lookAtCFrame, Smoothness)
 end
 
--- Triggerbot function
 local function triggerbot()
     if TriggerbotEnabled then
         for _, player in ipairs(Players:GetPlayers()) do
@@ -119,7 +94,6 @@ local function triggerbot()
                 local screenPos, onScreen = Camera:WorldToScreenPoint(head.Position)
                 local distance = (Vector2.new(screenPos.X, screenPos.Y) - Vector2.new(UIS:GetMouseLocation().X, UIS:GetMouseLocation().Y)).Magnitude
                 if onScreen and distance <= TriggerbotFOV then
-                    -- Triggerbot logic here: Auto-shoot when target is in crosshair
                     game:GetService("ReplicatedStorage").RemoteEvent:FireServer("Shoot")
                 end
             end
@@ -127,7 +101,6 @@ local function triggerbot()
     end
 end
 
--- Update ESP, Cam Lock, and Triggerbot every frame
 RunService.RenderStepped:Connect(function()
     if ESPEnabled then
         for _, player in ipairs(Players:GetPlayers()) do
@@ -138,7 +111,7 @@ RunService.RenderStepped:Connect(function()
     end
 
     if CamLockEnabled then
-        local target = getClosestTarget()  -- Function to get the closest target
+        local target = getClosestTarget()
         if target then
             camLock(target)
         end
@@ -147,7 +120,6 @@ RunService.RenderStepped:Connect(function()
     triggerbot()
 end)
 
--- Helper function to get the closest target (for Cam Lock)
 function getClosestTarget()
     local closestPlayer = nil
     local shortestDistance = math.huge
@@ -166,3 +138,29 @@ function getClosestTarget()
     end
     return closestPlayer
 end
+
+local dragging, dragInput, dragStart, startPos
+local function onInputBegan(input, gameProcessed)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 and not gameProcessed then
+        dragging = true
+        dragStart = input.Position
+        startPos = ScreenGui.Position
+    end
+end
+
+local function onInputChanged(input)
+    if dragging then
+        local delta = input.Position - dragStart
+        ScreenGui.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end
+
+local function onInputEnded(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = false
+    end
+end
+
+UIS.InputBegan:Connect(onInputBegan)
+UIS.InputChanged:Connect(onInputChanged)
+UIS.InputEnded:Connect(onInputEnded)
